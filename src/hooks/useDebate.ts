@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { personas, sampleTranscript, debateTopics, type TranscriptEntry, type Persona } from "@/data/debateData";
-import { generatePersonaResponse, generateDebateSummary } from "@/services/aiService";
+import { generatePersonaResponse, generateDebateSummary, isAPIAvailable, getAPIError } from "@/services/aiService";
+import { toast } from "sonner";
 import { speak, toggleMute, getIsMuted, isTTSSupported } from "@/services/ttsService";
 
 export function useDebate() {
@@ -83,8 +84,23 @@ export function useDebate() {
       speak(response, currentPersona.id);
 
       setHeatLevel((h) => Math.min(100, h + Math.random() * 8 + 2));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating response:", error);
+
+      // If the API circuit breaker tripped, stop the debate and notify user
+      if (!isAPIAvailable()) {
+        setSpeakingId(null);
+        isGeneratingRef.current = false;
+        // Stop debate gracefully
+        isDebatingRef.current = false;
+        isLightningRef.current = false;
+        setIsDebating(false);
+        setIsLightningRound(false);
+        clearInterval(timerRef.current);
+        clearTimeout(speakerRef.current);
+        toast.error(getAPIError() || "API connection lost — debate paused");
+        return;
+      }
     }
 
     setSpeakingId(null);
