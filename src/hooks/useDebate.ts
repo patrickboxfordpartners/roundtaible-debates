@@ -12,6 +12,7 @@ export function useDebate() {
     [...personas].sort((a, b) => b.wins - a.wins)
   );
   const [winner, setWinner] = useState<Persona | null>(null);
+  const [personasState, setPersonasState] = useState<Persona[]>(personas);
   const [reactions, setReactions] = useState<Record<string, number>>({
     "🎩": 12, "🧐": 8, "📜": 5, "⏱️": 3, "⚖️": 7,
   });
@@ -94,6 +95,11 @@ export function useDebate() {
 
   const dismissWinner = useCallback(() => setWinner(null), []);
 
+  const updatePersonaContext = useCallback((personaId: string, context: string) => {
+    setPersonasState((prev) =>
+      prev.map((p) => (p.id === personaId ? { ...p, context } : p))
+    );
+  }, []);
   useEffect(() => {
     return () => {
       clearInterval(timerRef.current);
@@ -111,6 +117,7 @@ export function useDebate() {
     leaderboard,
     winner,
     reactions,
+    personasState,
     startDebate,
     stopDebate,
     selectTopic,
@@ -119,5 +126,6 @@ export function useDebate() {
     voteWinner,
     addReaction,
     dismissWinner,
+    updatePersonaContext,
   };
 }

@@ -13,6 +13,7 @@ export interface Persona {
   color: string;
   wins: number;
   quotes: string[];
+  context: string;
 }
 
 export interface TranscriptEntry {
@@ -39,6 +40,7 @@ export const personas: Persona[] = [
       "I have not failed. I've just found 10,000 ways that won't work.",
       "Genius is one percent inspiration and ninety-nine percent perspiration.",
     ],
+    context: "",
   },
   {
     id: "morgan",
@@ -51,6 +53,7 @@ export const personas: Persona[] = [
       "A man always has two reasons for doing anything: a good reason and the real reason.",
       "Go as far as you can see; when you get there, you'll be able to see further.",
     ],
+    context: "",
   },
   {
     id: "carnegie",
@@ -63,6 +66,7 @@ export const personas: Persona[] = [
       "No man becomes rich unless he enriches others.",
       "The man who dies rich, dies disgraced.",
     ],
+    context: "",
   },
   {
     id: "twain",
@@ -75,6 +79,7 @@ export const personas: Persona[] = [
       "The secret of getting ahead is getting started.",
       "Whenever you find yourself on the side of the majority, it is time to pause and reflect.",
     ],
+    context: "",
   },
   {
     id: "adams",
@@ -87,6 +92,7 @@ export const personas: Persona[] = [
       "Chaos was the law of nature; order was the dream of man.",
       "A teacher affects eternity; he can never tell where his influence stops.",
     ],
+    context: "",
   },
   {
     id: "tesla",
@@ -99,6 +105,7 @@ export const personas: Persona[] = [
       "The present is theirs; the future, for which I really worked, is mine.",
       "If you want to find the secrets of the universe, think in terms of energy, frequency and vibration.",
     ],
+    context: "",
   },
 ];
 

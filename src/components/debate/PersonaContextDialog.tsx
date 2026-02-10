@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Save } from "lucide-react";
+import type { Persona } from "@/data/debateData";
+
+interface PersonaContextDialogProps {
+  persona: Persona | null;
+  onClose: () => void;
+  onSave: (personaId: string, context: string) => void;
+}
+
+export function PersonaContextDialog({ persona, onClose, onSave }: PersonaContextDialogProps) {
+  const [contextText, setContextText] = useState(persona?.context || "");
+
+  // Sync when persona changes
+  if (persona && contextText === "" && persona.context !== "") {
+    setContextText(persona.context);
+  }
+
+  const handleSave = () => {
+    if (persona) {
+      onSave(persona.id, contextText);
+      onClose();
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {persona && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div
+            className="bg-card border border-border rounded-xl p-6 max-w-lg w-full mx-4 shadow-2xl"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start gap-4 mb-4">
+              <div
+                className="w-14 h-14 rounded-full flex-shrink-0 overflow-hidden border-2"
+                style={{ borderColor: persona.color }}
+              >
+                {persona.avatar ? (
+                  <img src={persona.avatar} alt={persona.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center font-display font-bold text-white"
+                    style={{ backgroundColor: persona.color }}
+                  >
+                    {persona.name.split(" ").map(w => w[0]).join("")}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <h2 className="font-display text-xl font-bold text-foreground">{persona.name}</h2>
+                <p className="font-body text-sm italic" style={{ color: persona.color }}>{persona.role}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Character quotes */}
+            <div className="mb-4 p-3 rounded-lg bg-background/60 border border-border">
+              <p className="text-[10px] font-display font-semibold text-muted-foreground uppercase tracking-wider mb-1">Famous Quotes</p>
+              {persona.quotes.map((q, i) => (
+                <p key={i} className="font-body text-xs text-muted-foreground italic leading-relaxed">
+                  "{q}"
+                </p>
+              ))}
+            </div>
+
+            {/* Context textarea */}
+            <div className="mb-4">
+              <label className="block text-xs font-display font-semibold text-foreground mb-1.5">
+                Character Context & Instructions
+              </label>
+              <p className="text-[10px] font-body text-muted-foreground mb-2">
+                Add personality traits, speaking style, debate positions, or any additional context for this persona's responses.
+              </p>
+              <textarea
+                value={contextText}
+                onChange={(e) => setContextText(e.target.value)}
+                placeholder={`e.g. "${persona.name} is particularly passionate about technology and always argues from an innovation-first perspective. Speaks in short, punchy sentences..."`}
+                className="w-full h-32 px-3 py-2 text-sm font-body rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-4 mb-4 text-xs font-body text-muted-foreground">
+              <span>🏆 {persona.wins} wins</span>
+              <span className="w-1 h-1 rounded-full bg-border" />
+              <span>{contextText.length > 0 ? "Custom context active" : "No custom context"}</span>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 text-sm font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+              >
+                <Save className="w-3.5 h-3.5" /> Save Context
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
