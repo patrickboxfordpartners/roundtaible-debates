@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mic, MicOff, Zap, Shuffle, FileText, Send } from "lucide-react";
 import { debateTopics, personas } from "@/data/debateData";
+import { startVapiCall, stopVapiCall } from "@/services/vapiService";
+import { toast } from "sonner";
 
 interface ControlBarProps {
   isDebating: boolean;
@@ -12,6 +14,7 @@ interface ControlBarProps {
   onPitchIdea: (text: string) => void;
   onVote: (personaId: string) => void;
   onSummarize: () => void;
+  onVoiceInput?: (text: string) => void;
 }
 
 export function ControlBar({
@@ -23,9 +26,11 @@ export function ControlBar({
   onPitchIdea,
   onVote,
   onSummarize,
+  onVoiceInput,
 }: ControlBarProps) {
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
+  const [isListening, setIsListening] = useState(false);
 
   const handlePitch = () => {
     if (pitchText.trim()) {
@@ -33,6 +38,54 @@ export function ControlBar({
       setPitchText("");
     }
   };
+
+  const toggleMic = async () => {
+    if (micOn) {
+      // Stop listening
+      stopVapiCall();
+      setMicOn(false);
+      setIsListening(false);
+      toast.info("Microphone off");
+    } else {
+      // Start listening
+      setMicOn(true);
+      toast.info("Microphone on - speak now");
+
+      try {
+        await startVapiCall({
+          onSpeechStart: () => {
+            setIsListening(true);
+          },
+          onSpeechEnd: () => {
+            setIsListening(false);
+          },
+          onTranscript: (transcript, isFinal) => {
+            if (isFinal && transcript.trim() && onVoiceInput) {
+              onVoiceInput(transcript.trim());
+            }
+          },
+          onError: (error) => {
+            console.error("Vapi error:", error);
+            toast.error("Voice input error");
+            setMicOn(false);
+            setIsListening(false);
+          },
+        });
+      } catch (error) {
+        console.error("Failed to start voice:", error);
+        toast.error("Failed to start microphone");
+        setMicOn(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (micOn) {
+        stopVapiCall();
+      }
+    };
+  }, [micOn]);
 
   return (
     <motion.div
@@ -61,11 +114,18 @@ export function ControlBar({
       <div className="px-4 py-3 flex flex-wrap gap-2 items-center">
         {/* Mic */}
         <button
-          onClick={() => setMicOn(!micOn)}
-          className={`p-2 rounded-lg border transition-colors ${micOn ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary/50"}`}
-          title="Toggle microphone"
+          onClick={toggleMic}
+          className={`p-2 rounded-lg border transition-colors relative ${
+            micOn
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background border-border hover:border-primary/50"
+          } ${isListening ? "animate-pulse" : ""}`}
+          title={micOn ? "Stop microphone" : "Start microphone"}
         >
           {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+          {isListening && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+          )}
         </button>
 
         {/* Pitch input */}

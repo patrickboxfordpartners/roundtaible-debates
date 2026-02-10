@@ -38,6 +38,10 @@ const Index = () => {
     debate.addTranscriptEntry("human", `[You]: ${message}`);
   };
 
+  const handleVoiceInput = (text: string) => {
+    debate.addTranscriptEntry("human", text);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight">
       {/* Header */}
@@ -108,6 +112,7 @@ const Index = () => {
           onPitchIdea={handlePitchIdea}
           onVote={debate.voteWinner}
           onSummarize={handleSummarize}
+          onVoiceInput={handleVoiceInput}
         />
       </div>
 
