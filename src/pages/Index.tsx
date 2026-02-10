@@ -31,7 +31,7 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-          Algonquin Round<span className="text-primary">AI</span>ble
+          Algonquin Roundt<span className="text-primary">AI</span>ble
         </h1>
         <p className="font-body text-xs md:text-sm text-muted-foreground italic mt-0.5">
           Where history's greatest minds debate the future

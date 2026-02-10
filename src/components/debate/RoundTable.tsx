@@ -18,10 +18,10 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
   const seconds = timeRemaining % 60;
 
   return (
-    <div className="relative w-full max-w-[600px] mx-auto aspect-square">
+    <div className="relative w-full max-w-[520px] mx-auto aspect-square">
       {/* Table surface */}
       <motion.div
-        className="absolute inset-[15%] rounded-full wood-gradient border-4 border-wood-medium shadow-2xl"
+        className="absolute inset-[18%] rounded-full wood-gradient border-4 border-wood-medium shadow-2xl"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 100, delay: 0.2 }}
