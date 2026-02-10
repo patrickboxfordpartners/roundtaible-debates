@@ -101,6 +101,12 @@ export function useDebate() {
     );
   }, []);
 
+  const removePersona = useCallback((personaId: string) => {
+    setPersonasState((prev) => prev.filter((p) => p.id !== personaId));
+    setLeaderboard((prev) => prev.filter((p) => p.id !== personaId));
+    if (speakingId === personaId) setSpeakingId(null);
+  }, [speakingId]);
+
   const addPersona = useCallback((persona: { name: string; role: string; color: string; context: string }) => {
     const id = persona.name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
     const newPersona: Persona = {
@@ -144,5 +150,6 @@ export function useDebate() {
     dismissWinner,
     updatePersonaContext,
     addPersona,
+    removePersona,
   };
 }

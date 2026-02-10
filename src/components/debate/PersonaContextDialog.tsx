@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Save } from "lucide-react";
+import { X, Save, Trash2 } from "lucide-react";
 import type { Persona } from "@/data/debateData";
 
 interface PersonaContextDialogProps {
   persona: Persona | null;
   onClose: () => void;
   onSave: (personaId: string, context: string) => void;
+  onRemove: (personaId: string) => void;
 }
 
-export function PersonaContextDialog({ persona, onClose, onSave }: PersonaContextDialogProps) {
+export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: PersonaContextDialogProps) {
   const [contextText, setContextText] = useState(persona?.context || "");
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   // Sync when persona changes
   if (persona && contextText === "" && persona.context !== "") {
@@ -105,19 +107,55 @@ export function PersonaContextDialog({ persona, onClose, onSave }: PersonaContex
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 text-sm font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-              >
-                <Save className="w-3.5 h-3.5" /> Save Context
-              </button>
+            <div className="flex items-center justify-between">
+              {/* Remove */}
+              <div>
+                {!confirmRemove ? (
+                  <button
+                    onClick={() => setConfirmRemove(true)}
+                    className="px-3 py-2 text-sm font-display font-semibold rounded-lg text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-body text-destructive">Remove from table?</span>
+                    <button
+                      onClick={() => {
+                        if (persona) {
+                          onRemove(persona.id);
+                          onClose();
+                        }
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-display font-semibold rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={() => setConfirmRemove(false)}
+                      className="px-2.5 py-1.5 text-xs font-display font-semibold rounded-lg border border-border hover:bg-muted transition-colors text-foreground"
+                    >
+                      No
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Save / Cancel */}
+              <div className="flex gap-2">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 text-sm font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" /> Save Context
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
