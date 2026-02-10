@@ -18,16 +18,18 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
   const seconds = timeRemaining % 60;
 
   return (
-    <div className="relative w-full max-w-[520px] mx-auto aspect-square">
+    <div className="relative w-full max-w-[500px] mx-auto aspect-square">
       {/* Table surface */}
       <motion.div
-        className="absolute inset-[18%] rounded-full wood-gradient border-4 border-wood-medium shadow-2xl"
+        className="absolute inset-[20%] rounded-full wood-gradient table-rim"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 100, delay: 0.2 }}
       >
-        {/* Inner ring */}
-        <div className="absolute inset-3 rounded-full border border-amber-glow/30" />
+        {/* Outer decorative ring */}
+        <div className="absolute inset-1 rounded-full border border-amber-glow/20" />
+        {/* Inner felt/leather inlay */}
+        <div className="absolute inset-4 rounded-full border border-amber-glow/15 bg-wood-dark/30" />
 
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 text-center">
