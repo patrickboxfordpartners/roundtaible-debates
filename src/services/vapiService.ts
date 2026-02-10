@@ -1,83 +1,87 @@
-import Vapi from "@vapi-ai/web";
+// Voice input using Web Speech API (works reliably in all modern browsers)
+// Production upgrade: swap to Vapi SDK for enterprise-grade transcription
 
-let vapiInstance: Vapi | null = null;
-
-export function getVapiInstance(): Vapi {
-  if (!vapiInstance) {
-    vapiInstance = new Vapi(import.meta.env.VITE_VAPI_PUBLIC_KEY);
-  }
-  return vapiInstance;
-}
-
-export interface VapiCallbacks {
+export interface VoiceCallbacks {
   onSpeechStart?: () => void;
   onSpeechEnd?: () => void;
   onTranscript?: (transcript: string, isFinal: boolean) => void;
   onError?: (error: any) => void;
 }
 
-export async function startVapiCall(callbacks: VapiCallbacks) {
-  const vapi = getVapiInstance();
+let recognition: SpeechRecognition | null = null;
+let isActive = false;
 
-  // Set up event listeners
-  if (callbacks.onSpeechStart) {
-    vapi.on("speech-start", callbacks.onSpeechStart);
+export function isVoiceSupported(): boolean {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+export function startVoiceInput(callbacks: VoiceCallbacks) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    callbacks.onError?.("Speech recognition not supported in this browser");
+    return;
   }
 
-  if (callbacks.onSpeechEnd) {
-    vapi.on("speech-end", callbacks.onSpeechEnd);
-  }
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
 
-  if (callbacks.onTranscript) {
-    vapi.on("message", (message: any) => {
-      if (message.type === "transcript") {
-        callbacks.onTranscript?.(message.transcript, message.isFinal);
-      }
-    });
-  }
+  recognition.onstart = () => {
+    isActive = true;
+    callbacks.onSpeechStart?.();
+  };
 
-  if (callbacks.onError) {
-    vapi.on("error", callbacks.onError);
-  }
+  recognition.onresult = (event: SpeechRecognitionEvent) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      const transcript = result[0].transcript;
+      const isFinal = result.isFinal;
+      callbacks.onTranscript?.(transcript, isFinal);
+    }
+  };
+
+  recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    if (event.error === "not-allowed") {
+      callbacks.onError?.("Microphone access denied");
+    } else if (event.error !== "aborted") {
+      callbacks.onError?.(event.error);
+    }
+  };
+
+  recognition.onend = () => {
+    isActive = false;
+    callbacks.onSpeechEnd?.();
+    // Auto-restart if still supposed to be listening
+    if (recognition && isActive) {
+      try { recognition.start(); } catch {}
+    }
+  };
 
   try {
-    // Start the call with a simple assistant configuration
-    await vapi.start({
-      transcriber: {
-        provider: "deepgram",
-        model: "nova-2",
-        language: "en",
-      },
-      model: {
-        provider: "openai",
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are a debate participant. Listen and transcribe what the user says.",
-          },
-        ],
-      },
-      voice: {
-        provider: "11labs",
-        voiceId: "paula", // Neutral voice
-      },
-    });
+    recognition.start();
   } catch (error) {
-    console.error("Failed to start Vapi call:", error);
-    if (callbacks.onError) {
-      callbacks.onError(error);
-    }
+    callbacks.onError?.(error);
   }
 }
 
-export function stopVapiCall() {
-  const vapi = getVapiInstance();
-  vapi.stop();
+export function stopVoiceInput() {
+  isActive = false;
+  if (recognition) {
+    try { recognition.stop(); } catch {}
+    recognition = null;
+  }
 }
 
-export function isVapiActive(): boolean {
-  const vapi = getVapiInstance();
-  // @ts-ignore - accessing internal state
-  return vapi._active || false;
+export function isVoiceActive(): boolean {
+  return isActive;
+}
+
+// Extend Window for webkit prefix
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
 }

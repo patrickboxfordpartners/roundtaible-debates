@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mic, MicOff, Zap, Shuffle, FileText, Send } from "lucide-react";
 import { debateTopics, personas } from "@/data/debateData";
-import { startVapiCall, stopVapiCall } from "@/services/vapiService";
+import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/vapiService";
 import { toast } from "sonner";
 
 interface ControlBarProps {
@@ -41,51 +41,42 @@ export function ControlBar({
     }
   };
 
-  const toggleMic = async () => {
+  const toggleMic = () => {
     if (micOn) {
-      // Stop listening
-      stopVapiCall();
+      stopVoiceInput();
       setMicOn(false);
       setIsListening(false);
       toast.info("Microphone off");
     } else {
-      // Start listening
-      setMicOn(true);
-      toast.info("Microphone on - speak now");
-
-      try {
-        await startVapiCall({
-          onSpeechStart: () => {
-            setIsListening(true);
-          },
-          onSpeechEnd: () => {
-            setIsListening(false);
-          },
-          onTranscript: (transcript, isFinal) => {
-            if (isFinal && transcript.trim() && onVoiceInput) {
-              onVoiceInput(transcript.trim());
-            }
-          },
-          onError: (error) => {
-            console.error("Vapi error:", error);
-            toast.error("Voice input error");
-            setMicOn(false);
-            setIsListening(false);
-          },
-        });
-      } catch (error) {
-        console.error("Failed to start voice:", error);
-        toast.error("Failed to start microphone");
-        setMicOn(false);
+      if (!isVoiceSupported()) {
+        toast.error("Voice input not supported in this browser");
+        return;
       }
+
+      setMicOn(true);
+      toast.info("Listening — speak to join the debate");
+
+      startVoiceInput({
+        onSpeechStart: () => setIsListening(true),
+        onSpeechEnd: () => setIsListening(false),
+        onTranscript: (transcript, isFinal) => {
+          if (isFinal && transcript.trim() && onVoiceInput) {
+            onVoiceInput(transcript.trim());
+          }
+        },
+        onError: (error) => {
+          console.error("Voice error:", error);
+          toast.error(typeof error === "string" ? error : "Voice input error");
+          setMicOn(false);
+          setIsListening(false);
+        },
+      });
     }
   };
 
   useEffect(() => {
     return () => {
-      if (micOn) {
-        stopVapiCall();
-      }
+      if (micOn) stopVoiceInput();
     };
   }, [micOn]);
 

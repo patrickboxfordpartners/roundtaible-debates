@@ -9,9 +9,19 @@ export function useDebate() {
   const [heatLevel, setHeatLevel] = useState(35);
   const [timeRemaining, setTimeRemaining] = useState(180);
   const [isDebating, setIsDebating] = useState(false);
-  const [leaderboard, setLeaderboard] = useState<Persona[]>(() =>
-    [...personas].sort((a, b) => b.wins - a.wins)
-  );
+  const [leaderboard, setLeaderboard] = useState<Persona[]>(() => {
+    // Restore wins from localStorage
+    try {
+      const saved = localStorage.getItem("roundtaible_leaderboard");
+      if (saved) {
+        const wins: Record<string, number> = JSON.parse(saved);
+        return [...personas]
+          .map((p) => ({ ...p, wins: wins[p.id] ?? p.wins }))
+          .sort((a, b) => b.wins - a.wins);
+      }
+    } catch {}
+    return [...personas].sort((a, b) => b.wins - a.wins);
+  });
   const [winner, setWinner] = useState<Persona | null>(null);
   const [personasState, setPersonasState] = useState<Persona[]>(personas);
   const [reactions, setReactions] = useState<Record<string, number>>({
@@ -23,9 +33,11 @@ export function useDebate() {
   const speakerRef = useRef<ReturnType<typeof setTimeout>>();
   const speakerIndexRef = useRef(0);
   const isGeneratingRef = useRef(false);
+  const isDebatingRef = useRef(false);
+  const isLightningRef = useRef(false);
 
   const generateNextResponse = useCallback(async () => {
-    if (isGeneratingRef.current || !isDebating) return;
+    if (isGeneratingRef.current || !isDebatingRef.current) return;
     isGeneratingRef.current = true;
 
     const currentPersonas = personasState.filter(p => p.id !== "human");
@@ -48,6 +60,13 @@ export function useDebate() {
         personasState
       );
 
+      // Check if debate was stopped while we were waiting for OpenAI
+      if (!isDebatingRef.current) {
+        setSpeakingId(null);
+        isGeneratingRef.current = false;
+        return;
+      }
+
       setTranscript((prev) => [
         ...prev,
         {
@@ -66,17 +85,21 @@ export function useDebate() {
     setSpeakingId(null);
     isGeneratingRef.current = false;
 
-    // Schedule next response (faster in lightning round)
-    const baseDelay = isLightningRound ? 2000 : 5000;
-    const randomDelay = isLightningRound ? 1000 : 3000;
+    // Only schedule next if still debating
+    if (!isDebatingRef.current) return;
+
+    const baseDelay = isLightningRef.current ? 2000 : 5000;
+    const randomDelay = isLightningRef.current ? 1000 : 3000;
     const delay = baseDelay + Math.random() * randomDelay;
 
     speakerRef.current = setTimeout(() => {
       generateNextResponse();
     }, delay);
-  }, [activeTopic, transcript, personasState, isDebating, isLightningRound]);
+  }, [activeTopic, transcript, personasState]);
 
   const startDebate = useCallback((lightning = false) => {
+    isDebatingRef.current = true;
+    isLightningRef.current = lightning;
     setIsDebating(true);
     setIsLightningRound(lightning);
     setTimeRemaining(lightning ? 60 : 180);
@@ -90,8 +113,13 @@ export function useDebate() {
       setTimeRemaining((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current);
+          clearTimeout(speakerRef.current);
+          isDebatingRef.current = false;
+          isLightningRef.current = false;
+          isGeneratingRef.current = false;
           setIsDebating(false);
           setIsLightningRound(false);
+          setSpeakingId(null);
           return 0;
         }
         return t - 1;
@@ -104,6 +132,8 @@ export function useDebate() {
   }, [generateNextResponse]);
 
   const stopDebate = useCallback(() => {
+    isDebatingRef.current = false;
+    isLightningRef.current = false;
     setIsDebating(false);
     setIsLightningRound(false);
     clearInterval(timerRef.current);
@@ -131,6 +161,7 @@ export function useDebate() {
     if (!isDebating) {
       startDebate(true);
     } else {
+      isLightningRef.current = true;
       setIsLightningRound(true);
       setTimeRemaining(60);
       setHeatLevel(50);
@@ -146,17 +177,23 @@ export function useDebate() {
   }, []);
 
   const voteWinner = useCallback((personaId: string) => {
-    const persona = personas.find((p) => p.id === personaId);
+    const persona = leaderboard.find((p) => p.id === personaId);
     if (persona) {
       stopDebate();
-      setWinner({ ...persona, wins: persona.wins + 1 });
-      setLeaderboard((prev) =>
-        prev
+      const updatedWins = persona.wins + 1;
+      setWinner({ ...persona, wins: updatedWins });
+      setLeaderboard((prev) => {
+        const updated = prev
           .map((p) => (p.id === personaId ? { ...p, wins: p.wins + 1 } : p))
-          .sort((a, b) => b.wins - a.wins)
-      );
+          .sort((a, b) => b.wins - a.wins);
+        // Persist to localStorage
+        const wins: Record<string, number> = {};
+        updated.forEach((p) => { wins[p.id] = p.wins; });
+        localStorage.setItem("roundtaible_leaderboard", JSON.stringify(wins));
+        return updated;
+      });
     }
-  }, [stopDebate]);
+  }, [stopDebate, leaderboard]);
 
   const addReaction = useCallback((emoji: string) => {
     setReactions((prev) => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, Trash2 } from "lucide-react";
 import type { Persona } from "@/data/debateData";
@@ -15,9 +15,12 @@ export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: Per
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   // Sync when persona changes
-  if (persona && contextText === "" && persona.context !== "") {
-    setContextText(persona.context);
-  }
+  useEffect(() => {
+    if (persona) {
+      setContextText(persona.context || "");
+      setConfirmRemove(false);
+    }
+  }, [persona?.id]);
 
   const handleSave = () => {
     if (persona) {

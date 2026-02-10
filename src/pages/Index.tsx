@@ -9,10 +9,7 @@ import { VictoryModal } from "@/components/debate/VictoryModal";
 import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
 import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
 import { motion } from "framer-motion";
-import { Share2 } from "lucide-react";
-import { toast } from "sonner";
 import type { Persona } from "@/data/debateData";
-import { getShareableLink } from "@/services/multiplayerService";
 
 const Index = () => {
   const debate = useDebate();
@@ -45,15 +42,6 @@ const Index = () => {
     debate.addTranscriptEntry("human", text);
   };
 
-  const handleShareRoom = async () => {
-    const link = getShareableLink();
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Room link copied! Share it to watch together.");
-    } catch {
-      toast.info("Share this link: " + link);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight">
@@ -63,22 +51,12 @@ const Index = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="relative">
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-            Algonquin Roundt<span className="text-primary">AI</span>ble
-          </h1>
-          <p className="font-body text-xs md:text-sm text-muted-foreground italic mt-0.5">
-            Where history's greatest minds debate the future
-          </p>
-          <button
-            onClick={handleShareRoom}
-            className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-lg border border-border bg-background hover:bg-accent transition-colors flex items-center gap-1.5 text-xs font-body"
-            title="Share debate room"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Share</span>
-          </button>
-        </div>
+        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+          Algonquin Roundt<span className="text-primary">AI</span>ble
+        </h1>
+        <p className="font-body text-xs md:text-sm text-muted-foreground italic mt-0.5">
+          Where history's greatest minds debate the future
+        </p>
       </motion.header>
 
       {/* Main content */}
