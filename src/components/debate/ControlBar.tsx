@@ -11,6 +11,7 @@ interface ControlBarProps {
   onStopDebate: () => void;
   onSelectTopic: (id: string) => void;
   onSurpriseMe: () => void;
+  onLightningRound: () => void;
   onPitchIdea: (text: string) => void;
   onVote: (personaId: string) => void;
   onSummarize: () => void;
@@ -23,6 +24,7 @@ export function ControlBar({
   onStopDebate,
   onSelectTopic,
   onSurpriseMe,
+  onLightningRound,
   onPitchIdea,
   onVote,
   onSummarize,
@@ -154,7 +156,7 @@ export function ControlBar({
         </button>
 
         <button
-          onClick={isDebating ? onStopDebate : onStartDebate}
+          onClick={isDebating ? onStopDebate : onLightningRound}
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1"
         >
           <Zap className="w-3.5 h-3.5" /> {isDebating ? "End Round" : "Lightning Round"}

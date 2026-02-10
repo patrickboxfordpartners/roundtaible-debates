@@ -17,6 +17,7 @@ export function useDebate() {
   const [reactions, setReactions] = useState<Record<string, number>>({
     "🎩": 12, "🧐": 8, "📜": 5, "⏱️": 3, "⚖️": 7,
   });
+  const [isLightningRound, setIsLightningRound] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const speakerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -65,17 +66,21 @@ export function useDebate() {
     setSpeakingId(null);
     isGeneratingRef.current = false;
 
-    // Schedule next response (5-8 seconds)
-    const delay = 5000 + Math.random() * 3000;
+    // Schedule next response (faster in lightning round)
+    const baseDelay = isLightningRound ? 2000 : 5000;
+    const randomDelay = isLightningRound ? 1000 : 3000;
+    const delay = baseDelay + Math.random() * randomDelay;
+
     speakerRef.current = setTimeout(() => {
       generateNextResponse();
     }, delay);
-  }, [activeTopic, transcript, personasState, isDebating]);
+  }, [activeTopic, transcript, personasState, isDebating, isLightningRound]);
 
-  const startDebate = useCallback(() => {
+  const startDebate = useCallback((lightning = false) => {
     setIsDebating(true);
-    setTimeRemaining(180);
-    setHeatLevel(20);
+    setIsLightningRound(lightning);
+    setTimeRemaining(lightning ? 60 : 180);
+    setHeatLevel(lightning ? 50 : 20);
     setWinner(null);
     setTranscript([]); // Clear transcript for new debate
     speakerIndexRef.current = 0;
@@ -86,11 +91,12 @@ export function useDebate() {
         if (t <= 1) {
           clearInterval(timerRef.current);
           setIsDebating(false);
+          setIsLightningRound(false);
           return 0;
         }
         return t - 1;
       });
-      setHeatLevel((h) => Math.min(100, h + Math.random() * 2));
+      setHeatLevel((h) => Math.min(100, h + Math.random() * (lightning ? 5 : 2)));
     }, 1000);
 
     // Start AI responses
@@ -99,6 +105,7 @@ export function useDebate() {
 
   const stopDebate = useCallback(() => {
     setIsDebating(false);
+    setIsLightningRound(false);
     clearInterval(timerRef.current);
     clearTimeout(speakerRef.current);
     setSpeakingId(null);
@@ -117,8 +124,18 @@ export function useDebate() {
   const surpriseMe = useCallback(() => {
     const idx = Math.floor(Math.random() * debateTopics.length);
     selectTopic(debateTopics[idx].id);
-    startDebate();
+    startDebate(false);
   }, [selectTopic, startDebate]);
+
+  const startLightningRound = useCallback(() => {
+    if (!isDebating) {
+      startDebate(true);
+    } else {
+      setIsLightningRound(true);
+      setTimeRemaining(60);
+      setHeatLevel(50);
+    }
+  }, [isDebating, startDebate]);
 
   const addTranscriptEntry = useCallback((personaId: string, text: string) => {
     setTranscript((prev) => [
@@ -200,6 +217,7 @@ export function useDebate() {
     heatLevel,
     timeRemaining,
     isDebating,
+    isLightningRound,
     leaderboard,
     winner,
     reactions,
@@ -208,6 +226,7 @@ export function useDebate() {
     stopDebate,
     selectTopic,
     surpriseMe,
+    startLightningRound,
     addTranscriptEntry,
     voteWinner,
     addReaction,
