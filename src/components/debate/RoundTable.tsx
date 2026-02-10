@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { personas, type DebateTopic } from "@/data/debateData";
 import { PersonaSeat } from "./PersonaSeat";
@@ -9,16 +10,18 @@ interface RoundTableProps {
   heatLevel: number;
   timeRemaining: number;
   isDebating: boolean;
-  onVote: (id: string) => void;
   winner: Persona | null;
+  personasState: Persona[];
+  onClickPersona: (persona: Persona) => void;
 }
 
-export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, isDebating, onVote, winner }: RoundTableProps) {
+export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, isDebating, winner, personasState, onClickPersona }: RoundTableProps) {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
+  const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="relative w-full max-w-[500px] mx-auto aspect-square">
+    <div ref={containerRef} className="relative w-full max-w-[500px] mx-auto aspect-square">
       {/* Table surface */}
       <motion.div
         className="absolute inset-[20%] rounded-full wood-gradient table-rim"
@@ -42,12 +45,10 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
             {activeTopic.title}
           </motion.p>
 
-          {/* Timer */}
           <div className="mt-2 font-display text-2xl md:text-3xl font-bold text-primary">
             {minutes}:{seconds.toString().padStart(2, "0")}
           </div>
 
-          {/* Heat meter */}
           <div className="mt-2 w-3/4 max-w-[120px]">
             <div className="flex justify-between text-[9px] font-body text-secondary-foreground/70 mb-0.5">
               <span>Cool</span>
@@ -78,15 +79,16 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
       </motion.div>
 
       {/* Persona seats */}
-      {personas.map((persona, i) => (
+      {personasState.map((persona, i) => (
         <PersonaSeat
           key={persona.id}
           persona={persona}
           isSpeaking={speakingId === persona.id}
           index={i}
-          total={personas.length}
-          onVote={onVote}
+          total={personasState.length}
           isWinner={winner?.id === persona.id}
+          onClickPersona={onClickPersona}
+          containerRef={containerRef as React.RefObject<HTMLDivElement>}
         />
       ))}
     </div>

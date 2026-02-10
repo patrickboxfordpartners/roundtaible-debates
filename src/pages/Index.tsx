@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useDebate } from "@/hooks/useDebate";
 import { RoundTable } from "@/components/debate/RoundTable";
 import { TranscriptPanel } from "@/components/debate/TranscriptPanel";
@@ -5,10 +6,13 @@ import { Leaderboard } from "@/components/debate/Leaderboard";
 import { ControlBar } from "@/components/debate/ControlBar";
 import { SpectatorBar } from "@/components/debate/SpectatorBar";
 import { VictoryModal } from "@/components/debate/VictoryModal";
+import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
 import { motion } from "framer-motion";
+import type { Persona } from "@/data/debateData";
 
 const Index = () => {
   const debate = useDebate();
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
 
   const handlePitchIdea = (text: string) => {
     debate.addTranscriptEntry("edison", `[New pitch from the gallery]: ${text}`);
@@ -22,11 +26,17 @@ const Index = () => {
     debate.addTranscriptEntry("adams", `[Gallery suggestion]: "${text}" — An intriguing proposition from the audience.`);
   };
 
+  const handleClickPersona = (persona: Persona) => {
+    // Find the latest version from state
+    const current = debate.personasState.find(p => p.id === persona.id);
+    setSelectedPersona(current || persona);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight">
       {/* Header */}
       <motion.header
-        className="text-center py-4 px-4 border-b border-border bg-card/40"
+        className="text-center py-4 px-4 border-b border-border bg-card/40 relative z-20"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -48,14 +58,15 @@ const Index = () => {
             heatLevel={debate.heatLevel}
             timeRemaining={debate.timeRemaining}
             isDebating={debate.isDebating}
-            onVote={debate.voteWinner}
             winner={debate.winner}
+            personasState={debate.personasState}
+            onClickPersona={handleClickPersona}
           />
         </div>
 
         {/* Right panel: Transcript + Leaderboard */}
         <motion.div
-          className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-border bg-card/30 flex flex-col max-h-[400px] lg:max-h-none"
+          className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-border bg-card/30 flex flex-col max-h-[400px] lg:max-h-none relative z-20"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
@@ -70,26 +81,37 @@ const Index = () => {
       </div>
 
       {/* Spectator bar */}
-      <SpectatorBar
-        reactions={debate.reactions}
-        onReaction={debate.addReaction}
-        onGallerySubmit={handleGallerySubmit}
-      />
+      <div className="relative z-20">
+        <SpectatorBar
+          reactions={debate.reactions}
+          onReaction={debate.addReaction}
+          onGallerySubmit={handleGallerySubmit}
+        />
+      </div>
 
       {/* Control bar */}
-      <ControlBar
-        isDebating={debate.isDebating}
-        onStartDebate={debate.startDebate}
-        onStopDebate={debate.stopDebate}
-        onSelectTopic={debate.selectTopic}
-        onSurpriseMe={debate.surpriseMe}
-        onPitchIdea={handlePitchIdea}
-        onVote={debate.voteWinner}
-        onSummarize={handleSummarize}
-      />
+      <div className="relative z-20">
+        <ControlBar
+          isDebating={debate.isDebating}
+          onStartDebate={debate.startDebate}
+          onStopDebate={debate.stopDebate}
+          onSelectTopic={debate.selectTopic}
+          onSurpriseMe={debate.surpriseMe}
+          onPitchIdea={handlePitchIdea}
+          onVote={debate.voteWinner}
+          onSummarize={handleSummarize}
+        />
+      </div>
 
       {/* Victory modal */}
       <VictoryModal winner={debate.winner} onDismiss={debate.dismissWinner} />
+
+      {/* Persona context dialog */}
+      <PersonaContextDialog
+        persona={selectedPersona}
+        onClose={() => setSelectedPersona(null)}
+        onSave={debate.updatePersonaContext}
+      />
     </div>
   );
 };
