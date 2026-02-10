@@ -21,7 +21,7 @@ const Index = () => {
   };
 
   const handleSummarize = () => {
-    debate.addTranscriptEntry("twain", "If I may summarize: we've argued in circles—much like this table—and arrived precisely where we started, only more exhausted.");
+    debate.summarizeDebate();
   };
 
   const handleGallerySubmit = (text: string) => {

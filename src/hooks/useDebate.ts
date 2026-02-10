@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { personas, sampleTranscript, debateTopics, type TranscriptEntry, type Persona } from "@/data/debateData";
+import { generatePersonaResponse, generateDebateSummary } from "@/services/aiService";
 
 export function useDebate() {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
@@ -18,13 +19,66 @@ export function useDebate() {
   });
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
-  const speakerRef = useRef<ReturnType<typeof setInterval>>();
+  const speakerRef = useRef<ReturnType<typeof setTimeout>>();
+  const speakerIndexRef = useRef(0);
+  const isGeneratingRef = useRef(false);
+
+  const generateNextResponse = useCallback(async () => {
+    if (isGeneratingRef.current || !isDebating) return;
+    isGeneratingRef.current = true;
+
+    const currentPersonas = personasState.filter(p => p.id !== "human");
+    if (currentPersonas.length === 0) {
+      isGeneratingRef.current = false;
+      return;
+    }
+
+    // Cycle through personas
+    const currentPersona = currentPersonas[speakerIndexRef.current % currentPersonas.length];
+    speakerIndexRef.current += 1;
+
+    setSpeakingId(currentPersona.id);
+
+    try {
+      const response = await generatePersonaResponse(
+        currentPersona,
+        activeTopic,
+        transcript,
+        personasState
+      );
+
+      setTranscript((prev) => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          personaId: currentPersona.id,
+          text: response,
+          timestamp: Date.now(),
+        },
+      ]);
+
+      setHeatLevel((h) => Math.min(100, h + Math.random() * 8 + 2));
+    } catch (error) {
+      console.error("Error generating response:", error);
+    }
+
+    setSpeakingId(null);
+    isGeneratingRef.current = false;
+
+    // Schedule next response (5-8 seconds)
+    const delay = 5000 + Math.random() * 3000;
+    speakerRef.current = setTimeout(() => {
+      generateNextResponse();
+    }, delay);
+  }, [activeTopic, transcript, personasState, isDebating]);
 
   const startDebate = useCallback(() => {
     setIsDebating(true);
     setTimeRemaining(180);
     setHeatLevel(20);
     setWinner(null);
+    setTranscript([]); // Clear transcript for new debate
+    speakerIndexRef.current = 0;
 
     // Timer countdown
     timerRef.current = setInterval(() => {
@@ -36,28 +90,26 @@ export function useDebate() {
         }
         return t - 1;
       });
-      setHeatLevel((h) => Math.min(100, h + Math.random() * 3));
+      setHeatLevel((h) => Math.min(100, h + Math.random() * 2));
     }, 1000);
 
-    // Rotate speakers
-    speakerRef.current = setInterval(() => {
-      const idx = Math.floor(Math.random() * personas.length);
-      setSpeakingId(personas[idx].id);
-    }, 3000);
-  }, []);
+    // Start AI responses
+    generateNextResponse();
+  }, [generateNextResponse]);
 
   const stopDebate = useCallback(() => {
     setIsDebating(false);
     clearInterval(timerRef.current);
-    clearInterval(speakerRef.current);
+    clearTimeout(speakerRef.current);
     setSpeakingId(null);
+    isGeneratingRef.current = false;
   }, []);
 
   const selectTopic = useCallback((topicId: string) => {
     const topic = debateTopics.find((t) => t.id === topicId);
     if (topic) {
       setActiveTopic(topic);
-      setTranscript(sampleTranscript);
+      setTranscript([]);
       setHeatLevel(20);
     }
   }, []);
@@ -122,10 +174,22 @@ export function useDebate() {
     setPersonasState((prev) => [...prev, newPersona]);
     setLeaderboard((prev) => [...prev, newPersona].sort((a, b) => b.wins - a.wins));
   }, []);
+  const summarizeDebate = useCallback(async () => {
+    if (transcript.length === 0) return;
+
+    setSpeakingId("twain");
+    const summary = await generateDebateSummary(activeTopic, transcript, personasState);
+    setTranscript((prev) => [
+      ...prev,
+      { id: String(Date.now()), personaId: "twain", text: summary, timestamp: Date.now() },
+    ]);
+    setSpeakingId(null);
+  }, [activeTopic, transcript, personasState]);
+
   useEffect(() => {
     return () => {
       clearInterval(timerRef.current);
-      clearInterval(speakerRef.current);
+      clearTimeout(speakerRef.current);
     };
   }, []);
 
@@ -151,5 +215,6 @@ export function useDebate() {
     updatePersonaContext,
     addPersona,
     removePersona,
+    summarizeDebate,
   };
 }
