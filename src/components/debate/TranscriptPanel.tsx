@@ -15,10 +15,10 @@ export function TranscriptPanel({ entries }: TranscriptPanelProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <h3 className="font-display text-base font-bold text-foreground px-3 py-2 border-b border-border">
-        📜 Transcript
+      <h3 className="font-display text-xs font-bold text-foreground px-3 py-1.5 border-b border-border uppercase tracking-wider text-muted-foreground">
+        Transcript
       </h3>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5">
         {entries.map((entry, i) => {
           const persona = personas.find((p) => p.id === entry.personaId);
           if (!persona) return null;
@@ -27,24 +27,22 @@ export function TranscriptPanel({ entries }: TranscriptPanelProps) {
               key={entry.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="flex gap-2"
+              transition={{ delay: Math.min(i * 0.02, 0.3) }}
+              className="flex gap-1.5"
             >
               <div
-                className="w-1 rounded-full flex-shrink-0"
+                className="w-0.5 rounded-full flex-shrink-0 mt-0.5"
                 style={{ backgroundColor: persona.color }}
               />
-              <div>
+              <p className="text-xs font-body text-foreground/90 leading-snug">
                 <span
-                  className="font-display text-xs font-semibold"
+                  className="font-display font-semibold mr-1"
                   style={{ color: persona.color }}
                 >
-                  {persona.name}
+                  {persona.name}:
                 </span>
-                <p className="text-sm font-body text-foreground/90 leading-relaxed">
-                  {entry.text}
-                </p>
-              </div>
+                {entry.text}
+              </p>
             </motion.div>
           );
         })}

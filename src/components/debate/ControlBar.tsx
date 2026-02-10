@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mic, MicOff, Zap, Shuffle, FileText, Send } from "lucide-react";
+import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX } from "lucide-react";
 import { debateTopics, personas } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/vapiService";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ interface ControlBarProps {
   onVote: (personaId: string) => void;
   onSummarize: () => void;
   onVoiceInput?: (text: string) => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
 
 export function ControlBar({
@@ -29,6 +31,8 @@ export function ControlBar({
   onVote,
   onSummarize,
   onVoiceInput,
+  isMuted,
+  onToggleMute,
 }: ControlBarProps) {
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
@@ -105,6 +109,21 @@ export function ControlBar({
 
       {/* Controls row */}
       <div className="px-4 py-3 flex flex-wrap gap-2 items-center">
+        {/* Speaker mute */}
+        {onToggleMute && (
+          <button
+            onClick={onToggleMute}
+            className={`p-2 rounded-lg border transition-colors ${
+              isMuted
+                ? "bg-muted text-muted-foreground border-border"
+                : "bg-background border-border hover:border-primary/50"
+            }`}
+            title={isMuted ? "Unmute voices" : "Mute voices"}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        )}
+
         {/* Mic */}
         <button
           onClick={toggleMic}

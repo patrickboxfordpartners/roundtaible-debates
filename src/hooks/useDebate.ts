@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { personas, sampleTranscript, debateTopics, type TranscriptEntry, type Persona } from "@/data/debateData";
 import { generatePersonaResponse, generateDebateSummary } from "@/services/aiService";
+import { speak, toggleMute, getIsMuted, isTTSSupported } from "@/services/ttsService";
 
 export function useDebate() {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
@@ -28,6 +29,7 @@ export function useDebate() {
     "🎩": 12, "🧐": 8, "📜": 5, "⏱️": 3, "⚖️": 7,
   });
   const [isLightningRound, setIsLightningRound] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const speakerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -76,6 +78,9 @@ export function useDebate() {
           timestamp: Date.now(),
         },
       ]);
+
+      // Speak the response aloud
+      speak(response, currentPersona.id);
 
       setHeatLevel((h) => Math.min(100, h + Math.random() * 8 + 2));
     } catch (error) {
@@ -237,8 +242,14 @@ export function useDebate() {
       ...prev,
       { id: String(Date.now()), personaId: "twain", text: summary, timestamp: Date.now() },
     ]);
+    speak(summary, "twain");
     setSpeakingId(null);
   }, [activeTopic, transcript, personasState]);
+
+  const handleToggleMute = useCallback(() => {
+    const muted = toggleMute();
+    setIsMuted(muted);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -272,5 +283,7 @@ export function useDebate() {
     addPersona,
     removePersona,
     summarizeDebate,
+    isMuted,
+    handleToggleMute,
   };
 }

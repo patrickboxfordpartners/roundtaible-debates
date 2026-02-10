@@ -60,9 +60,9 @@ const Index = () => {
       </motion.header>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
         {/* Center: Round Table */}
-        <div className="flex-1 flex items-center justify-center p-4 min-h-[400px] lg:min-h-0">
+        <div className="flex-1 flex items-center justify-center p-2 lg:p-4 min-h-0">
           <RoundTable
             activeTopic={debate.activeTopic}
             speakingId={debate.speakingId}
@@ -79,15 +79,15 @@ const Index = () => {
 
         {/* Right panel: Transcript + Leaderboard */}
         <motion.div
-          className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-border bg-card/30 flex flex-col max-h-[400px] lg:max-h-none relative z-20"
+          className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-border bg-card/30 flex flex-col h-[200px] lg:h-auto relative z-20 shrink-0"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0">
             <TranscriptPanel entries={debate.transcript} />
           </div>
-          <div className="border-t border-border">
+          <div className="border-t border-border shrink-0">
             <Leaderboard leaderboard={debate.leaderboard} />
           </div>
         </motion.div>
@@ -115,6 +115,8 @@ const Index = () => {
           onVote={debate.voteWinner}
           onSummarize={handleSummarize}
           onVoiceInput={handleVoiceInput}
+          isMuted={debate.isMuted}
+          onToggleMute={debate.handleToggleMute}
         />
       </div>
 
