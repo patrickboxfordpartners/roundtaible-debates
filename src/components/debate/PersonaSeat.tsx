@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Persona } from "@/data/debateData";
 
@@ -10,9 +11,38 @@ interface PersonaSeatProps {
   isWinner: boolean;
 }
 
+function TypewriterText({ text, delay, className, style }: { text: string; delay: number; className?: string; style?: React.CSSProperties }) {
+  const [displayed, setDisplayed] = useState("");
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const startTimer = setTimeout(() => setStarted(true), delay * 1000);
+    return () => clearTimeout(startTimer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    if (displayed.length >= text.length) return;
+    const timer = setTimeout(() => {
+      setDisplayed(text.slice(0, displayed.length + 1));
+    }, 45);
+    return () => clearTimeout(timer);
+  }, [started, displayed, text]);
+
+  return (
+    <span className={className} style={style}>
+      {displayed}
+      {started && displayed.length < text.length && (
+        <span className="animate-pulse text-primary">▌</span>
+      )}
+    </span>
+  );
+}
+
 export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinner }: PersonaSeatProps) {
   const angle = (index / total) * 360 - 90;
   const radius = 42;
+  const baseDelay = index * 0.25;
 
   return (
     <motion.div
@@ -22,10 +52,11 @@ export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinne
         top: `${50 + radius * Math.sin((angle * Math.PI) / 180)}%`,
         transform: "translate(-50%, -50%)",
       }}
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
+      initial={{ opacity: 0, scale: 0, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: baseDelay, type: "spring", stiffness: 160, damping: 14 }}
     >
+      {/* Avatar with fade-in + ring animation */}
       <motion.button
         onClick={() => onVote(persona.id)}
         className={`
@@ -34,15 +65,21 @@ export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinne
           ${isWinner ? "victory-glow border-gold" : isSpeaking ? "animate-pulse-glow border-primary" : "border-border hover:border-primary/50"}
         `}
         style={{ borderColor: isSpeaking ? persona.color : undefined }}
+        initial={{ opacity: 0, rotate: -10 }}
+        animate={{ opacity: 1, rotate: 0 }}
+        transition={{ delay: baseDelay + 0.15, duration: 0.5, ease: "easeOut" }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         title={`Vote for ${persona.name}`}
       >
         {persona.avatar ? (
-          <img
+          <motion.img
             src={persona.avatar}
             alt={persona.name}
             className="w-full h-full object-cover"
+            initial={{ scale: 1.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: baseDelay + 0.25, duration: 0.6, ease: "easeOut" }}
           />
         ) : (
           <span className="font-display text-lg md:text-xl font-bold" style={{ color: persona.color }}>
@@ -59,12 +96,17 @@ export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinne
         )}
       </motion.button>
 
-      <div className="text-center">
+      {/* Typewriter nameplate */}
+      <div className="text-center min-h-[28px] md:min-h-[32px]">
         <p className="font-display text-xs md:text-sm font-semibold text-foreground leading-tight">
-          {persona.name}
+          <TypewriterText text={persona.name} delay={baseDelay + 0.5} />
         </p>
-        <p className="text-[10px] md:text-xs font-body italic" style={{ color: persona.color }}>
-          {persona.role}
+        <p className="text-[10px] md:text-xs font-body italic">
+          <TypewriterText
+            text={persona.role}
+            delay={baseDelay + 0.5 + persona.name.length * 0.045 + 0.2}
+            style={{ color: persona.color }}
+          />
         </p>
       </div>
     </motion.div>
