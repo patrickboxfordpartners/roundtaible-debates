@@ -1,7 +1,9 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { personas, type DebateTopic } from "@/data/debateData";
+import { UserPlus } from "lucide-react";
+import { type DebateTopic } from "@/data/debateData";
 import { PersonaSeat } from "./PersonaSeat";
+import { JumpInButton } from "./JumpInButton";
 import type { Persona } from "@/data/debateData";
 
 interface RoundTableProps {
@@ -13,9 +15,11 @@ interface RoundTableProps {
   winner: Persona | null;
   personasState: Persona[];
   onClickPersona: (persona: Persona) => void;
+  onAddPersona: () => void;
+  onJumpIn: (message: string) => void;
 }
 
-export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, isDebating, winner, personasState, onClickPersona }: RoundTableProps) {
+export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, isDebating, winner, personasState, onClickPersona, onAddPersona, onJumpIn }: RoundTableProps) {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +81,24 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
           )}
         </div>
       </motion.div>
+
+      {/* Add persona button */}
+      <motion.button
+        onClick={onAddPersona}
+        className="absolute z-20 flex items-center gap-1 px-2.5 py-1.5 rounded-full font-display text-[10px] font-semibold border border-dashed border-border bg-card/80 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/10 transition-all shadow-md"
+        style={{ top: "6px", right: "6px" }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        title="Add a new persona to the table"
+      >
+        <UserPlus className="w-3.5 h-3.5" /> Add
+      </motion.button>
+
+      {/* Jump In button */}
+      <JumpInButton isDebating={isDebating} onJumpIn={onJumpIn} />
 
       {/* Persona seats */}
       {personasState.map((persona, i) => (

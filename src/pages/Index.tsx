@@ -7,12 +7,14 @@ import { ControlBar } from "@/components/debate/ControlBar";
 import { SpectatorBar } from "@/components/debate/SpectatorBar";
 import { VictoryModal } from "@/components/debate/VictoryModal";
 import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
+import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
 import { motion } from "framer-motion";
 import type { Persona } from "@/data/debateData";
 
 const Index = () => {
   const debate = useDebate();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   const handlePitchIdea = (text: string) => {
     debate.addTranscriptEntry("edison", `[New pitch from the gallery]: ${text}`);
@@ -30,6 +32,10 @@ const Index = () => {
     // Find the latest version from state
     const current = debate.personasState.find(p => p.id === persona.id);
     setSelectedPersona(current || persona);
+  };
+
+  const handleJumpIn = (message: string) => {
+    debate.addTranscriptEntry("human", `[You]: ${message}`);
   };
 
   return (
@@ -61,6 +67,8 @@ const Index = () => {
             winner={debate.winner}
             personasState={debate.personasState}
             onClickPersona={handleClickPersona}
+            onAddPersona={() => setAddDialogOpen(true)}
+            onJumpIn={handleJumpIn}
           />
         </div>
 
@@ -111,6 +119,13 @@ const Index = () => {
         persona={selectedPersona}
         onClose={() => setSelectedPersona(null)}
         onSave={debate.updatePersonaContext}
+      />
+
+      {/* Add persona dialog */}
+      <AddPersonaDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onAdd={debate.addPersona}
       />
     </div>
   );
