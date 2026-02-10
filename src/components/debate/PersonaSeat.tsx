@@ -10,12 +10,9 @@ interface PersonaSeatProps {
   isWinner: boolean;
 }
 
-const initialsFrom = (name: string) =>
-  name.split(" ").map((w) => w[0]).join("").slice(0, 2);
-
 export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinner }: PersonaSeatProps) {
   const angle = (index / total) * 360 - 90;
-  const radius = 42; // % from center
+  const radius = 42;
 
   return (
     <motion.div
@@ -29,21 +26,29 @@ export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinne
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: index * 0.1, type: "spring", stiffness: 200 }}
     >
-      {/* Avatar */}
       <motion.button
         onClick={() => onVote(persona.id)}
         className={`
-          relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center
-          font-display text-lg md:text-xl font-bold cursor-pointer
-          border-2 transition-all duration-500
+          relative w-16 h-16 md:w-20 md:h-20 rounded-full cursor-pointer
+          border-2 transition-all duration-500 overflow-hidden
           ${isWinner ? "victory-glow border-gold" : isSpeaking ? "animate-pulse-glow border-primary" : "border-border hover:border-primary/50"}
         `}
-        style={{ backgroundColor: persona.color + "22", color: persona.color, borderColor: isSpeaking ? persona.color : undefined }}
+        style={{ borderColor: isSpeaking ? persona.color : undefined }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         title={`Vote for ${persona.name}`}
       >
-        {initialsFrom(persona.name)}
+        {persona.avatar ? (
+          <img
+            src={persona.avatar}
+            alt={persona.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="font-display text-lg md:text-xl font-bold" style={{ color: persona.color }}>
+            {persona.name.split(" ").map((w) => w[0]).join("")}
+          </span>
+        )}
         {isSpeaking && (
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -54,15 +59,11 @@ export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinne
         )}
       </motion.button>
 
-      {/* Nameplate */}
       <div className="text-center">
         <p className="font-display text-xs md:text-sm font-semibold text-foreground leading-tight">
           {persona.name}
         </p>
-        <p
-          className="text-[10px] md:text-xs font-body italic"
-          style={{ color: persona.color }}
-        >
+        <p className="text-[10px] md:text-xs font-body italic" style={{ color: persona.color }}>
           {persona.role}
         </p>
       </div>

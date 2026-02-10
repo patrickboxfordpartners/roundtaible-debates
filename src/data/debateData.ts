@@ -1,3 +1,10 @@
+import edisonAvatar from "@/assets/edison-avatar.jpg";
+import morganAvatar from "@/assets/morgan-avatar.jpg";
+import carnegieAvatar from "@/assets/carnegie-avatar.jpg";
+import twainAvatar from "@/assets/twain-avatar.jpg";
+import adamsAvatar from "@/assets/adams-avatar.jpg";
+import teslaAvatar from "@/assets/tesla-avatar.jpg";
+
 export interface Persona {
   id: string;
   name: string;
@@ -25,7 +32,7 @@ export const personas: Persona[] = [
     id: "edison",
     name: "Thomas Edison",
     role: "The Inventor",
-    avatar: "",
+    avatar: edisonAvatar,
     color: "#F5A623",
     wins: 3,
     quotes: [
@@ -37,7 +44,7 @@ export const personas: Persona[] = [
     id: "morgan",
     name: "J.P. Morgan",
     role: "The Capitalist",
-    avatar: "",
+    avatar: morganAvatar,
     color: "#2E7D32",
     wins: 5,
     quotes: [
@@ -49,7 +56,7 @@ export const personas: Persona[] = [
     id: "carnegie",
     name: "Andrew Carnegie",
     role: "The Philanthropist",
-    avatar: "",
+    avatar: carnegieAvatar,
     color: "#1565C0",
     wins: 2,
     quotes: [
@@ -61,7 +68,7 @@ export const personas: Persona[] = [
     id: "twain",
     name: "Mark Twain",
     role: "The Satirist",
-    avatar: "",
+    avatar: twainAvatar,
     color: "#E65100",
     wins: 7,
     quotes: [
@@ -71,21 +78,21 @@ export const personas: Persona[] = [
   },
   {
     id: "adams",
-    name: "Abigail Adams",
-    role: "The Stateswoman",
-    avatar: "",
+    name: "Henry Adams",
+    role: "The Historian",
+    avatar: adamsAvatar,
     color: "#6A1B9A",
     wins: 4,
     quotes: [
-      "Remember, all men would be tyrants if they could.",
-      "Learning is not attained by chance, it must be sought for with ardor.",
+      "Chaos was the law of nature; order was the dream of man.",
+      "A teacher affects eternity; he can never tell where his influence stops.",
     ],
   },
   {
     id: "tesla",
     name: "Nikola Tesla",
     role: "The Visionary",
-    avatar: "",
+    avatar: teslaAvatar,
     color: "#00838F",
     wins: 6,
     quotes: [
