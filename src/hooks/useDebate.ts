@@ -100,6 +100,22 @@ export function useDebate() {
       prev.map((p) => (p.id === personaId ? { ...p, context } : p))
     );
   }, []);
+
+  const addPersona = useCallback((persona: { name: string; role: string; color: string; context: string }) => {
+    const id = persona.name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
+    const newPersona: Persona = {
+      id,
+      name: persona.name,
+      role: persona.role,
+      avatar: "",
+      color: persona.color,
+      wins: 0,
+      quotes: [],
+      context: persona.context,
+    };
+    setPersonasState((prev) => [...prev, newPersona]);
+    setLeaderboard((prev) => [...prev, newPersona].sort((a, b) => b.wins - a.wins));
+  }, []);
   useEffect(() => {
     return () => {
       clearInterval(timerRef.current);
@@ -127,5 +143,6 @@ export function useDebate() {
     addReaction,
     dismissWinner,
     updatePersonaContext,
+    addPersona,
   };
 }
