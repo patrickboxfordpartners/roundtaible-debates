@@ -23,7 +23,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background parchment-texture">
+    <div className="min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight">
       {/* Header */}
       <motion.header
         className="text-center py-4 px-4 border-b border-border bg-card/40"
