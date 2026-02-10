@@ -119,6 +119,7 @@ const Index = () => {
         persona={selectedPersona}
         onClose={() => setSelectedPersona(null)}
         onSave={debate.updatePersonaContext}
+        onRemove={debate.removePersona}
       />
 
       {/* Add persona dialog */}
