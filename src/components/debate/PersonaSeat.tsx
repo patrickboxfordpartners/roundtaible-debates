@@ -41,7 +41,7 @@ function TypewriterText({ text, delay, className, style }: { text: string; delay
 
 export function PersonaSeat({ persona, isSpeaking, index, total, onVote, isWinner }: PersonaSeatProps) {
   const angle = (index / total) * 360 - 90;
-  const radius = 42;
+  const radius = 32; // aligns avatars to the table edge
   const baseDelay = index * 0.25;
 
   return (
