@@ -5,6 +5,7 @@ import type { Persona } from "@/data/debateData";
 interface PersonaSeatProps {
   persona: Persona;
   isSpeaking: boolean;
+  isThinking: boolean;
   index: number;
   total: number;
   isWinner: boolean;
@@ -40,7 +41,7 @@ function TypewriterText({ text, delay, className, style }: { text: string; delay
   );
 }
 
-export function PersonaSeat({ persona, isSpeaking, index, total, isWinner, onClickPersona, containerRef }: PersonaSeatProps) {
+export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isWinner, onClickPersona, containerRef }: PersonaSeatProps) {
   const angle = (index / total) * 360 - 90;
   // Table inset is 20%, so edge is at 30% from center. Place avatar centers right on that edge.
   const radius = 30;
@@ -107,7 +108,7 @@ export function PersonaSeat({ persona, isSpeaking, index, total, isWinner, onCli
         {persona.avatar ? (
           <motion.img
             src={persona.avatar}
-            alt={persona.name}
+            alt={`${persona.name} — ${persona.role}`}
             className="w-full h-full object-cover pointer-events-none"
             initial={{ scale: 1.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -126,6 +127,22 @@ export function PersonaSeat({ persona, isSpeaking, index, total, isWinner, onCli
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
+        )}
+        {/* Thinking indicator */}
+        {isThinking && !isSpeaking && (
+          <motion.div
+            className="absolute inset-0 rounded-full flex items-center justify-center bg-black/30 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.span
+              className="text-white text-xs font-body tracking-widest"
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              ...
+            </motion.span>
+          </motion.div>
         )}
         {/* Context indicator dot */}
         {persona.context && (

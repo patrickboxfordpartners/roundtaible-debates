@@ -1,12 +1,24 @@
 import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { personas, type TranscriptEntry } from "@/data/debateData";
+import type { TranscriptEntry, Persona } from "@/data/debateData";
 
 interface TranscriptPanelProps {
   entries: TranscriptEntry[];
+  personasState: Persona[];
 }
 
-export function TranscriptPanel({ entries }: TranscriptPanelProps) {
+const humanPersona: Persona = {
+  id: "human",
+  name: "You",
+  role: "The Audience",
+  avatar: "",
+  color: "#9E9E9E",
+  wins: 0,
+  quotes: [],
+  context: "",
+};
+
+export function TranscriptPanel({ entries, personasState }: TranscriptPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,7 +32,9 @@ export function TranscriptPanel({ entries }: TranscriptPanelProps) {
       </h3>
       <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5">
         {entries.map((entry, i) => {
-          const persona = personas.find((p) => p.id === entry.personaId);
+          const persona = entry.personaId === "human"
+            ? humanPersona
+            : personasState.find((p) => p.id === entry.personaId);
           if (!persona) return null;
           return (
             <motion.div

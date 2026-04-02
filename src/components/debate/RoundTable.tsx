@@ -9,6 +9,7 @@ import type { Persona } from "@/data/debateData";
 interface RoundTableProps {
   activeTopic: DebateTopic;
   speakingId: string | null;
+  thinkingId: string | null;
   heatLevel: number;
   timeRemaining: number;
   isDebating: boolean;
@@ -19,7 +20,7 @@ interface RoundTableProps {
   onJumpIn: (message: string) => void;
 }
 
-export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, isDebating, winner, personasState, onClickPersona, onAddPersona, onJumpIn }: RoundTableProps) {
+export function RoundTable({ activeTopic, speakingId, thinkingId, heatLevel, timeRemaining, isDebating, winner, personasState, onClickPersona, onAddPersona, onJumpIn }: RoundTableProps) {
   const minutes = Math.floor(timeRemaining / 60);
   const seconds = timeRemaining % 60;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,6 +107,7 @@ export function RoundTable({ activeTopic, speakingId, heatLevel, timeRemaining, 
           key={persona.id}
           persona={persona}
           isSpeaking={speakingId === persona.id}
+          isThinking={thinkingId === persona.id}
           index={i}
           total={personasState.length}
           isWinner={winner?.id === persona.id}

@@ -1,11 +1,10 @@
 // Voice input using Web Speech API (works reliably in all modern browsers)
-// Production upgrade: swap to Vapi SDK for enterprise-grade transcription
 
 export interface VoiceCallbacks {
   onSpeechStart?: () => void;
   onSpeechEnd?: () => void;
   onTranscript?: (transcript: string, isFinal: boolean) => void;
-  onError?: (error: any) => void;
+  onError?: (error: string) => void;
 }
 
 let recognition: SpeechRecognition | null = null;
@@ -51,25 +50,35 @@ export function startVoiceInput(callbacks: VoiceCallbacks) {
   };
 
   recognition.onend = () => {
+    const wasActive = isActive;
     isActive = false;
     callbacks.onSpeechEnd?.();
     // Auto-restart if still supposed to be listening
-    if (recognition && isActive) {
-      try { recognition.start(); } catch {}
+    if (recognition && wasActive) {
+      try {
+        recognition.start();
+      } catch (e) {
+        // Recognition already started or browser denied — stop gracefully
+        callbacks.onError?.("Voice input ended unexpectedly");
+      }
     }
   };
 
   try {
     recognition.start();
-  } catch (error) {
-    callbacks.onError?.(error);
+  } catch (e) {
+    callbacks.onError?.("Failed to start voice input");
   }
 }
 
 export function stopVoiceInput() {
   isActive = false;
   if (recognition) {
-    try { recognition.stop(); } catch {}
+    try {
+      recognition.stop();
+    } catch {
+      // Already stopped — safe to ignore
+    }
     recognition = null;
   }
 }

@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX } from "lucide-react";
-import { debateTopics, personas } from "@/data/debateData";
+import { debateTopics, type DebateTopic } from "@/data/debateData";
+import type { Persona } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/vapiService";
 import { toast } from "sonner";
 
 interface ControlBarProps {
   isDebating: boolean;
+  personasState: Persona[];
   onStartDebate: () => void;
   onStopDebate: () => void;
   onSelectTopic: (id: string) => void;
@@ -22,6 +24,7 @@ interface ControlBarProps {
 
 export function ControlBar({
   isDebating,
+  personasState,
   onStartDebate,
   onStopDebate,
   onSelectTopic,
@@ -37,6 +40,10 @@ export function ControlBar({
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [topicCategory, setTopicCategory] = useState<string>("All");
+
+  const categories = ["All", ...Array.from(new Set(debateTopics.map(t => t.category)))];
+  const filteredTopics = topicCategory === "All" ? debateTopics : debateTopics.filter(t => t.category === topicCategory);
 
   const handlePitch = () => {
     if (pitchText.trim()) {
@@ -84,6 +91,8 @@ export function ControlBar({
     };
   }, [micOn]);
 
+  const votePersonas = personasState.filter(p => p.id !== "human");
+
   return (
     <motion.div
       className="w-full bg-card border-t border-border"
@@ -94,8 +103,21 @@ export function ControlBar({
       {/* Topics row */}
       <div className="px-4 py-2 border-b border-border overflow-x-auto">
         <div className="flex gap-2 items-center min-w-max">
-          <span className="font-display text-xs font-semibold text-muted-foreground mr-1">Topics:</span>
-          {debateTopics.map((topic) => (
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setTopicCategory(cat)}
+              className={`px-2 py-0.5 text-[10px] font-display font-semibold rounded-full transition-colors whitespace-nowrap ${
+                topicCategory === cat
+                  ? "bg-primary/20 text-primary border border-primary/30"
+                  : "text-muted-foreground hover:text-foreground border border-transparent"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-1" />
+          {filteredTopics.map((topic) => (
             <button
               key={topic.id}
               onClick={() => { onSelectTopic(topic.id); if (!isDebating) onStartDebate(); }}
@@ -179,10 +201,10 @@ export function ControlBar({
           <FileText className="w-3.5 h-3.5" /> Summarize
         </button>
 
-        {/* Vote avatars */}
+        {/* Vote avatars — uses dynamic personasState */}
         <div className="flex items-center gap-1 ml-2">
           <span className="text-[10px] font-display text-muted-foreground mr-1">Vote:</span>
-          {personas.map((p) => (
+          {votePersonas.map((p) => (
             <button
               key={p.id}
               onClick={() => onVote(p.id)}
