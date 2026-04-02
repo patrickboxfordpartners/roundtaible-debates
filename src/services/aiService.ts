@@ -85,7 +85,7 @@ ${persona.context ? `Additional context about your character: ${persona.context}
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "grok-3-mini-fast",
+      model: "grok-3-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -160,7 +160,7 @@ export async function generateDebateSummary(
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "grok-3-mini-fast",
+      model: "grok-3-mini",
       messages: [
         { role: "system", content: narrator.prompt },
         { role: "user", content: `Summarize this debate on "${topic.title}":\n\n${fullTranscript}` }
