@@ -1,4 +1,5 @@
 import type { TranscriptEntry, DebateTopic, Persona } from "@/data/debateData";
+import { supabase } from "./supabaseClient";
 
 export interface SavedDebate {
   id: string;
@@ -23,6 +24,30 @@ export function getSavedDebates(): SavedDebate[] {
   }
 }
 
+/** Persist debate to Supabase (fire-and-forget, localStorage is still primary) */
+async function persistToSupabase(
+  topic: DebateTopic,
+  transcript: TranscriptEntry[],
+  personas: Array<{ id: string; name: string; color: string }>,
+  winnerId: string | null,
+  duration: number
+) {
+  if (!supabase) return;
+  try {
+    await supabase.from("debates").insert({
+      topic_id: topic.id,
+      topic_title: topic.title,
+      topic_category: topic.category,
+      transcript,
+      personas,
+      winner_id: winnerId,
+      duration,
+    });
+  } catch (err) {
+    console.warn("Failed to persist debate to Supabase:", err);
+  }
+}
+
 export function saveDebate(
   topic: DebateTopic,
   transcript: TranscriptEntry[],
@@ -43,6 +68,10 @@ export function saveDebate(
   const existing = getSavedDebates();
   const updated = [debate, ...existing].slice(0, MAX_SAVED);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+  // Also persist to Supabase for content generation pipeline
+  persistToSupabase(topic, transcript, debate.personas, winnerId, duration);
+
   return debate;
 }
 
