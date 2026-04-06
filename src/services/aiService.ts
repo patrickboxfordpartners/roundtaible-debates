@@ -31,6 +31,18 @@ export function resetCircuit() {
   circuitReason = "";
 }
 
+// Debate mode: "standard" (entertainment/demo) or "educational" (fact-checking, citations)
+export type DebateMode = "standard" | "educational";
+let currentMode: DebateMode = "standard";
+
+export function setDebateMode(mode: DebateMode) {
+  currentMode = mode;
+}
+
+export function getDebateMode(): DebateMode {
+  return currentMode;
+}
+
 const personaPrompts: Record<string, string> = {
   edison: "You are Thomas Edison, the pragmatic inventor. You focus on practical solutions, experimentation, and results. You're optimistic about technology solving problems. Respond in 2 sentences. Be direct, solution-focused, and speak with authority about innovation and hard work.",
 
@@ -72,12 +84,16 @@ export async function generatePersonaResponse(
     ? `\nIMPORTANT: A member of the audience just said: "${lastHumanEntry.text}" — acknowledge or respond to their point directly before continuing the debate.`
     : "";
 
+  const educationalSuffix = currentMode === "educational"
+    ? `\n\nEDUCATIONAL MODE: After your in-character response, add a brief factual note in brackets like [Fact: ...] citing a real historical event, study, or principle that supports or challenges your argument. This helps the audience learn from the debate.`
+    : "";
+
   const userPrompt = `The debate topic is: "${topic.title}"
 
 Recent discussion:
 ${context || "(Opening statements — you are the first to speak.)"}
 ${humanResponseInstruction}
-${persona.context ? `Additional context about your character: ${persona.context}\n\n` : ""}Now respond to the debate as ${persona.name}. Stay in character. Make it conversational and natural — you can agree, disagree, interrupt, build on someone's point, or introduce a new angle. Be witty and engaging. Address other debaters by name when responding to their points.`;
+${persona.context ? `Additional context about your character: ${persona.context}\n\n` : ""}Now respond to the debate as ${persona.name}. Stay in character. Make it conversational and natural — you can agree, disagree, interrupt, build on someone's point, or introduce a new angle. Be witty and engaging. Address other debaters by name when responding to their points.${educationalSuffix}`;
 
   if (circuitOpen) {
     throw new Error(`API unavailable: ${circuitReason}`);
@@ -163,7 +179,7 @@ export async function generateDebateSummary(
       model: "grok-3-mini",
       messages: [
         { role: "system", content: narrator.prompt },
-        { role: "user", content: `Summarize this debate on "${topic.title}":\n\n${fullTranscript}` }
+        { role: "user", content: `Summarize this debate on "${topic.title}":\n\n${fullTranscript}${currentMode === "educational" ? "\n\nInclude 2-3 key takeaways that the audience can learn from this debate, noting which arguments were well-supported by evidence." : ""}` }
       ],
       temperature: 0.8,
       max_tokens: 300,

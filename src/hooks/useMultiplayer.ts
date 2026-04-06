@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
-  createBroadcastProvider,
+  createProvider,
   generateRoomId,
   getRoomIdFromUrl,
   setRoomIdInUrl,
@@ -46,7 +46,7 @@ export function useMultiplayer() {
   // Host: create a new room
   const createRoom = useCallback(() => {
     const roomId = generateRoomId();
-    const provider = createBroadcastProvider(roomId);
+    const provider = createProvider(roomId);
     providerRef.current = provider;
 
     provider.subscribe((msg) => {
@@ -76,7 +76,7 @@ export function useMultiplayer() {
 
   // Guest: join an existing room
   const joinRoom = useCallback((roomId: string, name: string) => {
-    const provider = createBroadcastProvider(roomId);
+    const provider = createProvider(roomId);
     providerRef.current = provider;
 
     provider.subscribe((msg) => {

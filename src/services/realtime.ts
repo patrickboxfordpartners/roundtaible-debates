@@ -66,24 +66,47 @@ export function createBroadcastProvider(roomId: string): RealtimeProvider {
   };
 }
 
-// --- Supabase implementation (cross-device, plug in later) ---
-// export function createSupabaseProvider(roomId: string, supabaseUrl: string, supabaseKey: string): RealtimeProvider {
-//   const supabase = createClient(supabaseUrl, supabaseKey);
-//   const channel = supabase.channel(`debate:${roomId}`);
-//   let listener: ((message: RealtimeMessage) => void) | null = null;
-//
-//   channel.on("broadcast", { event: "message" }, ({ payload }) => {
-//     listener?.(payload as RealtimeMessage);
-//   }).subscribe();
-//
-//   return {
-//     send(message: RealtimeMessage) {
-//       channel.send({ type: "broadcast", event: "message", payload: message });
-//     },
-//     subscribe(callback) { listener = callback; },
-//     disconnect() { listener = null; supabase.removeChannel(channel); },
-//   };
-// }
+// --- Supabase implementation (cross-device multiplayer) ---
+
+import { createClient } from "@supabase/supabase-js";
+
+export function createSupabaseProvider(roomId: string): RealtimeProvider | null {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) return null;
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const channel = supabase.channel(`debate:${roomId}`);
+  let listener: ((message: RealtimeMessage) => void) | null = null;
+
+  channel
+    .on("broadcast", { event: "message" }, ({ payload }) => {
+      listener?.(payload as RealtimeMessage);
+    })
+    .subscribe();
+
+  return {
+    send(message: RealtimeMessage) {
+      channel.send({ type: "broadcast", event: "message", payload: message });
+    },
+    subscribe(callback) {
+      listener = callback;
+    },
+    disconnect() {
+      listener = null;
+      supabase.removeChannel(channel);
+    },
+  };
+}
+
+// --- Auto-select best provider ---
+
+export function createProvider(roomId: string): RealtimeProvider {
+  const supabase = createSupabaseProvider(roomId);
+  if (supabase) return supabase;
+  return createBroadcastProvider(roomId);
+}
 
 // --- Room ID utilities ---
 

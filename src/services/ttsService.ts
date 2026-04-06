@@ -1,78 +1,217 @@
-// Text-to-speech using browser SpeechSynthesis API
-// Male voices only — all personas are historical men
+// Text-to-speech using ElevenLabs API for high-quality persona voices
+// Falls back to browser SpeechSynthesis if API key is missing
+
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 interface VoiceConfig {
-  pitch: number;   // 0-2, default 1
-  rate: number;    // 0.1-10, default 1
+  voiceId: string;
+  stability: number;
+  similarityBoost: number;
 }
 
+// ElevenLabs voice IDs for each persona
+// These are pre-built voices from ElevenLabs voice library
 const personaVoices: Record<string, VoiceConfig> = {
-  edison:   { pitch: 0.9, rate: 1.0 },   // Steady, authoritative
-  morgan:   { pitch: 0.6, rate: 0.85 },  // Deep, slow — commanding
-  carnegie: { pitch: 0.85, rate: 0.95 }, // Warm, measured
-  twain:    { pitch: 1.0, rate: 1.1 },   // Lively, quick wit
-  adams:    { pitch: 0.75, rate: 0.8 },  // Low, deliberate — scholarly
-  tesla:    { pitch: 1.1, rate: 1.05 },  // Slightly higher, energetic
-  human:    { pitch: 0.9, rate: 1.0 },   // Default
+  edison: {
+    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - deep, authoritative inventor
+    stability: 0.75,
+    similarityBoost: 0.75,
+  },
+  morgan: {
+    voiceId: "TxGEqnHWrfWFTfGW9XjX", // Josh - deep, commanding banker
+    stability: 0.85,
+    similarityBoost: 0.8,
+  },
+  carnegie: {
+    voiceId: "ErXwobaYiN019PkySvjV", // Antoni - warm, educated philanthropist
+    stability: 0.7,
+    similarityBoost: 0.75,
+  },
+  twain: {
+    voiceId: "onwK4e9ZLuTAKqWW03F9", // Daniel - narrative, witty storyteller
+    stability: 0.6,
+    similarityBoost: 0.7,
+  },
+  adams: {
+    voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - calm, scholarly historian
+    stability: 0.8,
+    similarityBoost: 0.8,
+  },
+  tesla: {
+    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie - energetic, eccentric visionary
+    stability: 0.65,
+    similarityBoost: 0.7,
+  },
+  wilde: {
+    voiceId: "ErXwobaYiN019PkySvjV", // Antoni - theatrical, witty
+    stability: 0.65,
+    similarityBoost: 0.75,
+  },
+  einstein: {
+    voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - thoughtful, theoretical
+    stability: 0.75,
+    similarityBoost: 0.8,
+  },
+  cleopatra: {
+    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - regal, commanding
+    stability: 0.75,
+    similarityBoost: 0.75,
+  },
+  darwin: {
+    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - observant, scientific
+    stability: 0.8,
+    similarityBoost: 0.8,
+  },
+  hypatia: {
+    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - intellectual, precise
+    stability: 0.8,
+    similarityBoost: 0.75,
+  },
+  machiavelli: {
+    voiceId: "onwK4e9ZLuTAKqWW03F9", // Daniel - calculating, strategic
+    stability: 0.75,
+    similarityBoost: 0.75,
+  },
+  curie: {
+    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - focused, determined
+    stability: 0.8,
+    similarityBoost: 0.8,
+  },
+  "sun-tzu": {
+    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - wise, strategic
+    stability: 0.85,
+    similarityBoost: 0.8,
+  },
+  human: {
+    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - default
+    stability: 0.75,
+    similarityBoost: 0.75,
+  },
+};
+
+// Fallback browser TTS config (used if ElevenLabs API key is missing)
+interface BrowserVoiceConfig {
+  pitch: number;
+  rate: number;
+}
+
+const browserVoices: Record<string, BrowserVoiceConfig> = {
+  edison: { pitch: 0.9, rate: 1.0 },
+  morgan: { pitch: 0.6, rate: 0.85 },
+  carnegie: { pitch: 0.85, rate: 0.95 },
+  twain: { pitch: 1.0, rate: 1.1 },
+  adams: { pitch: 0.75, rate: 0.8 },
+  tesla: { pitch: 1.1, rate: 1.05 },
+  human: { pitch: 0.9, rate: 1.0 },
 };
 
 let isMuted = false;
-let maleVoicesCache: SpeechSynthesisVoice[] | null = null;
+let currentAudio: HTMLAudioElement | null = null;
+let elevenLabsClient: ElevenLabsClient | null = null;
+let useElevenLabs = false;
 
-function getMaleVoices(): SpeechSynthesisVoice[] {
-  if (maleVoicesCache && maleVoicesCache.length > 0) return maleVoicesCache;
-
-  const allVoices = window.speechSynthesis.getVoices();
-  const englishVoices = allVoices.filter(v => v.lang.startsWith("en"));
-
-  // Filter for male voices by name heuristics
-  const maleKeywords = ["male", "daniel", "james", "david", "thomas", "alex", "fred", "ralph", "albert", "guy", "lee", "aaron", "rishi", "oliver", "george", "jacques"];
-  const femaleKeywords = ["female", "samantha", "karen", "victoria", "susan", "fiona", "kate", "moira", "tessa", "allison", "ava", "zoe", "nicky"];
-
-  const male = englishVoices.filter(v => {
-    const name = v.name.toLowerCase();
-    const isFemale = femaleKeywords.some(k => name.includes(k));
-    if (isFemale) return false;
-    const isMale = maleKeywords.some(k => name.includes(k));
-    return isMale;
-  });
-
-  // If we found male voices, use them. Otherwise fall back to all English voices
-  // but use lower pitch settings to sound male.
-  maleVoicesCache = male.length > 0 ? male : englishVoices;
-  return maleVoicesCache;
+// Initialize ElevenLabs client
+const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+if (apiKey) {
+  elevenLabsClient = new ElevenLabsClient({ apiKey });
+  useElevenLabs = true;
+  console.log("✓ ElevenLabs TTS enabled");
+} else {
+  console.warn("⚠ ElevenLabs API key not found, falling back to browser TTS");
 }
 
 export function isTTSSupported(): boolean {
-  return "speechSynthesis" in window;
+  return useElevenLabs || "speechSynthesis" in window;
 }
 
-export function speak(text: string, personaId: string) {
-  if (isMuted || !isTTSSupported()) return;
+async function speakElevenLabs(text: string, personaId: string) {
+  if (!elevenLabsClient || isMuted) return;
 
-  // Cancel any current speech to avoid overlap
+  const config = personaVoices[personaId] || personaVoices.human;
+
+  try {
+    // Generate audio stream from ElevenLabs
+    const audioStream = await elevenLabsClient.textToSpeech.convert(config.voiceId, {
+      modelId: "eleven_monolingual_v1",
+      text: text,
+      voiceSettings: {
+        stability: config.stability,
+        similarityBoost: config.similarityBoost,
+      },
+    });
+
+    // Convert stream to blob
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
+    }
+    const blob = new Blob(chunks, { type: "audio/mpeg" });
+    const audioUrl = URL.createObjectURL(blob);
+
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    // Play the audio
+    currentAudio = new Audio(audioUrl);
+    currentAudio.volume = 0.85;
+    currentAudio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      currentAudio = null;
+    };
+    await currentAudio.play();
+  } catch (error) {
+    console.error("ElevenLabs TTS error:", error);
+    // Fall back to browser TTS on error
+    speakBrowserTTS(text, personaId);
+  }
+}
+
+function speakBrowserTTS(text: string, personaId: string) {
+  if (isMuted || !("speechSynthesis" in window)) return;
+
+  // Cancel any current speech
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  const config = personaVoices[personaId] || personaVoices.human;
+  const config = browserVoices[personaId] || browserVoices.human;
 
   utterance.pitch = config.pitch;
   utterance.rate = config.rate;
   utterance.volume = 0.85;
 
-  // Assign a male voice, varying by persona
-  const voices = getMaleVoices();
-  if (voices.length > 0) {
-    const personaIds = Object.keys(personaVoices);
-    const idx = personaIds.indexOf(personaId);
-    utterance.voice = voices[Math.abs(idx) % voices.length];
+  // Assign voice
+  const voices = window.speechSynthesis.getVoices();
+  const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
+  if (englishVoices.length > 0) {
+    const idx = Object.keys(browserVoices).indexOf(personaId);
+    utterance.voice = englishVoices[Math.abs(idx) % englishVoices.length];
   }
 
   window.speechSynthesis.speak(utterance);
 }
 
+export async function speak(text: string, personaId: string) {
+  if (useElevenLabs) {
+    await speakElevenLabs(text, personaId);
+  } else {
+    speakBrowserTTS(text, personaId);
+  }
+}
+
 export function stopSpeaking() {
-  window.speechSynthesis.cancel();
+  // Stop ElevenLabs audio
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+
+  // Stop browser TTS
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
 }
 
 export function setMuted(muted: boolean) {
@@ -90,11 +229,10 @@ export function toggleMute(): boolean {
   return isMuted;
 }
 
-// Pre-load voices (some browsers load them async)
-if (isTTSSupported()) {
+// Pre-load browser voices (some browsers load them async)
+if (!useElevenLabs && "speechSynthesis" in window) {
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {
-    maleVoicesCache = null; // Reset cache when voices load
-    getMaleVoices();
+    window.speechSynthesis.getVoices();
   };
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap } from "lucide-react";
 import { debateTopics, type DebateTopic } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
-import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/vapiService";
+import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/voiceInputService";
+import { getDebateMode, setDebateMode, type DebateMode } from "@/services/aiService";
 import { toast } from "sonner";
 
 interface ControlBarProps {
@@ -41,6 +42,14 @@ export function ControlBar({
   const [pitchText, setPitchText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [topicCategory, setTopicCategory] = useState<string>("All");
+  const [debateMode, setDebateModeState] = useState<DebateMode>(getDebateMode());
+
+  const toggleMode = () => {
+    const next = debateMode === "standard" ? "educational" : "standard";
+    setDebateMode(next);
+    setDebateModeState(next);
+    toast.info(next === "educational" ? "Educational mode: AI will cite sources and facts" : "Standard mode: entertainment debate");
+  };
 
   const categories = ["All", ...Array.from(new Set(debateTopics.map(t => t.category)))];
   const filteredTopics = topicCategory === "All" ? debateTopics : debateTopics.filter(t => t.category === topicCategory);
@@ -145,6 +154,19 @@ export function ControlBar({
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         )}
+
+        {/* Educational mode toggle */}
+        <button
+          onClick={toggleMode}
+          className={`p-2 rounded-lg border transition-colors ${
+            debateMode === "educational"
+              ? "bg-primary/20 text-primary border-primary/30"
+              : "bg-background border-border hover:border-primary/50"
+          }`}
+          title={debateMode === "educational" ? "Switch to standard mode" : "Switch to educational mode"}
+        >
+          <GraduationCap className="w-4 h-4" />
+        </button>
 
         {/* Mic */}
         <button
