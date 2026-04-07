@@ -14,7 +14,7 @@ import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
 import { DebateHistory } from "@/components/debate/DebateHistory";
 import { MultiplayerPanel } from "@/components/debate/MultiplayerPanel";
 import { debateTopics } from "@/data/debateData";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { History, Sun, Moon, Keyboard, Users } from "lucide-react";
 import type { Persona } from "@/data/debateData";
 import type { RealtimeMessage } from "@/services/realtime";
@@ -348,6 +348,32 @@ const Index = () => {
         </div>
       )}
 
+      {/* Paused for discussion overlay */}
+      <AnimatePresence>
+        {debate.isPaused && (
+          <motion.div
+            className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-amber-500/90 text-white px-8 py-4 rounded-2xl shadow-2xl pointer-events-auto"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: [1, 1.02, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <p className="font-display text-lg md:text-2xl font-bold text-center">
+                Paused for Class Discussion
+              </p>
+              <p className="font-body text-xs text-white/80 text-center mt-1">
+                Click "Resume Debate" to continue
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main content */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0" role="main">
         {/* Center: Round Table */}
@@ -410,6 +436,9 @@ const Index = () => {
             onVoiceInput={handleVoiceInput}
             isMuted={debate.isMuted}
             onToggleMute={debate.handleToggleMute}
+            isPaused={debate.isPaused}
+            onPauseDebate={debate.pauseDebate}
+            onResumeDebate={debate.resumeDebate}
           />
         </nav>
       )}

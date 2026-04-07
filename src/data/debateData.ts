@@ -35,6 +35,7 @@ export interface DebateTopic {
   id: string;
   title: string;
   category: string;
+  subject?: string;
 }
 
 // Default 6 personas with avatars
@@ -257,6 +258,27 @@ export const debateTopics: DebateTopic[] = [
   { id: "cancel-culture", title: "Cancel culture: justice or mob rule?", category: "Culture" },
   { id: "tradition", title: "Should tradition guide the future?",  category: "Culture" },
   { id: "empires", title: "Do empires create or destroy progress?", category: "History" },
+
+  // --- Education: US History ---
+  { id: "edu-revolution", title: "Was the American Revolution inevitable?", category: "US History", subject: "US History" },
+  { id: "edu-new-deal", title: "Did the New Deal help or harm recovery?", category: "US History", subject: "US History" },
+  { id: "edu-atomic-bomb", title: "Was dropping the atomic bomb justified?", category: "US History", subject: "US History" },
+  { id: "edu-civil-war", title: "Was the Civil War avoidable?", category: "US History", subject: "US History" },
+
+  // --- Education: World History ---
+  { id: "edu-rome-fall", title: "Was Rome's fall a catastrophe or transformation?", category: "World History", subject: "World History" },
+  { id: "edu-colonialism", title: "Did colonialism have any positive outcomes?", category: "World History", subject: "World History" },
+  { id: "edu-french-rev", title: "Was the French Revolution worth its cost?", category: "World History", subject: "World History" },
+
+  // --- Education: Science & Ethics ---
+  { id: "edu-genome", title: "Should we edit the human genome?", category: "Science & Ethics", subject: "Science & Ethics" },
+  { id: "edu-animal-testing", title: "Is animal testing justified for medical research?", category: "Science & Ethics", subject: "Science & Ethics" },
+  { id: "edu-terraform", title: "Should we terraform Mars?", category: "Science & Ethics", subject: "Science & Ethics" },
+
+  // --- Education: Philosophy & Logic ---
+  { id: "edu-objective-morality", title: "Is there objective morality?", category: "Philosophy & Logic", subject: "Philosophy & Logic" },
+  { id: "edu-machine-consciousness", title: "Can machines be conscious?", category: "Philosophy & Logic", subject: "Philosophy & Logic" },
+  { id: "edu-utilitarianism", title: "Is utilitarianism a valid ethical framework?", category: "Philosophy & Logic", subject: "Philosophy & Logic" },
 ];
 
 export const sampleTranscript: TranscriptEntry[] = [

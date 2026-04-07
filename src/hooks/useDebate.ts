@@ -35,6 +35,7 @@ export function useDebate() {
   const [isLightningRound, setIsLightningRound] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const speakerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -44,9 +45,10 @@ export function useDebate() {
   const isGeneratingRef = useRef(false);
   const isDebatingRef = useRef(false);
   const isLightningRef = useRef(false);
+  const isPausedRef = useRef(false);
 
   const generateNextResponse = useCallback(async () => {
-    if (isGeneratingRef.current || !isDebatingRef.current) return;
+    if (isGeneratingRef.current || !isDebatingRef.current || isPausedRef.current) return;
     isGeneratingRef.current = true;
 
     const currentPersonas = personasState.filter(p => p.id !== "human");
@@ -128,6 +130,8 @@ export function useDebate() {
   const startDebate = useCallback((lightning = false) => {
     isDebatingRef.current = true;
     isLightningRef.current = lightning;
+    isPausedRef.current = false;
+    setIsPaused(false);
     setIsDebating(true);
     setIsLightningRound(lightning);
     setTimeRemaining(lightning ? 60 : 180);
@@ -172,6 +176,8 @@ export function useDebate() {
   const stopDebate = useCallback(() => {
     isDebatingRef.current = false;
     isLightningRef.current = false;
+    isPausedRef.current = false;
+    setIsPaused(false);
     setIsDebating(false);
     setIsLightningRound(false);
     clearInterval(timerRef.current);
@@ -180,6 +186,55 @@ export function useDebate() {
     setThinkingId(null);
     isGeneratingRef.current = false;
   }, []);
+
+  const pauseDebate = useCallback(() => {
+    if (!isDebatingRef.current || isPausedRef.current) return;
+    isPausedRef.current = true;
+    setIsPaused(true);
+    clearInterval(timerRef.current);
+    clearTimeout(speakerRef.current);
+    isGeneratingRef.current = false;
+    setSpeakingId(null);
+    setThinkingId(null);
+  }, []);
+
+  const resumeDebate = useCallback(() => {
+    if (!isDebatingRef.current || !isPausedRef.current) return;
+    isPausedRef.current = false;
+    setIsPaused(false);
+
+    // Restart the timer from where it left off
+    const lightning = isLightningRef.current;
+    timerRef.current = setInterval(() => {
+      setTimeRemaining((t) => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          clearTimeout(speakerRef.current);
+          isDebatingRef.current = false;
+          isLightningRef.current = false;
+          isGeneratingRef.current = false;
+          setIsDebating(false);
+          setIsLightningRound(false);
+          setSpeakingId(null);
+          setThinkingId(null);
+          const duration = Math.round((Date.now() - debateStartTimeRef.current) / 1000);
+          if (transcriptRef.current.length > 0) {
+            saveDebate(activeTopic, transcriptRef.current, personasState, null, duration);
+          }
+          return 0;
+        }
+        return t - 1;
+      });
+      setHeatLevel((h) => {
+        const increase = Math.random() * (lightning ? 5 : 2);
+        const decay = h > 80 ? 1 : 0;
+        return Math.min(100, Math.max(0, h + increase - decay));
+      });
+    }, 1000);
+
+    // Resume AI generation
+    generateNextResponse();
+  }, [generateNextResponse, activeTopic, personasState]);
 
   const selectTopic = useCallback((topicId: string) => {
     const topic = debateTopics.find((t) => t.id === topicId);
@@ -394,6 +449,9 @@ export function useDebate() {
     removePersona,
     summarizeDebate,
     isMuted,
+    isPaused,
+    pauseDebate,
+    resumeDebate,
     handleToggleMute,
     apiError,
     clearApiError,
