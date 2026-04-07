@@ -64,7 +64,7 @@ export function JumpInButton({ isDebating, onJumpIn }: JumpInButtonProps) {
 
       <motion.button
         onClick={() => setExpanded(!expanded)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-display text-xs font-semibold border transition-all shadow-lg ${
+        className={`flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 rounded-full font-display text-xs font-semibold border transition-all shadow-lg ${
           queued
             ? "bg-accent text-accent-foreground border-accent"
             : expanded
@@ -74,8 +74,11 @@ export function JumpInButton({ isDebating, onJumpIn }: JumpInButtonProps) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        <Hand className="w-3.5 h-3.5" />
-        {queued ? "Queued!" : "Jump In"}
+        <Hand className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+        <span>{queued ? "Queued!" : "Jump In"}</span>
+        <span className="text-[9px] font-body text-muted-foreground sm:hidden">
+          {!queued && "Join the Debate"}
+        </span>
       </motion.button>
     </div>
   );

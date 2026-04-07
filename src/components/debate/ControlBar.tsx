@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play } from "lucide-react";
 import { debateTopics, type DebateTopic } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/voiceInputService";
@@ -21,6 +21,9 @@ interface ControlBarProps {
   onVoiceInput?: (text: string) => void;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  isPaused?: boolean;
+  onPauseDebate?: () => void;
+  onResumeDebate?: () => void;
 }
 
 export function ControlBar({
@@ -37,6 +40,9 @@ export function ControlBar({
   onVoiceInput,
   isMuted,
   onToggleMute,
+  isPaused,
+  onPauseDebate,
+  onResumeDebate,
 }: ControlBarProps) {
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
@@ -51,7 +57,10 @@ export function ControlBar({
     toast.info(next === "educational" ? "Educational mode: AI will cite sources and facts" : "Standard mode: entertainment debate");
   };
 
-  const categories = ["All", ...Array.from(new Set(debateTopics.map(t => t.category)))];
+  const eduSubjects = ["US History", "World History", "Science & Ethics", "Philosophy & Logic"];
+  const standardCategories = Array.from(new Set(debateTopics.filter(t => !t.subject).map(t => t.category)));
+  const eduCategories = Array.from(new Set(debateTopics.filter(t => t.subject).map(t => t.category)));
+  const isEdu = debateMode === "educational";
   const filteredTopics = topicCategory === "All" ? debateTopics : debateTopics.filter(t => t.category === topicCategory);
 
   const handlePitch = () => {
@@ -112,7 +121,17 @@ export function ControlBar({
       {/* Topics row */}
       <div className="px-4 py-2 border-b border-border overflow-x-auto">
         <div className="flex gap-2 items-center min-w-max">
-          {categories.map((cat) => (
+          <button
+            onClick={() => setTopicCategory("All")}
+            className={`px-2 py-0.5 text-[10px] font-display font-semibold rounded-full transition-colors whitespace-nowrap ${
+              topicCategory === "All"
+                ? "bg-primary/20 text-primary border border-primary/30"
+                : "text-muted-foreground hover:text-foreground border border-transparent"
+            }`}
+          >
+            All
+          </button>
+          {standardCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => setTopicCategory(cat)}
@@ -120,6 +139,31 @@ export function ControlBar({
                 topicCategory === cat
                   ? "bg-primary/20 text-primary border border-primary/30"
                   : "text-muted-foreground hover:text-foreground border border-transparent"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+          {eduCategories.length > 0 && (
+            <>
+              <span className={`w-px h-4 mx-1 ${isEdu ? "bg-green-500/50" : "bg-border"}`} />
+              <span className={`text-[9px] font-display font-semibold uppercase tracking-wider ${isEdu ? "text-green-500" : "text-muted-foreground/50"}`}>
+                Edu
+              </span>
+            </>
+          )}
+          {eduCategories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setTopicCategory(cat)}
+              className={`px-2 py-0.5 text-[10px] font-display font-semibold rounded-full transition-colors whitespace-nowrap ${
+                topicCategory === cat
+                  ? isEdu
+                    ? "bg-green-500/20 text-green-500 border border-green-500/30"
+                    : "bg-primary/20 text-primary border border-primary/30"
+                  : isEdu
+                    ? "text-green-600 hover:text-green-500 border border-transparent"
+                    : "text-muted-foreground hover:text-foreground border border-transparent"
               }`}
             >
               {cat}
@@ -158,14 +202,17 @@ export function ControlBar({
         {/* Educational mode toggle */}
         <button
           onClick={toggleMode}
-          className={`p-2 rounded-lg border transition-colors ${
-            debateMode === "educational"
-              ? "bg-primary/20 text-primary border-primary/30"
-              : "bg-background border-border hover:border-primary/50"
+          className={`px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${
+            isEdu
+              ? "bg-green-500/15 text-green-500 border-green-500/30"
+              : "bg-background border-border hover:border-primary/50 text-muted-foreground"
           }`}
-          title={debateMode === "educational" ? "Switch to standard mode" : "Switch to educational mode"}
+          title={isEdu ? "Switch to standard mode" : "Switch to educational mode"}
         >
           <GraduationCap className="w-4 h-4" />
+          <span className="text-[10px] font-display font-semibold whitespace-nowrap">
+            Edu Mode {isEdu && "(Active)"}
+          </span>
         </button>
 
         {/* Mic */}
@@ -215,6 +262,21 @@ export function ControlBar({
         >
           <Zap className="w-3.5 h-3.5" /> {isDebating ? "End Round" : "Lightning Round"}
         </button>
+
+        {/* Pause / Resume for class discussion */}
+        {isDebating && onPauseDebate && onResumeDebate && (
+          <button
+            onClick={isPaused ? onResumeDebate : onPauseDebate}
+            className={`px-3 py-1.5 text-xs font-display font-semibold rounded-lg border transition-colors flex items-center gap-1 ${
+              isPaused
+                ? "bg-green-500/15 text-green-600 border-green-500/30 hover:bg-green-500/25"
+                : "bg-amber-500/15 text-amber-600 border-amber-500/30 hover:bg-amber-500/25"
+            }`}
+          >
+            {isPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+            {isPaused ? "Resume Debate" : "Pause for Discussion"}
+          </button>
+        )}
 
         <button
           onClick={onSummarize}
