@@ -188,4 +188,13 @@
       0 0 0 6px hsl(16 30% 16%),
       0 12px 40px hsl(16 33% 8% / 0.7);
   }
+
+  /* Demo/kiosk mode — larger text for distance readability */
+  .demo-mode {
+    font-size: 1.1rem;
+  }
+
+  .demo-mode h1 {
+    font-size: 2.25rem;
+  }
 }

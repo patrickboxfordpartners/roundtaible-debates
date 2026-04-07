@@ -6,9 +6,17 @@ import type { Persona } from "@/data/debateData";
 interface VictoryModalProps {
   winner: Persona | null;
   onDismiss: () => void;
+  autoDismissMs?: number;
 }
 
-export function VictoryModal({ winner, onDismiss }: VictoryModalProps) {
+export function VictoryModal({ winner, onDismiss, autoDismissMs }: VictoryModalProps) {
+  useEffect(() => {
+    if (winner && autoDismissMs) {
+      const timer = setTimeout(onDismiss, autoDismissMs);
+      return () => clearTimeout(timer);
+    }
+  }, [winner, autoDismissMs, onDismiss]);
+
   useEffect(() => {
     if (winner) {
       confetti({

@@ -3,9 +3,11 @@ import type { Persona } from "@/data/debateData";
 
 interface LeaderboardProps {
   leaderboard: Persona[];
+  onReset?: () => void;
+  hideReset?: boolean;
 }
 
-export function Leaderboard({ leaderboard }: LeaderboardProps) {
+export function Leaderboard({ leaderboard, onReset, hideReset }: LeaderboardProps) {
   return (
     <div className="flex flex-col">
       <div className="px-3 py-1.5 flex items-center gap-2 flex-wrap">
@@ -25,6 +27,14 @@ export function Leaderboard({ leaderboard }: LeaderboardProps) {
             )}
           </div>
         ))}
+        {!hideReset && onReset && (
+          <button
+            onClick={onReset}
+            className="ml-auto text-[9px] font-body text-muted-foreground/60 hover:text-foreground transition-colors"
+          >
+            Reset
+          </button>
+        )}
       </div>
     </div>
   );
