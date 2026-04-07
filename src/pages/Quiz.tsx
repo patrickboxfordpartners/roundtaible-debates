@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { personas, rosterPersonas } from "@/data/debateData";
-import { quizQuestions, calculateResult, type QuizResult } from "@/data/quizData";
+import { quizQuestions, calculateResult, personaMindsets, type QuizResult } from "@/data/quizData";
 
 const allPersonas = [...personas, ...rosterPersonas];
 
@@ -138,6 +138,13 @@ function ResultCard({ result, onRestart }: { result: QuizResult; onRestart: () =
         </span>
         <span className="text-muted-foreground text-sm ml-2">alignment</span>
       </div>
+
+      {/* Mindset paragraph */}
+      {personaMindsets[persona.id] && (
+        <p className="font-lora text-sm text-foreground/80 leading-relaxed mb-5">
+          {personaMindsets[persona.id]}
+        </p>
+      )}
 
       {/* Quote */}
       {quote && (
