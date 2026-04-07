@@ -184,7 +184,7 @@ function ResultCard({ result, onRestart }: { result: QuizResult; onRestart: () =
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={() => navigate(`/?persona=${persona.id}`)}
+          onClick={() => navigate(`/app?persona=${persona.id}`)}
           className="flex-1 py-3 px-6 rounded-lg font-semibold text-primary-foreground transition-all hover:opacity-90 hover:scale-[1.01]"
           style={{ backgroundColor: persona.color }}
         >
@@ -203,7 +203,7 @@ function ResultCard({ result, onRestart }: { result: QuizResult; onRestart: () =
           onClick={() => navigate("/")}
           className="text-sm text-muted-foreground hover:text-primary underline transition-colors"
         >
-          Back to the Roundtable
+          Back to Roundtaible
         </button>
       </div>
     </div>
@@ -247,7 +247,7 @@ export default function Quiz() {
           onClick={() => navigate("/")}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          ← Roundtaible
+          ← Home
         </button>
         <span className="font-playfair text-sm font-medium text-foreground">
           Which Historical Mind Are You?
