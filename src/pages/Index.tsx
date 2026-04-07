@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { personas, rosterPersonas } from "@/data/debateData";
 import { useDebate } from "@/hooks/useDebate";
 import { useMultiplayer } from "@/hooks/useMultiplayer";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -35,6 +36,27 @@ const Index = () => {
     return params.get("demo") === "true";
   }, []);
   const demoTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Quiz CTA: ?persona=edison pre-selects that persona and highlights their seat
+  const quizPersonaId = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("persona") || null;
+  }, []);
+
+  useEffect(() => {
+    if (!quizPersonaId) return;
+    const allPersonas = [...personas, ...rosterPersonas];
+    const match = allPersonas.find((p) => p.id === quizPersonaId);
+    if (!match) return;
+    // If the persona is in the roster (not active), add them first
+    const isActive = debate.personasState.some((p) => p.id === quizPersonaId);
+    if (!isActive) {
+      debate.addFromRoster(match);
+    }
+    // Open their context dialog so the user lands on something meaningful
+    setSelectedPersona(match);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizPersonaId]);
 
   // Demo: auto-start first debate after 2s
   useEffect(() => {
