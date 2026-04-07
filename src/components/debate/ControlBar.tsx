@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play } from "lucide-react";
+import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play, Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { debateTopics, type DebateTopic } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/voiceInputService";
@@ -49,6 +50,8 @@ export function ControlBar({
   const [isListening, setIsListening] = useState(false);
   const [topicCategory, setTopicCategory] = useState<string>("All");
   const [debateMode, setDebateModeState] = useState<DebateMode>(getDebateMode());
+
+  const navigate = useNavigate();
 
   const toggleMode = () => {
     const next = debateMode === "standard" ? "educational" : "standard";
@@ -283,6 +286,14 @@ export function ControlBar({
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors flex items-center gap-1"
         >
           <FileText className="w-3.5 h-3.5" /> Summarize
+        </button>
+
+        <button
+          onClick={() => navigate("/quiz")}
+          className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-primary/10 hover:border-primary/50 transition-colors flex items-center gap-1"
+          title="Find your historical archetype"
+        >
+          <Brain className="w-3.5 h-3.5" /> Personality Quiz
         </button>
 
         {/* Vote avatars — uses dynamic personasState */}
