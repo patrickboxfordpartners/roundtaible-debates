@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useDebate } from "@/hooks/useDebate";
 import { useMultiplayer } from "@/hooks/useMultiplayer";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -13,6 +13,7 @@ import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
 import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
 import { DebateHistory } from "@/components/debate/DebateHistory";
 import { MultiplayerPanel } from "@/components/debate/MultiplayerPanel";
+import { debateTopics } from "@/data/debateData";
 import { motion } from "framer-motion";
 import { History, Sun, Moon, Keyboard, Users } from "lucide-react";
 import type { Persona } from "@/data/debateData";
@@ -27,6 +28,46 @@ const Index = () => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [multiplayerOpen, setMultiplayerOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+
+  // Demo/kiosk mode
+  const isDemoMode = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("demo") === "true";
+  }, []);
+  const demoTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Demo: auto-start first debate after 2s
+  useEffect(() => {
+    if (!isDemoMode) return;
+    const timer = setTimeout(() => {
+      debate.startDebate();
+    }, 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemoMode]);
+
+  // Demo: when timer hits 0, auto-pick winner, then advance
+  useEffect(() => {
+    if (!isDemoMode) return;
+    if (debate.timeRemaining !== 0 || debate.isDebating) return;
+    // Timer just expired — pick a random winner after 3s
+    demoTimerRef.current = setTimeout(() => {
+      const eligible = debate.personasState.filter(p => p.id !== "human");
+      if (eligible.length > 0) {
+        const pick = eligible[Math.floor(Math.random() * eligible.length)];
+        debate.voteWinner(pick.id);
+      }
+    }, 3000);
+    return () => clearTimeout(demoTimerRef.current);
+  }, [isDemoMode, debate.timeRemaining, debate.isDebating, debate.personasState, debate.voteWinner]);
+
+  // Demo: after winner is dismissed, start next random topic
+  const handleDemoAdvance = useCallback(() => {
+    debate.dismissWinner();
+    const idx = Math.floor(Math.random() * debateTopics.length);
+    debate.selectTopic(debateTopics[idx].id);
+    setTimeout(() => debate.startDebate(), 1000);
+  }, [debate]);
 
   // --- Multiplayer message handling ---
 
@@ -184,7 +225,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight" role="application" aria-label="Algonquin RoundtAIble debate platform">
+    <div className={`min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight${isDemoMode ? " demo-mode" : ""}`} role="application" aria-label="Algonquin RoundtAIble debate platform">
       {/* Header */}
       <motion.header
         className="flex items-center justify-between py-4 px-4 border-b border-border bg-card/40 relative z-20"
@@ -217,6 +258,11 @@ const Index = () => {
           <p className="font-body text-xs md:text-sm text-muted-foreground italic mt-0.5">
             Where history's greatest minds debate the future
           </p>
+          {isDemoMode && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-display font-bold tracking-widest uppercase rounded bg-primary/15 text-primary border border-primary/30">
+              Demo Mode
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -273,6 +319,19 @@ const Index = () => {
         </motion.div>
       )}
 
+      {/* API error banner */}
+      {debate.apiError && (
+        <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30 text-center relative z-20 flex items-center justify-center gap-3">
+          <p className="text-xs font-display text-destructive">{debate.apiError}</p>
+          <button
+            onClick={() => { debate.clearApiError(); debate.startDebate(); }}
+            className="px-3 py-1 text-xs font-display font-semibold rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Multiplayer guest banner */}
       {mp.isGuest && (
         <div className="px-4 py-1.5 bg-primary/10 border-b border-primary/20 text-center relative z-20">
@@ -320,7 +379,7 @@ const Index = () => {
             <TranscriptPanel entries={debate.transcript} personasState={debate.personasState} />
           </div>
           <div className="border-t border-border shrink-0">
-            <Leaderboard leaderboard={debate.leaderboard} />
+            <Leaderboard leaderboard={debate.leaderboard} onReset={debate.resetLeaderboard} hideReset={isDemoMode} />
           </div>
         </motion.aside>
       </div>
@@ -334,27 +393,33 @@ const Index = () => {
         />
       </div>
 
-      {/* Control bar */}
-      <nav className="relative z-20" aria-label="Debate controls">
-        <ControlBar
-          isDebating={debate.isDebating}
-          personasState={debate.personasState}
-          onStartDebate={debate.startDebate}
-          onStopDebate={debate.stopDebate}
-          onSelectTopic={debate.selectTopic}
-          onSurpriseMe={debate.surpriseMe}
-          onLightningRound={debate.startLightningRound}
-          onPitchIdea={handlePitchIdea}
-          onVote={handleVote}
-          onSummarize={handleSummarize}
-          onVoiceInput={handleVoiceInput}
-          isMuted={debate.isMuted}
-          onToggleMute={debate.handleToggleMute}
-        />
-      </nav>
+      {/* Control bar (hidden in demo mode) */}
+      {!isDemoMode && (
+        <nav className="relative z-20" aria-label="Debate controls">
+          <ControlBar
+            isDebating={debate.isDebating}
+            personasState={debate.personasState}
+            onStartDebate={debate.startDebate}
+            onStopDebate={debate.stopDebate}
+            onSelectTopic={debate.selectTopic}
+            onSurpriseMe={debate.surpriseMe}
+            onLightningRound={debate.startLightningRound}
+            onPitchIdea={handlePitchIdea}
+            onVote={handleVote}
+            onSummarize={handleSummarize}
+            onVoiceInput={handleVoiceInput}
+            isMuted={debate.isMuted}
+            onToggleMute={debate.handleToggleMute}
+          />
+        </nav>
+      )}
 
       {/* Victory modal */}
-      <VictoryModal winner={debate.winner} onDismiss={debate.dismissWinner} />
+      <VictoryModal
+        winner={debate.winner}
+        onDismiss={isDemoMode ? handleDemoAdvance : debate.dismissWinner}
+        autoDismissMs={isDemoMode ? 5000 : undefined}
+      />
 
       {/* Persona context dialog */}
       <PersonaContextDialog

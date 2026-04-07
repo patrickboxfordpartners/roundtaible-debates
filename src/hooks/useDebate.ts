@@ -34,6 +34,7 @@ export function useDebate() {
   });
   const [isLightningRound, setIsLightningRound] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const speakerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -103,7 +104,9 @@ export function useDebate() {
         setIsLightningRound(false);
         clearInterval(timerRef.current);
         clearTimeout(speakerRef.current);
-        toast.error(getAPIError() || "API connection lost — debate paused");
+        const errMsg = getAPIError() || "API connection lost — debate paused";
+        setApiError(errMsg);
+        toast.error(errMsg);
         return;
       }
     }
@@ -181,11 +184,14 @@ export function useDebate() {
   const selectTopic = useCallback((topicId: string) => {
     const topic = debateTopics.find((t) => t.id === topicId);
     if (topic) {
+      if (isDebatingRef.current) {
+        stopDebate();
+      }
       setActiveTopic(topic);
       setTranscript([]);
       setHeatLevel(20);
     }
-  }, []);
+  }, [stopDebate]);
 
   const surpriseMe = useCallback(() => {
     const idx = Math.floor(Math.random() * debateTopics.length);
@@ -339,6 +345,15 @@ export function useDebate() {
     setIsMuted(muted);
   }, []);
 
+  const clearApiError = useCallback(() => setApiError(null), []);
+
+  const resetLeaderboard = useCallback(() => {
+    localStorage.removeItem("roundtaible_leaderboard");
+    setLeaderboard((prev) =>
+      prev.map((p) => ({ ...p, wins: 0 })).sort((a, b) => b.wins - a.wins)
+    );
+  }, []);
+
   // Keep transcript ref in sync for use in closures
   useEffect(() => {
     transcriptRef.current = transcript;
@@ -380,6 +395,9 @@ export function useDebate() {
     summarizeDebate,
     isMuted,
     handleToggleMute,
+    apiError,
+    clearApiError,
+    resetLeaderboard,
     syncFromHost,
     setSpeakingFromHost,
     setTimerFromHost,
