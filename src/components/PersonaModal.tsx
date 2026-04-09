@@ -51,8 +51,8 @@ export default function PersonaModal({ persona, open, onClose }: PersonaModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0 border-0 bg-transparent [&>button]:hidden">
-        <div className="relative w-full h-full">
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 border-0 overflow-y-auto [&>button]:hidden">
+        <div className="relative min-h-full">
           {/* Background Image */}
           <div className="absolute inset-0">
             <img
@@ -74,8 +74,8 @@ export default function PersonaModal({ persona, open, onClose }: PersonaModalPro
             <span className="sr-only">Close</span>
           </button>
 
-          {/* Content - Scrollable */}
-          <div className="relative z-[1] h-full overflow-y-auto px-8 py-12 md:px-12">
+          {/* Content */}
+          <div className="relative z-[1] px-8 py-12 md:px-12">
             {/* Hero Section */}
             <div className="mb-8">
               <div
