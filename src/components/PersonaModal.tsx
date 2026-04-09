@@ -51,104 +51,119 @@ export default function PersonaModal({ persona, open, onClose }: PersonaModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-card border-border">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
-
-        {/* Hero Section with Large Avatar */}
-        <div className="flex flex-col items-center pt-6 pb-8 border-b border-border">
-          <div
-            className="w-40 h-40 rounded-full overflow-hidden mb-6 border-4 shadow-2xl"
-            style={{ borderColor: persona.color }}
-          >
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0 border-0 bg-transparent [&>button]:hidden">
+        <div className="relative w-full h-full">
+          {/* Background Image */}
+          <div className="absolute inset-0">
             <img
               src={persona.avatar}
               alt={persona.name}
               className="w-full h-full object-cover"
             />
-          </div>
-          <DialogHeader className="text-center">
-            <DialogTitle className="font-playfair text-3xl font-bold mb-2">
-              {persona.name}
-            </DialogTitle>
-            <p className="text-lg text-muted-foreground font-lora italic">
-              {persona.role}
-            </p>
-          </DialogHeader>
-        </div>
-
-        <div className="py-6 space-y-8">
-          {/* Famous Quotes */}
-          <div>
-            <h3 className="font-playfair text-xl font-semibold mb-4 text-foreground">
-              Famous Quotes
-            </h3>
-            <div className="space-y-3">
-              {persona.quotes.map((quote, i) => (
-                <blockquote
-                  key={i}
-                  className="border-l-4 pl-4 py-2 italic font-lora text-muted-foreground"
-                  style={{ borderColor: persona.color }}
-                >
-                  "{quote}"
-                </blockquote>
-              ))}
-            </div>
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60" />
           </div>
 
-          {/* Key Accomplishments */}
-          {accomplishments.length > 0 && (
-            <div>
-              <h3 className="font-playfair text-xl font-semibold mb-4 text-foreground">
-                Key Accomplishments
-              </h3>
-              <ul className="space-y-3 font-lora text-sm leading-relaxed text-foreground/90">
-                {accomplishments.map((item, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span
-                      className="mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: persona.color }}
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 backdrop-blur-sm p-2 text-white transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </button>
 
-          {/* Mindset & Thought Process */}
-          {mindset.length > 0 && (
-            <div>
-              <h3 className="font-playfair text-xl font-semibold mb-4 text-foreground">
-                Mindset & Thought Process
-              </h3>
-              <div className="space-y-3 font-lora text-sm leading-relaxed text-muted-foreground">
-                {mindset.map((item, i) => (
-                  <p key={i} className="pl-4 border-l border-border">
-                    {item}
-                  </p>
+          {/* Content - Scrollable */}
+          <div className="relative z-[1] h-full overflow-y-auto px-8 py-12 md:px-12">
+            {/* Hero Section */}
+            <div className="mb-8">
+              <div
+                className="mb-4 inline-block rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider backdrop-blur-sm"
+                style={{
+                  backgroundColor: `${persona.color}20`,
+                  color: persona.color,
+                  borderColor: persona.color,
+                  borderWidth: '1px'
+                }}
+              >
+                {persona.role}
+              </div>
+              <h1 className="font-playfair text-5xl md:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-2xl">
+                {persona.name}
+              </h1>
+
+              {/* Famous Quotes */}
+              <div className="space-y-4 mb-8">
+                {persona.quotes.map((quote, i) => (
+                  <blockquote
+                    key={i}
+                    className="border-l-4 pl-5 py-2 italic font-lora text-lg md:text-xl text-white/90 leading-relaxed"
+                    style={{ borderColor: persona.color }}
+                  >
+                    "{quote}"
+                  </blockquote>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Full Context - Collapsed by default */}
-          <details className="group">
-            <summary className="font-playfair text-lg font-semibold cursor-pointer text-foreground hover:text-primary transition-colors list-none flex items-center gap-2">
-              <span className="inline-block transition-transform group-open:rotate-90">▶</span>
-              Complete Historical Profile
-            </summary>
-            <div className="mt-4 pl-6 border-l-2 border-border">
-              <p className="font-lora text-sm leading-relaxed text-muted-foreground">
-                {persona.context}
-              </p>
+            {/* Content Cards */}
+            <div className="space-y-6 max-w-3xl">
+              {/* Key Accomplishments */}
+              {accomplishments.length > 0 && (
+                <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 p-6">
+                  <h3 className="font-playfair text-2xl font-bold mb-4 text-white">
+                    Key Accomplishments
+                  </h3>
+                  <ul className="space-y-3 font-lora text-sm leading-relaxed text-white/80">
+                    {accomplishments.map((item, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span
+                          className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: persona.color }}
+                        />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Mindset & Thought Process */}
+              {mindset.length > 0 && (
+                <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 p-6">
+                  <h3 className="font-playfair text-2xl font-bold mb-4 text-white">
+                    Mindset & Thought Process
+                  </h3>
+                  <div className="space-y-3 font-lora text-sm leading-relaxed text-white/75">
+                    {mindset.map((item, i) => (
+                      <p key={i} className="pl-4 border-l-2 border-white/20">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Full Context - Collapsed by default */}
+              <details className="group rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 p-6">
+                <summary className="font-playfair text-xl font-bold cursor-pointer text-white hover:text-white/80 transition-colors list-none flex items-center gap-3">
+                  <span className="inline-block transition-transform group-open:rotate-90 text-lg" style={{ color: persona.color }}>
+                    ▶
+                  </span>
+                  Complete Historical Profile
+                </summary>
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="font-lora text-sm leading-relaxed text-white/70">
+                    {persona.context}
+                  </p>
+                </div>
+              </details>
             </div>
-          </details>
+
+            {/* Bottom padding for scroll */}
+            <div className="h-12" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
