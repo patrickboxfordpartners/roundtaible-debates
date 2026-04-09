@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { personas, rosterPersonas } from "@/data/debateData";
+import { personas, rosterPersonas, Persona } from "@/data/debateData";
 import { supabase } from "@/services/supabaseClient";
 import Footer from "@/components/Footer";
+import PersonaModal from "@/components/PersonaModal";
 
 const allPersonas = [...personas, ...rosterPersonas];
 
@@ -40,10 +41,22 @@ export default function Landing() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const waitlistRef = useRef<HTMLDivElement>(null);
 
   const scrollToWaitlist = () => {
     waitlistRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handlePersonaClick = (persona: Persona) => {
+    setSelectedPersona(persona);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setTimeout(() => setSelectedPersona(null), 200); // Delay cleanup for animation
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,9 +151,13 @@ export default function Landing() {
           </p>
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-4">
             {allPersonas.map((p) => (
-              <div key={p.id} className="flex flex-col items-center gap-2 group">
+              <button
+                key={p.id}
+                onClick={() => handlePersonaClick(p)}
+                className="flex flex-col items-center gap-2 group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg p-2 -m-2"
+              >
                 <div
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all group-hover:scale-110 group-hover:shadow-lg"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all group-hover:scale-110 group-hover:shadow-lg cursor-pointer"
                   style={{ borderColor: p.color }}
                 >
                   {p.avatar ? (
@@ -154,10 +171,10 @@ export default function Landing() {
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] font-lora text-muted-foreground text-center leading-tight hidden sm:block">
+                <span className="text-[10px] font-lora text-muted-foreground text-center leading-tight hidden sm:block group-hover:text-foreground transition-colors">
                   {p.name.split(" ").pop()}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -290,6 +307,13 @@ export default function Landing() {
       </section>
 
       <Footer />
+
+      {/* Persona Modal */}
+      <PersonaModal
+        persona={selectedPersona}
+        open={modalOpen}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }
