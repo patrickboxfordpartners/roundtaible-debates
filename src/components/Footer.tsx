@@ -6,20 +6,24 @@ import { Loader2 } from "lucide-react";
 
 const Footer = () => {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      if (!supabase) throw new Error("Newsletter signup unavailable");
+      if (!supabase) throw new Error("Contact form unavailable");
 
-      const { error } = await supabase.from("newsletter_signups").insert([
+      const { error } = await supabase.from("contact_submissions").insert([
         {
-          email,
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
           source: "footer",
           user_agent: navigator.userAgent,
         },
@@ -28,15 +32,17 @@ const Footer = () => {
       if (error) throw error;
 
       toast({
-        title: "You're subscribed!",
-        description: "We'll send you weekly insights on AI & product development.",
+        title: "Message sent!",
+        description: "We'll get back to you within 24 hours.",
       });
+      setName("");
       setEmail("");
+      setMessage("");
     } catch (error) {
-      console.error("Newsletter signup error:", error);
+      console.error("Contact form error:", error);
       toast({
-        title: "Subscription failed",
-        description: "Please try again or email us at hello@boxfordpartners.com",
+        title: "Send failed",
+        description: "Please email us directly at hello@boxfordpartners.com",
         variant: "destructive",
       });
     } finally {
@@ -47,41 +53,60 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-card/30">
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        {/* Newsletter Signup */}
+        {/* Contact Form */}
         <div className="mb-16 rounded-2xl border border-border bg-card/50 p-8 md:p-12">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="font-playfair text-2xl font-bold text-foreground md:text-3xl">
-              Weekly Product Insights
+              Get in Touch
             </h3>
             <p className="font-lora mt-4 text-muted-foreground">
-              Get practical advice on building products, AI integration, and operations — no fluff, just what works.
+              Questions about Roundtaible? Want to bring it to your team or classroom? Let's talk.
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <form onSubmit={handleContactSubmit} className="mt-8 flex flex-col gap-3">
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                className="font-lora w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="font-lora flex-1 rounded-full border border-border bg-background px-6 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-md"
+                className="font-lora w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <textarea
+                required
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Tell us what you're interested in..."
+                rows={4}
+                className="font-lora w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
               />
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Subscribing...
+                    Sending...
                   </>
                 ) : (
-                  "Subscribe"
+                  "Send Message"
                 )}
               </button>
             </form>
             <p className="font-lora mt-4 text-xs text-muted-foreground">
-              No spam. Unsubscribe anytime.
+              Or email us directly at{" "}
+              <a href="mailto:hello@boxfordpartners.com" className="text-foreground hover:text-primary transition-colors">
+                hello@boxfordpartners.com
+              </a>
             </p>
           </div>
         </div>
