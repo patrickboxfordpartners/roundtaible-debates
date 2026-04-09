@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { personas, rosterPersonas } from "@/data/debateData";
 import { supabase } from "@/services/supabaseClient";
+import Footer from "@/components/Footer";
 
 const allPersonas = [...personas, ...rosterPersonas];
 
@@ -288,98 +289,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-8">
-            {/* Brand */}
-            <div className="flex-1">
-              <span className="font-playfair font-bold text-foreground text-lg">Roundtaible</span>
-              <p className="mt-3 text-sm text-muted-foreground font-lora max-w-sm">
-                History's greatest minds debating your hardest questions. Built by{" "}
-                <a
-                  href="https://www.boxfordpartners.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground hover:text-primary transition-colors"
-                >
-                  Boxford Partners
-                </a>.
-              </p>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex flex-col sm:flex-row gap-8">
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                  Product
-                </h4>
-                <ul className="space-y-2">
-                  <li>
-                    <button onClick={() => navigate("/app")} className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora">
-                      Enter the Debate
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={() => navigate("/quiz")} className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora">
-                      Personality Quiz
-                    </button>
-                  </li>
-                  <li>
-                    <button onClick={scrollToWaitlist} className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora">
-                      Join Waitlist
-                    </button>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                  Legal
-                </h4>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="https://www.boxfordpartners.com/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora"
-                    >
-                      Privacy Policy
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://www.boxfordpartners.com/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora"
-                    >
-                      Terms of Service
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="https://www.boxfordpartners.com/acceptable-use"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-foreground/80 hover:text-foreground transition-colors font-lora"
-                    >
-                      Acceptable Use
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-border">
-            <p className="text-center text-xs text-muted-foreground font-lora">
-              © {new Date().getFullYear()} Boxford Partners. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
