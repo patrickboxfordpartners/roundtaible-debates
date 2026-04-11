@@ -1,25 +1,73 @@
+import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Landing from "./pages/Landing";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { DebateModeProvider } from "@/contexts/DebateModeContext";
+import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
-import Quiz from "./pages/Quiz";
-import NotFound from "./pages/NotFound";
+
+const Landing = lazy(() => import("./pages/Landing"));
+const Quiz = lazy(() => import("./pages/Quiz"));
+const Auth = lazy(() => import("./pages/Auth"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const ClassView = lazy(() => import("./pages/ClassView"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-muted-foreground font-body">Loading...</div>
+    </div>
+  );
+}
 
 const App = () => (
-  <TooltipProvider>
-    <Toaster />
-    <Sonner />
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/app" element={<Index />} />
-        <Route path="/quiz" element={<Quiz />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  </TooltipProvider>
+  <AuthProvider>
+    <DebateModeProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/app" element={<Index />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/teacher"
+              element={
+                <AuthGuard requiredRole="teacher">
+                  <TeacherDashboard />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/student"
+              element={
+                <AuthGuard requiredRole="student">
+                  <StudentDashboard />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/class/:classId"
+              element={
+                <AuthGuard>
+                  <ClassView />
+                </AuthGuard>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </TooltipProvider>
+    </DebateModeProvider>
+  </AuthProvider>
 );
 
 export default App;

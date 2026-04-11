@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { personas, rosterPersonas } from "@/data/debateData";
 import { useDebate } from "@/hooks/useDebate";
+import { useDebateMode } from "@/contexts/DebateModeContext";
 import { useMultiplayer } from "@/hooks/useMultiplayer";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -21,7 +22,8 @@ import type { Persona } from "@/data/debateData";
 import type { RealtimeMessage } from "@/services/realtime";
 
 const Index = () => {
-  const debate = useDebate();
+  const { educationalConfig } = useDebateMode();
+  const debate = useDebate(educationalConfig);
   const mp = useMultiplayer();
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);

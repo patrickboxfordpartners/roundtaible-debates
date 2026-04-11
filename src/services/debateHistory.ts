@@ -30,11 +30,14 @@ async function persistToSupabase(
   transcript: TranscriptEntry[],
   personas: Array<{ id: string; name: string; color: string }>,
   winnerId: string | null,
-  duration: number
+  duration: number,
+  userId?: string,
+  classId?: string,
+  educationalMode?: boolean
 ) {
   if (!supabase) return;
   try {
-    await supabase.from("debates").insert({
+    await supabase.from("rt_debates").insert({
       topic_id: topic.id,
       topic_title: topic.title,
       topic_category: topic.category,
@@ -42,6 +45,9 @@ async function persistToSupabase(
       personas,
       winner_id: winnerId,
       duration,
+      user_id: userId || null,
+      class_id: classId || null,
+      educational_mode: educationalMode || false,
     });
   } catch (err) {
     console.warn("Failed to persist debate to Supabase:", err);
@@ -53,7 +59,10 @@ export function saveDebate(
   transcript: TranscriptEntry[],
   personas: Persona[],
   winnerId: string | null,
-  duration: number
+  duration: number,
+  userId?: string,
+  classId?: string,
+  educationalMode?: boolean
 ): SavedDebate {
   const debate: SavedDebate = {
     id: `debate_${Date.now()}`,
@@ -70,7 +79,7 @@ export function saveDebate(
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
   // Also persist to Supabase for content generation pipeline
-  persistToSupabase(topic, transcript, debate.personas, winnerId, duration);
+  persistToSupabase(topic, transcript, debate.personas, winnerId, duration, userId, classId, educationalMode);
 
   return debate;
 }

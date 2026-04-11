@@ -4,8 +4,9 @@ import { generatePersonaResponse, generateDebateSummary, isAPIAvailable, getAPIE
 import { toast } from "sonner";
 import { speak, toggleMute } from "@/services/ttsService";
 import { saveDebate } from "@/services/debateHistory";
+import type { EducationalConfig } from "@/contexts/DebateModeContext";
 
-export function useDebate() {
+export function useDebate(educationalConfig?: EducationalConfig) {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>(sampleTranscript);
   const [speakingId, setSpeakingId] = useState<string | null>("edison");
@@ -67,7 +68,8 @@ export function useDebate() {
         currentPersona,
         activeTopic,
         transcript,
-        personasState
+        personasState,
+        educationalConfig
       );
 
       if (!isDebatingRef.current) {

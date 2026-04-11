@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play, Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { debateTopics, type DebateTopic } from "@/data/debateData";
+import { debateTopics } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/voiceInputService";
-import { getDebateMode, setDebateMode, type DebateMode } from "@/services/aiService";
+import { setDebateMode } from "@/services/aiService";
+import { useDebateMode } from "@/contexts/DebateModeContext";
 import { toast } from "sonner";
 
 interface ControlBarProps {
@@ -49,15 +50,15 @@ export function ControlBar({
   const [pitchText, setPitchText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [topicCategory, setTopicCategory] = useState<string>("All");
-  const [debateMode, setDebateModeState] = useState<DebateMode>(getDebateMode());
+  const { mode: debateMode, setMode, educationalConfig, updateEducationalConfig } = useDebateMode();
 
   const navigate = useNavigate();
 
   const toggleMode = () => {
     const next = debateMode === "standard" ? "educational" : "standard";
-    setDebateMode(next);
-    setDebateModeState(next);
-    toast.info(next === "educational" ? "Educational mode: AI will cite sources and facts" : "Standard mode: entertainment debate");
+    setMode(next);
+    setDebateMode(next); // keep module-level in sync for now
+    toast.info(next === "educational" ? "Educational mode: AI will cite sources, facts, and discussion questions" : "Standard mode: entertainment debate");
   };
 
   const eduSubjects = ["US History", "World History", "Science & Ethics", "Philosophy & Logic"];
@@ -217,6 +218,21 @@ export function ControlBar({
             Edu Mode {isEdu && "(Active)"}
           </span>
         </button>
+
+        {/* Grade level selector (edu mode) */}
+        {isEdu && (
+          <select
+            value={educationalConfig.gradeLevel}
+            onChange={(e) => updateEducationalConfig({ gradeLevel: e.target.value as "" | "6-8" | "9-10" | "11-12" | "college" })}
+            className="px-2 py-1.5 text-[10px] font-display font-semibold rounded-lg border border-green-500/30 bg-green-500/10 text-green-500 focus:outline-none"
+          >
+            <option value="">Grade Level</option>
+            <option value="6-8">6-8</option>
+            <option value="9-10">9-10</option>
+            <option value="11-12">11-12</option>
+            <option value="college">College</option>
+          </select>
+        )}
 
         {/* Mic */}
         <button

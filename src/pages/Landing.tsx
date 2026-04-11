@@ -69,7 +69,7 @@ export default function Landing() {
       if (!supabase) throw new Error("Database not configured");
 
       const { error: dbError } = await supabase
-        .from("waitlist")
+        .from("rt_waitlist")
         .insert({ email: email.trim().toLowerCase(), name: name.trim() || null });
 
       if (dbError) {

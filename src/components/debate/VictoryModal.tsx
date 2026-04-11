@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import confetti from "canvas-confetti";
 import type { Persona } from "@/data/debateData";
 
 interface VictoryModalProps {
@@ -19,11 +18,13 @@ export function VictoryModal({ winner, onDismiss, autoDismissMs }: VictoryModalP
 
   useEffect(() => {
     if (winner) {
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ["#F5A623", "#D4A574", "#FFD700", "#3E2723"],
+      import("canvas-confetti").then((mod) => {
+        mod.default({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ["#F5A623", "#D4A574", "#FFD700", "#3E2723"],
+        });
       });
     }
   }, [winner]);

@@ -1,6 +1,49 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { TranscriptEntry, Persona } from "@/data/debateData";
+
+// Parse educational markers like [Fact: ...], [Question: ...], [Vocabulary: ...]
+function renderTextWithMarkers(text: string): ReactNode {
+  const markerPattern = /\[(Fact|Question|Vocabulary):\s*([^\]]+)\]/g;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = markerPattern.exec(text)) !== null) {
+    // Add text before the marker
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const type = match[1];
+    const content = match[2];
+
+    const styles: Record<string, string> = {
+      Fact: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+      Question: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+      Vocabulary: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+    };
+
+    parts.push(
+      <span
+        key={key++}
+        className={`inline-block mt-1 px-1.5 py-0.5 text-[10px] font-display font-semibold rounded border ${styles[type] || ""}`}
+      >
+        {type}: {content}
+      </span>
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
 
 interface TranscriptPanelProps {
   entries: TranscriptEntry[];
@@ -55,7 +98,7 @@ export function TranscriptPanel({ entries, personasState }: TranscriptPanelProps
                 >
                   {persona.name}:
                 </span>
-                {entry.text}
+                {renderTextWithMarkers(entry.text)}
               </p>
             </motion.div>
           );

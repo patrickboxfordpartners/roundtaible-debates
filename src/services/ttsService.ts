@@ -1,95 +1,9 @@
-// Text-to-speech using ElevenLabs API for high-quality persona voices
-// Falls back to browser SpeechSynthesis if API key is missing
+// Text-to-speech using Supabase Edge Function proxy to ElevenLabs
+// Falls back to browser SpeechSynthesis if Supabase is not configured
 
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { supabase } from "./supabaseClient";
 
-interface VoiceConfig {
-  voiceId: string;
-  stability: number;
-  similarityBoost: number;
-}
-
-// ElevenLabs voice IDs for each persona
-// These are pre-built voices from ElevenLabs voice library
-const personaVoices: Record<string, VoiceConfig> = {
-  edison: {
-    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - deep, authoritative inventor
-    stability: 0.75,
-    similarityBoost: 0.75,
-  },
-  morgan: {
-    voiceId: "TxGEqnHWrfWFTfGW9XjX", // Josh - deep, commanding banker
-    stability: 0.85,
-    similarityBoost: 0.8,
-  },
-  carnegie: {
-    voiceId: "ErXwobaYiN019PkySvjV", // Antoni - warm, educated philanthropist
-    stability: 0.7,
-    similarityBoost: 0.75,
-  },
-  twain: {
-    voiceId: "onwK4e9ZLuTAKqWW03F9", // Daniel - narrative, witty storyteller
-    stability: 0.6,
-    similarityBoost: 0.7,
-  },
-  adams: {
-    voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - calm, scholarly historian
-    stability: 0.8,
-    similarityBoost: 0.8,
-  },
-  tesla: {
-    voiceId: "IKne3meq5aSn9XLyUdCD", // Charlie - energetic, eccentric visionary
-    stability: 0.65,
-    similarityBoost: 0.7,
-  },
-  wilde: {
-    voiceId: "ErXwobaYiN019PkySvjV", // Antoni - theatrical, witty
-    stability: 0.65,
-    similarityBoost: 0.75,
-  },
-  einstein: {
-    voiceId: "VR6AewLTigWG4xSOukaG", // Arnold - thoughtful, theoretical
-    stability: 0.75,
-    similarityBoost: 0.8,
-  },
-  cleopatra: {
-    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - regal, commanding
-    stability: 0.75,
-    similarityBoost: 0.75,
-  },
-  darwin: {
-    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - observant, scientific
-    stability: 0.8,
-    similarityBoost: 0.8,
-  },
-  hypatia: {
-    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - intellectual, precise
-    stability: 0.8,
-    similarityBoost: 0.75,
-  },
-  machiavelli: {
-    voiceId: "onwK4e9ZLuTAKqWW03F9", // Daniel - calculating, strategic
-    stability: 0.75,
-    similarityBoost: 0.75,
-  },
-  curie: {
-    voiceId: "EXAVITQu4vr4xnSDxMaL", // Bella - focused, determined
-    stability: 0.8,
-    similarityBoost: 0.8,
-  },
-  "sun-tzu": {
-    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - wise, strategic
-    stability: 0.85,
-    similarityBoost: 0.8,
-  },
-  human: {
-    voiceId: "pNInz6obpgDQGcFmaJgB", // Adam - default
-    stability: 0.75,
-    similarityBoost: 0.75,
-  },
-};
-
-// Fallback browser TTS config (used if ElevenLabs API key is missing)
+// Fallback browser TTS config (used if edge function is unavailable)
 interface BrowserVoiceConfig {
   pitch: number;
   rate: number;
@@ -107,45 +21,39 @@ const browserVoices: Record<string, BrowserVoiceConfig> = {
 
 let isMuted = false;
 let currentAudio: HTMLAudioElement | null = null;
-let elevenLabsClient: ElevenLabsClient | null = null;
-let useElevenLabs = false;
-
-// Initialize ElevenLabs client
-const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
-if (apiKey) {
-  elevenLabsClient = new ElevenLabsClient({ apiKey });
-  useElevenLabs = true;
-  console.log("✓ ElevenLabs TTS enabled");
-} else {
-  console.warn("⚠ ElevenLabs API key not found, falling back to browser TTS");
-}
+const useElevenLabs = !!supabase; // Use edge function proxy if supabase is configured
 
 export function isTTSSupported(): boolean {
   return useElevenLabs || "speechSynthesis" in window;
 }
 
 async function speakElevenLabs(text: string, personaId: string) {
-  if (!elevenLabsClient || isMuted) return;
-
-  const config = personaVoices[personaId] || personaVoices.human;
+  if (!supabase || isMuted) return;
 
   try {
-    // Generate audio stream from ElevenLabs
-    const audioStream = await elevenLabsClient.textToSpeech.convert(config.voiceId, {
-      modelId: "eleven_monolingual_v1",
-      text: text,
-      voiceSettings: {
-        stability: config.stability,
-        similarityBoost: config.similarityBoost,
-      },
+    const { data, error } = await supabase.functions.invoke("tts-proxy", {
+      body: { text, personaId },
     });
 
-    // Convert stream to blob
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (error) {
+      console.error("TTS proxy error:", error);
+      speakBrowserTTS(text, personaId);
+      return;
     }
-    const blob = new Blob(chunks, { type: "audio/mpeg" });
+
+    // data is the raw response — convert to blob
+    let blob: Blob;
+    if (data instanceof Blob) {
+      blob = data;
+    } else if (data instanceof ArrayBuffer) {
+      blob = new Blob([data], { type: "audio/mpeg" });
+    } else {
+      // If we got JSON back, it's an error
+      console.error("TTS proxy returned non-audio data:", data);
+      speakBrowserTTS(text, personaId);
+      return;
+    }
+
     const audioUrl = URL.createObjectURL(blob);
 
     // Stop any currently playing audio
@@ -164,7 +72,6 @@ async function speakElevenLabs(text: string, personaId: string) {
     await currentAudio.play();
   } catch (error) {
     console.error("ElevenLabs TTS error:", error);
-    // Fall back to browser TTS on error
     speakBrowserTTS(text, personaId);
   }
 }
@@ -172,7 +79,6 @@ async function speakElevenLabs(text: string, personaId: string) {
 function speakBrowserTTS(text: string, personaId: string) {
   if (isMuted || !("speechSynthesis" in window)) return;
 
-  // Cancel any current speech
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -182,7 +88,6 @@ function speakBrowserTTS(text: string, personaId: string) {
   utterance.rate = config.rate;
   utterance.volume = 0.85;
 
-  // Assign voice
   const voices = window.speechSynthesis.getVoices();
   const englishVoices = voices.filter((v) => v.lang.startsWith("en"));
   if (englishVoices.length > 0) {
@@ -202,13 +107,10 @@ export async function speak(text: string, personaId: string) {
 }
 
 export function stopSpeaking() {
-  // Stop ElevenLabs audio
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
   }
-
-  // Stop browser TTS
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }

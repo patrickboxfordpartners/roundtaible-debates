@@ -19,7 +19,7 @@ const Footer = () => {
     try {
       if (!supabase) throw new Error("Contact form unavailable");
 
-      const { error } = await supabase.from("contact_submissions").insert([
+      const { error } = await supabase.from("rt_contact_submissions").insert([
         {
           name: name.trim(),
           email: email.trim(),
