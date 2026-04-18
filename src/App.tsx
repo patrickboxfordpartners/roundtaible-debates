@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DebateModeProvider } from "@/contexts/DebateModeContext";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -14,6 +15,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const ClassView = lazy(() => import("./pages/ClassView"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -25,6 +27,7 @@ function PageLoader() {
 }
 
 const App = () => (
+  <ErrorBoundary>
   <AuthProvider>
     <DebateModeProvider>
     <TooltipProvider>
@@ -34,7 +37,7 @@ const App = () => (
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/app" element={<Index />} />
+            <Route path="/app" element={<ErrorBoundary><Index /></ErrorBoundary>} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/auth" element={<Auth />} />
             <Route
@@ -61,6 +64,7 @@ const App = () => (
                 </AuthGuard>
               }
             />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -68,6 +72,7 @@ const App = () => (
     </TooltipProvider>
     </DebateModeProvider>
   </AuthProvider>
+  </ErrorBoundary>
 );
 
 export default App;

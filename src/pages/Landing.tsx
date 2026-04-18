@@ -1,11 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { personas, rosterPersonas, Persona } from "@/data/debateData";
+import { allPersonas, Persona } from "@/data/debateData";
 import { supabase } from "@/services/supabaseClient";
 import Footer from "@/components/Footer";
 import PersonaModal from "@/components/PersonaModal";
-
-const allPersonas = [...personas, ...rosterPersonas];
 
 const USE_CASES = [
   {
@@ -61,7 +59,12 @@ export default function Landing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError("Please enter a valid email address");
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -102,6 +105,12 @@ export default function Landing() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               Take the Quiz
+            </button>
+            <button
+              onClick={() => navigate("/pricing")}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+            >
+              Pricing
             </button>
             <button
               onClick={() => navigate("/app")}
