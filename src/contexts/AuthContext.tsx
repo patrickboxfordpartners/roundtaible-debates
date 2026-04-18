@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/services/supabaseClient";
+import { posthog } from "@/lib/posthog";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface Profile {
@@ -8,6 +9,10 @@ interface Profile {
   full_name: string;
   role: "teacher" | "student" | "admin";
   avatar_url: string | null;
+  subscription_tier: "free" | "pro" | "edu";
+  subscription_status: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
 }
 
 interface AuthContextType {
@@ -74,6 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(data as Profile | null);
+      if (data) {
+        posthog.identify(userId, {
+          email: data.email,
+          name: data.full_name,
+          role: data.role,
+          plan: data.subscription_tier ?? "free",
+        });
+      }
     } catch (err) {
       console.error("Profile fetch error:", err);
     } finally {
@@ -102,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
+    posthog.reset();
     setSession(null);
     setProfile(null);
   }
