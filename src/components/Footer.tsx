@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/services/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -114,12 +115,16 @@ const Footer = () => {
         <div className="grid gap-12 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-1">
-            <a href="https://www.boxfordpartners.com" target="_blank" rel="noopener noreferrer" className="inline-block">
-              <span className="font-playfair text-lg font-bold text-foreground">Boxford Partners</span>
-            </a>
-            <p className="font-lora mt-4 text-sm leading-relaxed text-muted-foreground">
-              Product studio for service &amp; B2B companies. Bottom-up problem solving, not top-down tech.
+            <Logo size="md" />
+            <p className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mt-3 border border-border rounded px-3 py-1.5 inline-block">
+              A Boxford Partners Company
             </p>
+            <a
+              href="mailto:hello@boxfordpartners.com"
+              className="text-muted-foreground text-xs mt-4 block hover:text-primary transition-colors"
+            >
+              hello@boxfordpartners.com
+            </a>
           </div>
 
           {/* Products */}
@@ -188,9 +193,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-border pt-8">
-          <p className="font-lora text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Boxford Partners. All rights reserved.
+        <div className="mt-16 border-t border-border pt-6">
+          <p className="text-xs text-muted-foreground/50">
+            © {new Date().getFullYear()} Boxford Partners LLC DBA ROUNDTAIBLE. All rights reserved.
           </p>
         </div>
       </div>
