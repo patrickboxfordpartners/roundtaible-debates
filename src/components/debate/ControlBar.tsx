@@ -6,6 +6,7 @@ import { debateTopics } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
 import { startVoiceInput, stopVoiceInput, isVoiceSupported } from "@/services/voiceInputService";
 import { setDebateMode } from "@/services/aiService";
+import { track } from "@/services/analytics";
 import { useDebateMode } from "@/contexts/DebateModeContext";
 import { toast } from "sonner";
 
@@ -49,6 +50,7 @@ export function ControlBar({
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
   const [topicCategory, setTopicCategory] = useState<string>("All");
   const { mode: debateMode, setMode, educationalConfig, updateEducationalConfig } = useDebateMode();
 
@@ -58,6 +60,7 @@ export function ControlBar({
     const next = debateMode === "standard" ? "educational" : "standard";
     setMode(next);
     setDebateMode(next); // keep module-level in sync for now
+    track({ event: "mode_switch", mode: next });
     toast.info(next === "educational" ? "Educational mode: AI will cite sources, facts, and discussion questions" : "Standard mode: entertainment debate");
   };
 
@@ -91,10 +94,17 @@ export function ControlBar({
 
       startVoiceInput({
         onSpeechStart: () => setIsListening(true),
-        onSpeechEnd: () => setIsListening(false),
+        onSpeechEnd: () => {
+          setIsListening(false);
+          setInterimTranscript("");
+        },
         onTranscript: (transcript, isFinal) => {
           if (isFinal && transcript.trim() && onVoiceInput) {
             onVoiceInput(transcript.trim());
+            setInterimTranscript("");
+            track({ event: "voice_input" });
+          } else if (!isFinal) {
+            setInterimTranscript(transcript);
           }
         },
         onError: (error) => {
@@ -102,6 +112,7 @@ export function ControlBar({
           toast.error(typeof error === "string" ? error : "Voice input error");
           setMicOn(false);
           setIsListening(false);
+          setInterimTranscript("");
         },
       });
     }
@@ -198,6 +209,7 @@ export function ControlBar({
                 : "bg-background border-border hover:border-primary/50"
             }`}
             title={isMuted ? "Unmute voices" : "Mute voices"}
+            aria-label={isMuted ? "Unmute voices" : "Mute voices"}
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
@@ -212,6 +224,8 @@ export function ControlBar({
               : "bg-background border-border hover:border-primary/50 text-muted-foreground"
           }`}
           title={isEdu ? "Switch to standard mode" : "Switch to educational mode"}
+          aria-label={isEdu ? "Switch to standard mode" : "Switch to educational mode"}
+          aria-pressed={isEdu}
         >
           <GraduationCap className="w-4 h-4" />
           <span className="text-[10px] font-display font-semibold whitespace-nowrap">
@@ -243,12 +257,21 @@ export function ControlBar({
               : "bg-background border-border hover:border-primary/50"
           } ${isListening ? "animate-pulse" : ""}`}
           title={micOn ? "Stop microphone" : "Start microphone"}
+          aria-label={micOn ? "Stop microphone" : "Start microphone"}
+          aria-pressed={micOn}
         >
           {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
           {isListening && (
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
           )}
         </button>
+
+        {/* Live voice transcript */}
+        {micOn && interimTranscript && (
+          <div className="px-2 py-1 text-[10px] font-body text-muted-foreground bg-primary/5 border border-primary/20 rounded-lg max-w-[200px] truncate italic">
+            {interimTranscript}
+          </div>
+        )}
 
         {/* Pitch input */}
         <div className="flex-1 min-w-[180px] flex gap-1">
@@ -261,6 +284,7 @@ export function ControlBar({
           />
           <button
             onClick={handlePitch}
+            aria-label="Send pitch idea"
             className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Send className="w-4 h-4" />
@@ -270,6 +294,7 @@ export function ControlBar({
         {/* Action buttons */}
         <button
           onClick={onSurpriseMe}
+          aria-label="Pick a random topic"
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-1"
         >
           <Shuffle className="w-3.5 h-3.5" /> Surprise Me
@@ -277,6 +302,7 @@ export function ControlBar({
 
         <button
           onClick={isDebating ? onStopDebate : onLightningRound}
+          aria-label={isDebating ? "End current round" : "Start lightning round"}
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1"
         >
           <Zap className="w-3.5 h-3.5" /> {isDebating ? "End Round" : "Lightning Round"}
@@ -286,6 +312,7 @@ export function ControlBar({
         {isDebating && onPauseDebate && onResumeDebate && (
           <button
             onClick={isPaused ? onResumeDebate : onPauseDebate}
+            aria-label={isPaused ? "Resume debate" : "Pause debate for discussion"}
             className={`px-3 py-1.5 text-xs font-display font-semibold rounded-lg border transition-colors flex items-center gap-1 ${
               isPaused
                 ? "bg-green-500/15 text-green-600 border-green-500/30 hover:bg-green-500/25"
@@ -299,6 +326,7 @@ export function ControlBar({
 
         <button
           onClick={onSummarize}
+          aria-label="Summarize debate"
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors flex items-center gap-1"
         >
           <FileText className="w-3.5 h-3.5" /> Summarize
@@ -306,6 +334,7 @@ export function ControlBar({
 
         <button
           onClick={() => navigate("/quiz")}
+          aria-label="Take personality quiz"
           className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-primary/10 hover:border-primary/50 transition-colors flex items-center gap-1"
           title="Find your historical archetype"
         >
@@ -322,6 +351,7 @@ export function ControlBar({
               className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-transparent hover:border-primary transition-all hover:scale-110"
               style={{ backgroundColor: p.color }}
               title={`Vote for ${p.name}`}
+              aria-label={`Vote for ${p.name}`}
             >
               {p.name[0]}
             </button>

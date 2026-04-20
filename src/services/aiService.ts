@@ -3,10 +3,17 @@ import { supabase } from "./supabaseClient";
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
 
 // Circuit breaker: stop calling API after fatal errors (quota, auth)
+// Auto-resets after CIRCUIT_COOLDOWN_MS so the app isn't permanently broken
 let circuitOpen = false;
 let circuitReason = "";
+let circuitOpenedAt = 0;
+const CIRCUIT_COOLDOWN_MS = 60_000; // Auto-retry after 60 seconds
 
 export function isAPIAvailable(): boolean {
+  if (circuitOpen && Date.now() - circuitOpenedAt > CIRCUIT_COOLDOWN_MS) {
+    circuitOpen = false;
+    circuitReason = "";
+  }
   return !circuitOpen;
 }
 
@@ -17,6 +24,7 @@ export function getAPIError(): string {
 export function resetCircuit() {
   circuitOpen = false;
   circuitReason = "";
+  circuitOpenedAt = 0;
 }
 
 // Debate mode: "standard" (entertainment/demo) or "educational" (fact-checking, citations)
@@ -31,21 +39,45 @@ export function getDebateMode(): DebateMode {
   return currentMode;
 }
 
-// Fallback responses when API is unavailable
-const fallbacks: Record<string, string> = {
-  edison:
+// Fallback responses when API is unavailable — rotated to avoid repetition
+const fallbacks: Record<string, string[]> = {
+  edison: [
     "I seem to have lost my train of thought — perhaps the telegraph lines are down. Give me a moment to gather my notes.",
-  morgan:
+    "The filament in my thinking lamp appears to have burned out. A temporary setback, I assure you.",
+    "Even at Menlo Park, we had power outages. Let me recalibrate my argument.",
+  ],
+  morgan: [
     "The market waits for no one, and neither do I. Let me collect my thoughts while the ticker catches up.",
-  carnegie:
+    "There appears to be a disruption in the financial cables. My position remains unchanged, however.",
+    "Even the House of Morgan requires a brief recess. The fundamentals of my argument are sound.",
+  ],
+  carnegie: [
     "Even the greatest steel mills need maintenance. Allow me a moment to reformulate my position.",
-  twain:
+    "A brief pause in production, nothing more. The furnace of my conviction still burns hot.",
+    "From the Monongahela to this table, I have weathered interruptions before. One moment.",
+  ],
+  twain: [
     "I appear to have swallowed my own wit. A rare condition, I assure you — it shall pass momentarily.",
-  adams:
+    "Reports of my silence have been greatly exaggerated. I shall return with something worth saying.",
+    "The typewriter of my mind has jammed. Probably for the best — I was about to be devastatingly clever.",
+  ],
+  adams: [
     "History teaches us patience. Let me pause and reconsider my argument from a different angle.",
-  tesla:
+    "The dynamo of modern discourse occasionally requires a moment of stillness. I shall reflect.",
+    "Even entropy allows for brief pauses. Let me gather the threads of this historical parallel.",
+  ],
+  tesla: [
     "My thoughts are vibrating at a frequency beyond current transmission capacity. One moment, please.",
+    "The alternating current of my reasoning requires a brief phase shift. I shall return.",
+    "A momentary interference in my wireless transmission of ideas. The signal will resume shortly.",
+  ],
 };
+
+function getRandomFallback(personaId: string): string {
+  const options = fallbacks[personaId];
+  if (!options) return "";
+  return options[Math.floor(Math.random() * options.length)];
+}
 
 export async function generatePersonaResponse(
   persona: Persona,
@@ -59,7 +91,7 @@ export async function generatePersonaResponse(
   }
 
   if (!supabase) {
-    return fallbacks[persona.id] || `${persona.name} pauses thoughtfully, collecting their thoughts...`;
+    return getRandomFallback(persona.id) || `${persona.name} pauses thoughtfully, collecting their thoughts...`;
   }
 
   try {
@@ -98,9 +130,10 @@ export async function generatePersonaResponse(
 
     if (data?.status === 429 || data?.status === 401 || data?.status === 403) {
       circuitOpen = true;
+      circuitOpenedAt = Date.now();
       circuitReason =
         data.status === 429
-          ? "API quota exceeded — check your xAI billing or use a new API key"
+          ? "API quota exceeded — will retry in 60 seconds"
           : "API key is invalid or unauthorized";
       throw new Error(circuitReason);
     }
@@ -113,12 +146,13 @@ export async function generatePersonaResponse(
     const errObj = error as { context?: { status?: number }; message?: string };
     if (errObj.context?.status === 429 || errObj.context?.status === 401) {
       circuitOpen = true;
-      circuitReason = "API unavailable";
+      circuitOpenedAt = Date.now();
+      circuitReason = "API unavailable — will retry in 60 seconds";
       throw error;
     }
 
     return (
-      fallbacks[persona.id] ||
+      getRandomFallback(persona.id) ||
       `${persona.name} pauses thoughtfully, collecting their thoughts...`
     );
   }
@@ -177,7 +211,8 @@ export async function generateDebateSummary(
     const errObj = error as { context?: { status?: number } };
     if (errObj.context?.status === 429 || errObj.context?.status === 401) {
       circuitOpen = true;
-      circuitReason = "API quota exceeded";
+      circuitOpenedAt = Date.now();
+      circuitReason = "API quota exceeded — will retry in 60 seconds";
     }
     return {
       text: "If I may summarize: we've argued in circles — much like this table — and arrived precisely where we started, only more exhausted. But wasn't that the point?",

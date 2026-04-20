@@ -1,10 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://theroundtaible.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 // Rate limiting
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -16,6 +26,11 @@ function checkRateLimit(ip: string): boolean {
   const entry = rateLimits.get(ip);
   if (!entry || now > entry.resetAt) {
     rateLimits.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+    if (rateLimits.size > 100) {
+      for (const [key, val] of rateLimits) {
+        if (now > val.resetAt) rateLimits.delete(key);
+      }
+    }
     return true;
   }
   if (entry.count >= RATE_LIMIT) return false;
@@ -109,6 +124,8 @@ const personaVoices: Record<string, VoiceConfig> = {
 };
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

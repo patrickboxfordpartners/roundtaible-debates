@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, UserPlus, Users } from "lucide-react";
-import { rosterPersonas } from "@/data/debateData";
+import { allPersonas } from "@/data/debateData";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { Persona } from "@/data/debateData";
 
 interface AddPersonaDialogProps {
@@ -23,8 +24,10 @@ export function AddPersonaDialog({ open, existingIds, onClose, onAdd, onAddFromR
   const [role, setRole] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [context, setContext] = useState("");
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  const focusRef = useFocusTrap(open, handleClose);
 
-  const availableRoster = rosterPersonas.filter(p => !existingIds.includes(p.id));
+  const availableRoster = allPersonas.filter(p => !existingIds.includes(p.id));
 
   const handleSubmit = () => {
     if (!name.trim()) return;
@@ -57,6 +60,10 @@ export function AddPersonaDialog({ open, existingIds, onClose, onAdd, onAddFromR
           onClick={onClose}
         >
           <motion.div
+            ref={focusRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add persona to the table"
             className="bg-card border border-border rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl max-h-[85vh] overflow-y-auto"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -72,6 +79,7 @@ export function AddPersonaDialog({ open, existingIds, onClose, onAdd, onAddFromR
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close dialog"
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
@@ -162,6 +170,7 @@ export function AddPersonaDialog({ open, existingIds, onClose, onAdd, onAddFromR
                       <button
                         key={c}
                         onClick={() => setColor(c)}
+                        aria-label={`Select color ${c}`}
                         className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
                         style={{ backgroundColor: c }}
                       />

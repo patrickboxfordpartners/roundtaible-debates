@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
+import { toast } from "sonner";
 
 interface ClassDetail {
   id: string;
@@ -39,11 +40,7 @@ export default function ClassView() {
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (classId) fetchClassData();
-  }, [classId]);
-
-  async function fetchClassData() {
+  const fetchClassData = useCallback(async () => {
     if (!supabase || !classId) return;
 
     try {
@@ -85,11 +82,15 @@ export default function ClassView() {
         }
       }
     } catch (err) {
-      console.error("Error fetching class:", err);
+      toast.error("Failed to load class details");
     } finally {
       setLoading(false);
     }
-  }
+  }, [classId, isTeacher]);
+
+  useEffect(() => {
+    if (classId) fetchClassData();
+  }, [classId, fetchClassData]);
 
   if (loading) {
     return (

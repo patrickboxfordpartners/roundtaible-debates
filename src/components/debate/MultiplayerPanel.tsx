@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, X, Copy, Link, LogOut, Crown } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { MultiplayerRole } from "@/hooks/useMultiplayer";
 
 interface MultiplayerPanelProps {
@@ -30,6 +31,8 @@ export function MultiplayerPanel({
 }: MultiplayerPanelProps) {
   const [joinName, setJoinName] = useState("");
   const [joinRoomId, setJoinRoomId] = useState(pendingRoomId || "");
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  const focusRef = useFocusTrap(open, handleClose);
 
   const handleJoin = () => {
     const rid = joinRoomId.trim();
@@ -54,6 +57,10 @@ export function MultiplayerPanel({
           onClick={onClose}
         >
           <motion.div
+            ref={focusRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Multiplayer room"
             className="bg-card border border-border rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -69,6 +76,7 @@ export function MultiplayerPanel({
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close dialog"
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />

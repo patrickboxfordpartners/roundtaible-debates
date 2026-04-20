@@ -76,7 +76,18 @@ export function saveDebate(
 
   const existing = getSavedDebates();
   const updated = [debate, ...existing].slice(0, MAX_SAVED);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    // QuotaExceededError — trim older debates and retry
+    const trimmed = updated.slice(0, Math.floor(MAX_SAVED / 2));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    } catch {
+      // Storage completely full — clear debate history to free space
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
 
   // Also persist to Supabase for content generation pipeline
   persistToSupabase(topic, transcript, debate.personas, winnerId, duration, userId, classId, educationalMode);

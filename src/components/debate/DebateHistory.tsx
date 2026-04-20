@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, X, Copy, Trash2, Clock, Trophy } from "lucide-react";
+import { History, X, Copy, Trash2, Clock, Trophy, Play } from "lucide-react";
 import { getSavedDebates, deleteDebate, clearHistory, formatTranscriptForExport, type SavedDebate } from "@/services/debateHistory";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { DebateReplay } from "./DebateReplay";
 import { toast } from "sonner";
 
 interface DebateHistoryProps {
@@ -12,7 +14,10 @@ interface DebateHistoryProps {
 export function DebateHistory({ open, onClose }: DebateHistoryProps) {
   const [debates, setDebates] = useState<SavedDebate[]>([]);
   const [selectedDebate, setSelectedDebate] = useState<SavedDebate | null>(null);
+  const [replayDebate, setReplayDebate] = useState<SavedDebate | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  const focusRef = useFocusTrap(open, handleClose);
 
   useEffect(() => {
     if (open) {
@@ -73,6 +78,10 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
           onClick={onClose}
         >
           <motion.div
+            ref={focusRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Debate history"
             className="bg-card border border-border rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[80vh] flex flex-col"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -106,6 +115,7 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                 )}
                 <button
                   onClick={onClose}
+                  aria-label="Close dialog"
                   className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 >
                   <X className="w-5 h-5" />
@@ -143,12 +153,20 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleCopy(selectedDebate)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors"
-                    >
-                      <Copy className="w-3.5 h-3.5" /> Copy Transcript
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => setReplayDebate(selectedDebate)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Play className="w-3.5 h-3.5" /> Replay
+                      </button>
+                      <button
+                        onClick={() => handleCopy(selectedDebate)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                      >
+                        <Copy className="w-3.5 h-3.5" /> Copy
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {selectedDebate.transcript.map((entry) => {
@@ -218,6 +236,7 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                             onClick={(e) => { e.stopPropagation(); handleCopy(debate); }}
                             className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                             title="Copy transcript"
+                            aria-label="Copy transcript"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -225,6 +244,7 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                             onClick={(e) => { e.stopPropagation(); handleDelete(debate.id); }}
                             className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
                             title="Delete"
+                            aria-label="Delete debate"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -238,6 +258,9 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Replay overlay */}
+      <DebateReplay debate={replayDebate} onClose={() => setReplayDebate(null)} />
     </AnimatePresence>
   );
 }

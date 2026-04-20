@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
 import { getSavedDebates, type SavedDebate } from "@/services/debateHistory";
+import { toast } from "sonner";
 
 interface ClassMembership {
   class_id: string;
@@ -26,12 +27,7 @@ export default function StudentDashboard() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
 
-  useEffect(() => {
-    fetchMemberships();
-    setLocalDebates(getSavedDebates());
-  }, []);
-
-  async function fetchMemberships() {
+  const fetchMemberships = useCallback(async () => {
     if (!supabase || !profile) {
       setLoading(false);
       return;
@@ -45,11 +41,16 @@ export default function StudentDashboard() {
       if (error) throw error;
       setMemberships((data as unknown as ClassMembership[]) || []);
     } catch (err) {
-      console.error("Error fetching memberships:", err);
+      toast.error("Failed to load your classes");
     } finally {
       setLoading(false);
     }
-  }
+  }, [profile]);
+
+  useEffect(() => {
+    fetchMemberships();
+    setLocalDebates(getSavedDebates());
+  }, [fetchMemberships]);
 
   async function handleJoinClass(e: React.FormEvent) {
     e.preventDefault();

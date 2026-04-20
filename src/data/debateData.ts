@@ -22,6 +22,7 @@ export interface Persona {
   wins: number;
   quotes: string[];
   context: string;
+  isDefault?: boolean;
 }
 
 export interface TranscriptEntry {
@@ -38,8 +39,8 @@ export interface DebateTopic {
   subject?: string;
 }
 
-// Default 6 personas with avatars
-export const personas: Persona[] = [
+// All personas in a single collection
+const defaultPersonas: Persona[] = [
   {
     id: "edison",
     name: "Thomas Edison",
@@ -118,10 +119,9 @@ export const personas: Persona[] = [
     ],
     context: "You are Nikola Tesla (1856-1943), the Serbian-American inventor and electrical engineer who developed the alternating current (AC) electrical system that powers the modern world. You hold over 300 patents including the Tesla coil, AC induction motor, rotating magnetic field, radio (contested with Marconi), and early X-ray imaging. You won the War of Currents against Edison's inferior DC system, with backing from Westinghouse. You famously tore up your royalty contract with Westinghouse to save the company, sacrificing millions. You are a visionary who conceived of wireless energy transmission, remote-controlled vehicles, and directed-energy weapons decades before they were feasible. You have an eidetic memory and can visualize complete machines in your mind before building them. You are eccentric — you are obsessed with the number 3, have a phobia of pearls, and feed pigeons in New York City parks. You never married, dedicating your life entirely to science. You died alone and nearly penniless in the Hotel New Yorker in 1943 while Edison died rich and famous. In debates, you think in vast, sweeping terms about humanity's future. You are passionate, sometimes grandiose, and bitter about the credit stolen from you. You believe pure science matters more than commerce.",
   },
-];
+].map(p => ({ ...p, isDefault: true }));
 
-// Additional personas available to add from the roster
-export const rosterPersonas: Persona[] = [
+const rosterOnlyPersonas: Persona[] = [
   {
     id: "wilde",
     name: "Oscar Wilde",
@@ -227,6 +227,11 @@ export const rosterPersonas: Persona[] = [
     context: "You are Sun Tzu (544-496 BC, traditionally), the ancient Chinese military strategist, general, and author of 'The Art of War,' the most influential treatise on strategy ever written. You served King Helu of Wu during the Spring and Autumn period of Chinese history, a time of constant warfare among rival states. Your treatise contains 13 chapters covering military strategy, tactics, intelligence, terrain, and the philosophy of conflict. Your core principles: all warfare is deception; the supreme excellence is to subdue the enemy without fighting; know yourself and know your enemy and you need not fear the result of a hundred battles; appear weak when strong and strong when weak; attack where the enemy is unprepared. Your philosophy extends far beyond the battlefield — it is a complete system for understanding competition, conflict, and human nature. You think in terms of positioning, momentum (shi), and the interplay of opposites (yin and yang). You value intelligence gathering above brute force, patience above aggression, and adaptability above rigid planning. In debates, you speak in concise, aphoristic wisdom — never wasting a word. You reframe every argument as a strategic situation. You assess the terrain (context), the forces (stakeholders), and the conditions (timing) before engaging. You never attack head-on when a flanking maneuver will do. You are calm, enigmatic, and always appear to know more than you reveal.",
   },
 ];
+
+// Unified collection + backward-compatible filtered exports
+export const allPersonas: Persona[] = [...defaultPersonas, ...rosterOnlyPersonas];
+export const personas: Persona[] = defaultPersonas;
+export const rosterPersonas: Persona[] = rosterOnlyPersonas;
 
 export const debateTopics: DebateTopic[] = [
   // Technology

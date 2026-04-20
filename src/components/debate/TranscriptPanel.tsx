@@ -73,7 +73,7 @@ export function TranscriptPanel({ entries, personasState }: TranscriptPanelProps
       <h3 className="font-display text-xs font-bold text-foreground px-3 py-1.5 border-b border-border uppercase tracking-wider text-muted-foreground">
         Transcript
       </h3>
-      <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5" role="log" aria-live="polite" aria-label="Debate transcript">
         {entries.map((entry, i) => {
           const persona = entry.personaId === "human"
             ? humanPersona

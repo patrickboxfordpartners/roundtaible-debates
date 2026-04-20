@@ -92,11 +92,16 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
     >
       {/* Avatar */}
       <motion.div
+        role="button"
+        tabIndex={0}
+        aria-label={`${persona.name}, ${persona.role}${isSpeaking ? " (speaking)" : isThinking ? " (thinking)" : ""}. Click to edit character.`}
         onPointerDown={handlePointerDown}
         onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } }}
         className={`
           relative w-16 h-16 md:w-20 md:h-20 rounded-full
           border-2 transition-all duration-500 overflow-hidden select-none
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
           ${isWinner ? "victory-glow border-gold" : isSpeaking ? "animate-pulse-glow border-primary" : "border-border hover:border-primary/50"}
         `}
         style={{ borderColor: isSpeaking ? persona.color : undefined }}

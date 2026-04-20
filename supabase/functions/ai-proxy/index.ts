@@ -1,11 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import OpenAI from "https://esm.sh/openai@4.67.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = [
+  "https://theroundtaible.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 // Rate limiting (in-memory, per-instance)
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -17,6 +27,12 @@ function checkRateLimit(ip: string): boolean {
   const entry = rateLimits.get(ip);
   if (!entry || now > entry.resetAt) {
     rateLimits.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+    // Periodic cleanup: evict expired entries every 100 requests
+    if (rateLimits.size > 100) {
+      for (const [key, val] of rateLimits) {
+        if (now > val.resetAt) rateLimits.delete(key);
+      }
+    }
     return true;
   }
   if (entry.count >= RATE_LIMIT) return false;
@@ -179,6 +195,8 @@ ${persona.context ? `Additional context about your character: ${persona.context}
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });

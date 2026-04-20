@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Save, Trash2 } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { Persona } from "@/data/debateData";
 
 interface PersonaContextDialogProps {
@@ -13,6 +14,8 @@ interface PersonaContextDialogProps {
 export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: PersonaContextDialogProps) {
   const [contextText, setContextText] = useState(persona?.context || "");
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  const focusRef = useFocusTrap(!!persona, handleClose);
 
   // Sync when persona changes
   useEffect(() => {
@@ -20,6 +23,7 @@ export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: Per
       setContextText(persona.context || "");
       setConfirmRemove(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sync only when persona identity changes, not on every re-render
   }, [persona?.id]);
 
   const handleSave = () => {
@@ -40,6 +44,10 @@ export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: Per
           onClick={onClose}
         >
           <motion.div
+            ref={focusRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={persona ? `Edit ${persona.name}` : "Edit persona"}
             className="bg-card border border-border rounded-xl p-6 max-w-lg w-full mx-4 shadow-2xl"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
@@ -70,6 +78,7 @@ export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: Per
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close dialog"
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
@@ -96,10 +105,16 @@ export function PersonaContextDialog({ persona, onClose, onSave, onRemove }: Per
               </p>
               <textarea
                 value={contextText}
-                onChange={(e) => setContextText(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 2000) setContextText(e.target.value);
+                }}
+                maxLength={2000}
                 placeholder={`e.g. "${persona.name} is particularly passionate about technology and always argues from an innovation-first perspective. Speaks in short, punchy sentences..."`}
                 className="w-full h-32 px-3 py-2 text-sm font-body rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
+              <p className={`text-[10px] font-body mt-1 text-right ${contextText.length > 1800 ? "text-destructive" : "text-muted-foreground"}`}>
+                {contextText.length}/2000
+              </p>
             </div>
 
             {/* Stats */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
+import { toast } from "sonner";
 
 interface ClassItem {
   id: string;
@@ -39,7 +40,7 @@ export default function TeacherDashboard() {
       if (error) throw error;
       setClasses((data as ClassItem[]) || []);
     } catch (err) {
-      console.error("Error fetching classes:", err);
+      toast.error("Failed to load classes");
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ export default function TeacherDashboard() {
       setShowCreate(false);
       fetchClasses();
     } catch (err) {
-      console.error("Error creating class:", err);
+      toast.error("Failed to create class");
     } finally {
       setCreating(false);
     }

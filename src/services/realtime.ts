@@ -1,8 +1,8 @@
 // Realtime abstraction layer
-// Currently uses BroadcastChannel (same-device, cross-tab)
-// Swap to Supabase Realtime for cross-device multiplayer
+// Uses Supabase Realtime (cross-device) with BroadcastChannel fallback (same-device)
 
 import type { TranscriptEntry, DebateTopic, Persona } from "@/data/debateData";
+import { supabase } from "./supabaseClient";
 
 // --- Message types ---
 
@@ -18,7 +18,8 @@ export type RealtimeMessage =
   | { type: "guest_reaction"; payload: { emoji: string } }
   | { type: "guest_persona"; payload: Persona }
   | { type: "guest_join"; payload: { name: string } }
-  | { type: "guest_leave"; payload: { name: string } };
+  | { type: "guest_leave"; payload: { name: string } }
+  | { type: "request_sync"; payload: { name: string } };
 
 export interface RoomState {
   topic: DebateTopic;
@@ -39,63 +40,124 @@ export interface RoomState {
 export interface RealtimeProvider {
   send(message: RealtimeMessage): void;
   subscribe(callback: (message: RealtimeMessage) => void): void;
+  onPresenceSync(callback: (guests: string[]) => void): void;
+  trackPresence(name: string): void;
   disconnect(): void;
 }
 
-// --- BroadcastChannel implementation (same-device, cross-tab) ---
+// --- Throttle utility ---
 
-export function createBroadcastProvider(roomId: string): RealtimeProvider {
-  const channel = new BroadcastChannel(`roundtaible_${roomId}`);
-  let listener: ((message: RealtimeMessage) => void) | null = null;
+function throttle<T extends (...args: never[]) => void>(fn: T, ms: number): T {
+  let lastCall = 0;
+  let pending: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: Parameters<T> | null = null;
 
-  channel.onmessage = (event: MessageEvent) => {
-    listener?.(event.data as RealtimeMessage);
-  };
+  return ((...args: Parameters<T>) => {
+    lastArgs = args;
+    const now = Date.now();
+    const remaining = ms - (now - lastCall);
+
+    if (remaining <= 0) {
+      if (pending) { clearTimeout(pending); pending = null; }
+      lastCall = now;
+      fn(...args);
+    } else if (!pending) {
+      pending = setTimeout(() => {
+        lastCall = Date.now();
+        pending = null;
+        if (lastArgs) fn(...lastArgs);
+      }, remaining);
+    }
+  }) as T;
+}
+
+// --- Supabase Realtime implementation ---
+
+function createSupabaseProvider(roomId: string): RealtimeProvider | null {
+  if (!supabase) return null;
+
+  const channel = supabase.channel(`debate:${roomId}`, {
+    config: { broadcast: { self: false }, presence: { key: roomId } },
+  });
+
+  let messageListener: ((msg: RealtimeMessage) => void) | null = null;
+  let presenceListener: ((guests: string[]) => void) | null = null;
+
+  channel
+    .on("broadcast", { event: "message" }, ({ payload }) => {
+      messageListener?.(payload as RealtimeMessage);
+    })
+    .on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState();
+      const names: string[] = [];
+      for (const key of Object.keys(state)) {
+        for (const presence of state[key]) {
+          const p = presence as { name?: string };
+          if (p.name) names.push(p.name);
+        }
+      }
+      presenceListener?.(names);
+    })
+    .subscribe();
+
+  // Throttle high-frequency messages (timer ticks, speaking state)
+  const throttledSend = throttle((message: RealtimeMessage) => {
+    channel.send({ type: "broadcast", event: "message", payload: message });
+  }, 200);
 
   return {
     send(message: RealtimeMessage) {
-      channel.postMessage(message);
+      // Throttle only high-frequency messages; send the rest immediately
+      if (message.type === "timer" || message.type === "speaking") {
+        throttledSend(message);
+      } else {
+        channel.send({ type: "broadcast", event: "message", payload: message });
+      }
     },
-    subscribe(callback: (message: RealtimeMessage) => void) {
-      listener = callback;
+    subscribe(callback) {
+      messageListener = callback;
+    },
+    onPresenceSync(callback) {
+      presenceListener = callback;
+    },
+    trackPresence(name: string) {
+      channel.track({ name });
     },
     disconnect() {
-      listener = null;
-      channel.close();
+      messageListener = null;
+      presenceListener = null;
+      channel.untrack();
+      supabase.removeChannel(channel);
     },
   };
 }
 
-// --- Supabase implementation (cross-device multiplayer) ---
+// --- BroadcastChannel fallback (same-device, cross-tab) ---
 
-import { createClient } from "@supabase/supabase-js";
+function createBroadcastProvider(roomId: string): RealtimeProvider {
+  const bc = new BroadcastChannel(`roundtaible_${roomId}`);
+  let messageListener: ((msg: RealtimeMessage) => void) | null = null;
 
-export function createSupabaseProvider(roomId: string): RealtimeProvider | null {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) return null;
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const channel = supabase.channel(`debate:${roomId}`);
-  let listener: ((message: RealtimeMessage) => void) | null = null;
-
-  channel
-    .on("broadcast", { event: "message" }, ({ payload }) => {
-      listener?.(payload as RealtimeMessage);
-    })
-    .subscribe();
+  bc.onmessage = (event: MessageEvent) => {
+    messageListener?.(event.data as RealtimeMessage);
+  };
 
   return {
     send(message: RealtimeMessage) {
-      channel.send({ type: "broadcast", event: "message", payload: message });
+      bc.postMessage(message);
     },
     subscribe(callback) {
-      listener = callback;
+      messageListener = callback;
+    },
+    onPresenceSync() {
+      // BroadcastChannel doesn't support presence — guest tracking via messages
+    },
+    trackPresence() {
+      // No-op for BroadcastChannel
     },
     disconnect() {
-      listener = null;
-      supabase.removeChannel(channel);
+      messageListener = null;
+      bc.close();
     },
   };
 }
@@ -103,9 +165,37 @@ export function createSupabaseProvider(roomId: string): RealtimeProvider | null 
 // --- Auto-select best provider ---
 
 export function createProvider(roomId: string): RealtimeProvider {
-  const supabase = createSupabaseProvider(roomId);
-  if (supabase) return supabase;
+  const sp = createSupabaseProvider(roomId);
+  if (sp) return sp;
   return createBroadcastProvider(roomId);
+}
+
+// --- Session persistence ---
+
+const SESSION_KEY = "roundtaible_mp_session";
+
+export interface SessionData {
+  role: "host" | "guest";
+  roomId: string;
+  guestName: string;
+}
+
+export function saveSession(data: SessionData): void {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
+}
+
+export function loadSession(): SessionData | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SessionData;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSession(): void {
+  sessionStorage.removeItem(SESSION_KEY);
 }
 
 // --- Room ID utilities ---

@@ -1,9 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { personas, rosterPersonas } from "@/data/debateData";
+import { allPersonas } from "@/data/debateData";
 import { quizQuestions, calculateResult, personaMindsets, type QuizResult } from "@/data/quizData";
-
-const allPersonas = [...personas, ...rosterPersonas];
 
 // Progress bar
 function ProgressBar({ current, total }: { current: number; total: number }) {

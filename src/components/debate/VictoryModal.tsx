@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import type { Persona } from "@/data/debateData";
 
 interface VictoryModalProps {
@@ -9,6 +10,9 @@ interface VictoryModalProps {
 }
 
 export function VictoryModal({ winner, onDismiss, autoDismissMs }: VictoryModalProps) {
+  const handleClose = useCallback(() => onDismiss(), [onDismiss]);
+  const focusRef = useFocusTrap(!!winner, handleClose);
+
   useEffect(() => {
     if (winner && autoDismissMs) {
       const timer = setTimeout(onDismiss, autoDismissMs);
@@ -40,6 +44,10 @@ export function VictoryModal({ winner, onDismiss, autoDismissMs }: VictoryModalP
           onClick={onDismiss}
         >
           <motion.div
+            ref={focusRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={winner ? `${winner.name} wins the debate` : "Victory"}
             className="bg-card border-2 border-gold rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
             initial={{ scale: 0.5, y: 50 }}
             animate={{ scale: 1, y: 0 }}
