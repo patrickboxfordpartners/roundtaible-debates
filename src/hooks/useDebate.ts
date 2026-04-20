@@ -1,12 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { personas, sampleTranscript, debateTopics, type TranscriptEntry, type Persona, type DebateTopic } from "@/data/debateData";
-import { generatePersonaResponse, generateDebateSummary, isAPIAvailable, getAPIError } from "@/services/aiService";
+import { generatePersonaResponse, generateDebateSummary, isAPIAvailable, getAPIError, resetCircuit } from "@/services/aiService";
 import { toast } from "sonner";
 import { speak, toggleMute } from "@/services/ttsService";
 import { saveDebate } from "@/services/debateHistory";
+import { track } from "@/services/analytics";
+import { canStartDebate } from "@/lib/debateLimits";
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
 
-export function useDebate(educationalConfig?: EducationalConfig) {
+interface DebateOptions {
+  educationalConfig?: EducationalConfig;
+  userId?: string;
+  subscriptionTier?: string;
+}
+
+export function useDebate(educationalConfig?: EducationalConfig, userId?: string, subscriptionTier?: string) {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>(sampleTranscript);
   const [speakingId, setSpeakingId] = useState<string | null>("edison");
@@ -43,10 +51,14 @@ export function useDebate(educationalConfig?: EducationalConfig) {
   const speakerIndexRef = useRef(0);
   const debateStartTimeRef = useRef(0);
   const transcriptRef = useRef<TranscriptEntry[]>([]);
+  const activeTopicRef = useRef(activeTopic);
+  const personasStateRef = useRef(personasState);
   const isGeneratingRef = useRef(false);
   const isDebatingRef = useRef(false);
   const isLightningRef = useRef(false);
   const isPausedRef = useRef(false);
+  const totalPauseTimeRef = useRef(0);
+  const pausedAtRef = useRef(0);
 
   const generateNextResponse = useCallback(async () => {
     if (isGeneratingRef.current || !isDebatingRef.current || isPausedRef.current) return;
@@ -127,9 +139,23 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     speakerRef.current = setTimeout(() => {
       generateNextResponse();
     }, delay);
-  }, [activeTopic, transcript, personasState]);
+  }, [activeTopic, transcript, personasState, educationalConfig]);
 
-  const startDebate = useCallback((lightning = false) => {
+  const [limitReached, setLimitReached] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number } | null>(null);
+
+  const startDebate = useCallback(async (lightning = false) => {
+    if (userId && subscriptionTier) {
+      const { allowed, used, limit } = await canStartDebate(userId, subscriptionTier);
+      if (!allowed) {
+        setLimitReached(true);
+        setUsageInfo({ used, limit });
+        toast.error(`You've used all ${limit} debates this month. Upgrade your plan for more.`);
+        return;
+      }
+      setUsageInfo({ used: used + 1, limit });
+    }
+
     isDebatingRef.current = true;
     isLightningRef.current = lightning;
     isPausedRef.current = false;
@@ -142,6 +168,16 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     setTranscript([]);
     speakerIndexRef.current = 0;
     debateStartTimeRef.current = Date.now();
+    totalPauseTimeRef.current = 0;
+    pausedAtRef.current = 0;
+
+    track({
+      event: "debate_start",
+      topic: activeTopic.title,
+      category: activeTopic.category,
+      personaCount: personasState.filter((p) => p.id !== "human").length,
+      mode: lightning ? "lightning" : "standard",
+    });
 
     timerRef.current = setInterval(() => {
       setTimeRemaining((t) => {
@@ -156,9 +192,16 @@ export function useDebate(educationalConfig?: EducationalConfig) {
           setSpeakingId(null);
           setThinkingId(null);
           // Auto-save debate when timer expires
-          const duration = Math.round((Date.now() - debateStartTimeRef.current) / 1000);
+          const duration = Math.round((Date.now() - debateStartTimeRef.current - totalPauseTimeRef.current) / 1000);
           if (transcriptRef.current.length > 0) {
-            saveDebate(activeTopic, transcriptRef.current, personasState, null, duration);
+            saveDebate(activeTopicRef.current, transcriptRef.current, personasStateRef.current, null, duration);
+            track({
+              event: "debate_end",
+              topic: activeTopicRef.current.title,
+              duration,
+              exchangeCount: transcriptRef.current.length,
+              winnerId: null,
+            });
           }
           return 0;
         }
@@ -173,7 +216,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     }, 1000);
 
     generateNextResponse();
-  }, [generateNextResponse]);
+  }, [generateNextResponse, activeTopic, personasState]);
 
   const stopDebate = useCallback(() => {
     isDebatingRef.current = false;
@@ -192,6 +235,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
   const pauseDebate = useCallback(() => {
     if (!isDebatingRef.current || isPausedRef.current) return;
     isPausedRef.current = true;
+    pausedAtRef.current = Date.now();
     setIsPaused(true);
     clearInterval(timerRef.current);
     clearTimeout(speakerRef.current);
@@ -203,6 +247,10 @@ export function useDebate(educationalConfig?: EducationalConfig) {
   const resumeDebate = useCallback(() => {
     if (!isDebatingRef.current || !isPausedRef.current) return;
     isPausedRef.current = false;
+    if (pausedAtRef.current > 0) {
+      totalPauseTimeRef.current += Date.now() - pausedAtRef.current;
+      pausedAtRef.current = 0;
+    }
     setIsPaused(false);
 
     // Restart the timer from where it left off
@@ -219,9 +267,9 @@ export function useDebate(educationalConfig?: EducationalConfig) {
           setIsLightningRound(false);
           setSpeakingId(null);
           setThinkingId(null);
-          const duration = Math.round((Date.now() - debateStartTimeRef.current) / 1000);
+          const duration = Math.round((Date.now() - debateStartTimeRef.current - totalPauseTimeRef.current) / 1000);
           if (transcriptRef.current.length > 0) {
-            saveDebate(activeTopic, transcriptRef.current, personasState, null, duration);
+            saveDebate(activeTopicRef.current, transcriptRef.current, personasStateRef.current, null, duration);
           }
           return 0;
         }
@@ -236,7 +284,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
 
     // Resume AI generation
     generateNextResponse();
-  }, [generateNextResponse, activeTopic, personasState]);
+  }, [generateNextResponse]);
 
   const selectTopic = useCallback((topicId: string) => {
     const topic = debateTopics.find((t) => t.id === topicId);
@@ -247,6 +295,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
       setActiveTopic(topic);
       setTranscript([]);
       setHeatLevel(20);
+      track({ event: "topic_select", topic: topic.title, category: topic.category });
     }
   }, [stopDebate]);
 
@@ -287,10 +336,18 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     const persona = leaderboard.find((p) => p.id === personaId);
     if (persona) {
       // Save debate before stopping
-      const duration = Math.round((Date.now() - debateStartTimeRef.current) / 1000);
+      const duration = Math.round((Date.now() - debateStartTimeRef.current - totalPauseTimeRef.current) / 1000);
       if (transcriptRef.current.length > 0) {
-        saveDebate(activeTopic, transcriptRef.current, personasState, personaId, duration);
+        saveDebate(activeTopicRef.current, transcriptRef.current, personasStateRef.current, personaId, duration);
+        track({
+          event: "debate_end",
+          topic: activeTopicRef.current.title,
+          duration,
+          exchangeCount: transcriptRef.current.length,
+          winnerId: personaId,
+        });
       }
+      track({ event: "vote", personaId });
       stopDebate();
       const updatedWins = persona.wins + 1;
       setWinner({ ...persona, wins: updatedWins });
@@ -304,7 +361,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
         return updated;
       });
     }
-  }, [stopDebate, leaderboard, activeTopic, personasState]);
+  }, [stopDebate, leaderboard]);
 
   const addReaction = useCallback((emoji: string) => {
     setReactions((prev) => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));
@@ -319,8 +376,16 @@ export function useDebate(educationalConfig?: EducationalConfig) {
   }, []);
 
   const removePersona = useCallback((personaId: string) => {
+    track({ event: "persona_remove", personaId });
     setPersonasState((prev) => prev.filter((p) => p.id !== personaId));
-    setLeaderboard((prev) => prev.filter((p) => p.id !== personaId));
+    setLeaderboard((prev) => {
+      const updated = prev.filter((p) => p.id !== personaId);
+      // Sync persisted leaderboard
+      const wins: Record<string, number> = {};
+      updated.forEach((p) => { wins[p.id] = p.wins; });
+      localStorage.setItem("roundtaible_leaderboard", JSON.stringify(wins));
+      return updated;
+    });
     if (speakingId === personaId) setSpeakingId(null);
   }, [speakingId]);
 
@@ -338,15 +403,18 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     };
     setPersonasState((prev) => [...prev, newPersona]);
     setLeaderboard((prev) => [...prev, newPersona].sort((a, b) => b.wins - a.wins));
+    track({ event: "persona_add", personaId: id, source: "custom" });
   }, []);
 
   const addFromRoster = useCallback((persona: Persona) => {
     setPersonasState((prev) => [...prev, { ...persona, wins: 0 }]);
     setLeaderboard((prev) => [...prev, { ...persona, wins: 0 }].sort((a, b) => b.wins - a.wins));
+    track({ event: "persona_add", personaId: persona.id, source: "roster" });
   }, []);
 
   const summarizeDebate = useCallback(async () => {
     if (transcript.length === 0) return;
+    track({ event: "summary_request" });
 
     const { text, narratorId } = await generateDebateSummary(activeTopic, transcript, personasState);
 
@@ -402,7 +470,10 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     setIsMuted(muted);
   }, []);
 
-  const clearApiError = useCallback(() => setApiError(null), []);
+  const clearApiError = useCallback(() => {
+    resetCircuit();
+    setApiError(null);
+  }, []);
 
   const resetLeaderboard = useCallback(() => {
     localStorage.removeItem("roundtaible_leaderboard");
@@ -411,10 +482,10 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     );
   }, []);
 
-  // Keep transcript ref in sync for use in closures
-  useEffect(() => {
-    transcriptRef.current = transcript;
-  }, [transcript]);
+  // Keep refs in sync for use in interval/timeout closures
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { activeTopicRef.current = activeTopic; }, [activeTopic]);
+  useEffect(() => { personasStateRef.current = personasState; }, [personasState]);
 
   useEffect(() => {
     return () => {
@@ -461,5 +532,7 @@ export function useDebate(educationalConfig?: EducationalConfig) {
     syncFromHost,
     setSpeakingFromHost,
     setTimerFromHost,
+    limitReached,
+    usageInfo,
   };
 }

@@ -6,7 +6,7 @@ import { useBilling } from "@/hooks/useBilling";
 import { useAuth } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
 
-const paidPlans = plans.filter((p) => p.id !== "free");
+const paidPlans = plans;
 
 function PlanCard({
   plan,

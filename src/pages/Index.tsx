@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { personas, rosterPersonas } from "@/data/debateData";
+import { allPersonas } from "@/data/debateData";
 import { useDebate } from "@/hooks/useDebate";
 import { useDebateMode } from "@/contexts/DebateModeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMultiplayer } from "@/hooks/useMultiplayer";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -18,12 +19,14 @@ import { MultiplayerPanel } from "@/components/debate/MultiplayerPanel";
 import { debateTopics } from "@/data/debateData";
 import { motion, AnimatePresence } from "framer-motion";
 import { History, Sun, Moon, Keyboard, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/data/debateData";
 import type { RealtimeMessage } from "@/services/realtime";
 
 const Index = () => {
   const { educationalConfig } = useDebateMode();
-  const debate = useDebate(educationalConfig);
+  const { user, profile } = useAuth();
+  const debate = useDebate(educationalConfig, user?.id, profile?.subscription_tier);
   const mp = useMultiplayer();
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
@@ -32,11 +35,21 @@ const Index = () => {
   const [multiplayerOpen, setMultiplayerOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
-  // Demo/kiosk mode
+  const navigate = useNavigate();
+
+  // Redirect unpaid users to pricing (skip in demo mode)
   const isDemoMode = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("demo") === "true";
   }, []);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    if (!profile) return;
+    if (profile.subscription_tier === "free") {
+      navigate("/pricing", { replace: true });
+    }
+  }, [profile, isDemoMode, navigate]);
   const demoTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Quiz CTA: ?persona=edison pre-selects that persona and highlights their seat
@@ -47,7 +60,6 @@ const Index = () => {
 
   useEffect(() => {
     if (!quizPersonaId) return;
-    const allPersonas = [...personas, ...rosterPersonas];
     const match = allPersonas.find((p) => p.id === quizPersonaId);
     if (!match) return;
     // If the persona is in the roster (not active), add them first
@@ -83,6 +95,7 @@ const Index = () => {
       }
     }, 3000);
     return () => clearTimeout(demoTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- specific debate fields listed to avoid re-running on every render
   }, [isDemoMode, debate.timeRemaining, debate.isDebating, debate.personasState, debate.voteWinner]);
 
   // Demo: after winner is dismissed, start next random topic
@@ -113,6 +126,22 @@ const Index = () => {
         case "guest_persona":
           debate.addFromRoster(msg.payload);
           break;
+        case "request_sync":
+          // Guest reconnected — send them the full current state
+          mp.broadcastState({
+            topic: debate.activeTopic,
+            transcript: debate.transcript,
+            personas: debate.personasState,
+            speakingId: debate.speakingId,
+            thinkingId: debate.thinkingId,
+            timeRemaining: debate.timeRemaining,
+            heatLevel: debate.heatLevel,
+            isDebating: debate.isDebating,
+            isLightning: debate.isLightningRound,
+            reactions: debate.reactions,
+            guests: mp.guests,
+          });
+          break;
       }
     });
   }, [mp.isHost, mp, debate]);
@@ -135,6 +164,7 @@ const Index = () => {
     if (latest) {
       mp.broadcastTranscript(latest);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally tracking length, not full array reference
   }, [mp, debate.transcript.length]);
 
   // Guest: sync state from host
