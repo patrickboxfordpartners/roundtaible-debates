@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { allPersonas, Persona } from "@/data/debateData";
 import { supabase } from "@/services/supabaseClient";
 import Footer from "@/components/Footer";
+import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
 
 const USE_CASES = [
@@ -98,7 +99,7 @@ export default function Landing() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-playfair text-lg font-bold tracking-tight">Roundtaible</span>
+          <Logo size="md" />
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/quiz")}

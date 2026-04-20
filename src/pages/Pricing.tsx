@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { plans, type PlanTier } from "@/lib/plans";
 import { useBilling } from "@/hooks/useBilling";
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
 
@@ -139,11 +140,8 @@ export default function Pricing() {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <button
-            onClick={() => navigate("/")}
-            className="font-playfair text-lg font-bold tracking-tight"
-          >
-            Roundtaible
+          <button onClick={() => navigate("/")}>
+            <Logo size="md" />
           </button>
           <div className="flex items-center gap-3">
             <button
