@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
 import { toast } from "sonner";
+import { Trophy, Plus, Play } from "lucide-react";
 
 interface ClassDetail {
   id: string;
@@ -31,6 +32,16 @@ interface StudentProfile {
   email: string;
 }
 
+interface TournamentItem {
+  id: string;
+  name: string;
+  description: string | null;
+  status: "setup" | "active" | "completed";
+  current_round: number;
+  total_rounds: number;
+  created_at: string;
+}
+
 export default function ClassView() {
   const { classId } = useParams();
   const { profile, isTeacher } = useAuth();
@@ -38,7 +49,13 @@ export default function ClassView() {
   const [classData, setClassData] = useState<ClassDetail | null>(null);
   const [debates, setDebates] = useState<DebateRecord[]>([]);
   const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTournamentCreate, setShowTournamentCreate] = useState(false);
+  const [tournamentName, setTournamentName] = useState("");
+  const [tournamentDesc, setTournamentDesc] = useState("");
+  const [totalRounds, setTotalRounds] = useState(3);
+  const [creating, setCreating] = useState(false);
 
   const fetchClassData = useCallback(async () => {
     if (!supabase || !classId) return;
@@ -63,6 +80,15 @@ export default function ClassView() {
         .limit(50);
 
       setDebates((debateData as DebateRecord[]) || []);
+
+      // Fetch tournaments
+      const { data: tournamentData } = await supabase
+        .from("rt_tournaments")
+        .select("id, name, description, status, current_round, total_rounds, created_at")
+        .eq("class_id", classId)
+        .order("created_at", { ascending: false });
+
+      setTournaments((tournamentData as TournamentItem[]) || []);
 
       // If teacher, fetch student list
       if (isTeacher) {
@@ -91,6 +117,55 @@ export default function ClassView() {
   useEffect(() => {
     if (classId) fetchClassData();
   }, [classId, fetchClassData]);
+
+  async function handleCreateTournament(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase || !profile || !classId) return;
+    setCreating(true);
+
+    try {
+      const { data: tournament, error } = await supabase
+        .from("rt_tournaments")
+        .insert({
+          class_id: classId,
+          created_by: profile.id,
+          name: tournamentName.trim(),
+          description: tournamentDesc.trim() || null,
+          total_rounds: totalRounds,
+          status: "setup",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create initial rounds (for now, all pending)
+      const rounds = [];
+      for (let i = 1; i <= totalRounds; i++) {
+        rounds.push({
+          tournament_id: tournament.id,
+          round_number: i,
+          topic_title: `Round ${i}`,
+          persona_a: `Debater A${i}`,
+          persona_b: `Debater B${i}`,
+          status: i === 1 ? "active" : "pending",
+        });
+      }
+
+      await supabase.from("rt_tournament_rounds").insert(rounds);
+
+      toast.success("Tournament created!");
+      setTournamentName("");
+      setTournamentDesc("");
+      setTotalRounds(3);
+      setShowTournamentCreate(false);
+      fetchClassData();
+    } catch (err) {
+      toast.error("Failed to create tournament");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -158,6 +233,115 @@ export default function ClassView() {
             )}
           </div>
         </div>
+
+        {/* Tournaments */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-xl font-bold flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" /> Tournaments ({tournaments.length})
+            </h2>
+            {isTeacher && (
+              <button
+                onClick={() => setShowTournamentCreate(!showTournamentCreate)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-display font-semibold hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Create Tournament
+              </button>
+            )}
+          </div>
+
+          {showTournamentCreate && (
+            <form onSubmit={handleCreateTournament} className="bg-card border border-border rounded-lg p-6 mb-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 font-body">Tournament Name</label>
+                <input
+                  required
+                  value={tournamentName}
+                  onChange={(e) => setTournamentName(e.target.value)}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body"
+                  placeholder="e.g., Spring Debate Championship"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 font-body">Description (optional)</label>
+                <textarea
+                  value={tournamentDesc}
+                  onChange={(e) => setTournamentDesc(e.target.value)}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body h-20 resize-none"
+                  placeholder="Brief description of the tournament format and goals"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 font-body">Number of Rounds</label>
+                <select
+                  value={totalRounds}
+                  onChange={(e) => setTotalRounds(Number(e.target.value))}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body"
+                >
+                  <option value={3}>3 rounds</option>
+                  <option value={4}>4 rounds (quarterfinals)</option>
+                  <option value={5}>5 rounds</option>
+                  <option value={7}>7 rounds</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {creating ? "Creating..." : "Create Tournament"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTournamentCreate(false)}
+                  className="px-4 py-2 border border-border rounded-lg font-display text-sm font-semibold hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {tournaments.length === 0 ? (
+            <div className="bg-card border border-border rounded-lg p-8 text-center">
+              <p className="text-muted-foreground font-body">No tournaments yet. {isTeacher && "Create one to get started!"}</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {tournaments.map((t) => (
+                <div
+                  key={t.id}
+                  onClick={() => navigate(`/tournament/${t.id}`)}
+                  className="bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display font-bold flex items-center gap-2">
+                        {t.name}
+                        {t.status === "active" && (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full font-semibold">
+                            <Play className="w-3 h-3 fill-current" /> Live
+                          </span>
+                        )}
+                      </h3>
+                      {t.description && (
+                        <p className="text-sm text-muted-foreground font-body mt-1">{t.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground font-body">
+                        <span>Round {t.current_round} of {t.total_rounds}</span>
+                        <span className={`px-2 py-0.5 rounded capitalize ${t.status === "active" ? "bg-green-500/10 text-green-400" : t.status === "completed" ? "bg-primary/10 text-primary" : "bg-muted"}`}>
+                          {t.status}
+                        </span>
+                      </div>
+                    </div>
+                    <Trophy className="w-5 h-5 text-amber-500 shrink-0 ml-3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Teacher: Student List */}
         {isTeacher && (

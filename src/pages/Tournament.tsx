@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
 import { toast } from "sonner";
-import { Trophy, Play, ChevronRight, ArrowLeft, Users, ThumbsUp } from "lucide-react";
+import { Trophy, Play, ChevronRight, ArrowLeft, Users, ThumbsUp, Zap } from "lucide-react";
 
 interface Round {
   id: string;
@@ -26,6 +26,137 @@ interface TournamentData {
   total_rounds: number;
   topics: string[];
   created_by: string;
+}
+
+interface BracketNode {
+  round: Round;
+  left?: BracketNode;
+  right?: BracketNode;
+}
+
+function BracketMatch({ round }: { round: Round }) {
+  const totalVotes = round.votes_a + round.votes_b;
+  const pctA = totalVotes > 0 ? Math.round((round.votes_a / totalVotes) * 100) : 50;
+  const pctB = totalVotes > 0 ? Math.round((round.votes_b / totalVotes) * 100) : 50;
+
+  return (
+    <div className={`bg-card border rounded-lg p-3 min-w-[200px] ${round.status === "active" ? "border-primary shadow-lg shadow-primary/20" : "border-border"}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-display font-bold text-muted-foreground uppercase tracking-wider">
+          {round.status === "active" ? "🔴 Live" : round.status === "completed" ? `R${round.round_number}` : "Pending"}
+        </span>
+        {round.status === "completed" && round.winner_id && (
+          <Trophy className="w-3.5 h-3.5 text-amber-500" />
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {[
+          { id: round.persona_a, votes: round.votes_a, pct: pctA },
+          { id: round.persona_b, votes: round.votes_b, pct: pctB },
+        ].map(side => {
+          const isWinner = round.winner_id === side.id;
+          return (
+            <div
+              key={side.id}
+              className={`text-xs font-body p-2 rounded transition-all ${
+                isWinner
+                  ? "bg-primary/10 border border-primary/30 font-bold"
+                  : round.status === "completed"
+                  ? "bg-muted/30 text-muted-foreground"
+                  : "bg-muted/50"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="truncate">{side.id}</span>
+                {round.status !== "pending" && (
+                  <span className="font-mono text-[10px] ml-1">{side.votes}</span>
+                )}
+              </div>
+              {round.status !== "pending" && (
+                <div className="h-1 bg-background rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${isWinner ? "bg-primary" : "bg-muted-foreground/40"}`} style={{ width: `${side.pct}%` }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BracketView({ tree }: { tree: BracketNode }) {
+  const { round, left, right } = tree;
+
+  return (
+    <div className="overflow-x-auto pb-4">
+      <div className="flex items-center justify-center gap-8 min-w-max">
+        {/* Left subtree */}
+        {left && (
+          <div className="flex flex-col items-end gap-8">
+            {left.left && (
+              <div className="flex items-center gap-4">
+                <BracketMatch round={left.left.round} />
+                <div className="w-8 h-px bg-border relative">
+                  <div className="absolute right-0 w-px h-16 bg-border -translate-y-8" />
+                </div>
+              </div>
+            )}
+            {left.right && (
+              <div className="flex items-center gap-4">
+                <BracketMatch round={left.right.round} />
+                <div className="w-8 h-px bg-border relative">
+                  <div className="absolute right-0 w-px h-16 bg-border translate-y-8" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Semi-final left */}
+        {left && (
+          <div className="flex items-center gap-4">
+            <BracketMatch round={left.round} />
+            <div className="w-8 h-px bg-border" />
+          </div>
+        )}
+
+        {/* Finals */}
+        <BracketMatch round={round} />
+
+        {/* Semi-final right */}
+        {right && (
+          <div className="flex items-center gap-4">
+            <div className="w-8 h-px bg-border" />
+            <BracketMatch round={right.round} />
+          </div>
+        )}
+
+        {/* Right subtree */}
+        {right && (
+          <div className="flex flex-col items-start gap-8">
+            {right.left && (
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-px bg-border relative">
+                  <div className="absolute left-0 w-px h-16 bg-border -translate-y-8" />
+                </div>
+                <BracketMatch round={right.left.round} />
+              </div>
+            )}
+            {right.right && (
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-px bg-border relative">
+                  <div className="absolute left-0 w-px h-16 bg-border translate-y-8" />
+                </div>
+                <BracketMatch round={right.right.round} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function Tournament() {
@@ -111,6 +242,49 @@ export default function Tournament() {
   const winner = completedRounds.length === rounds.length && rounds.length > 0
     ? rounds[rounds.length - 1]?.winner_id
     : null;
+
+  // Build bracket tree structure
+  const buildBracket = (): BracketNode[] => {
+    const roundsByNum: Record<number, Round[]> = {};
+    rounds.forEach(r => {
+      if (!roundsByNum[r.round_number]) roundsByNum[r.round_number] = [];
+      roundsByNum[r.round_number].push(r);
+    });
+
+    const maxRound = Math.max(...Object.keys(roundsByNum).map(Number));
+    const bracket: BracketNode[] = [];
+
+    // Finals (last round)
+    const finals = roundsByNum[maxRound]?.[0];
+    if (finals) {
+      const node: BracketNode = { round: finals };
+      bracket.push(node);
+
+      // Build semis (second-to-last round)
+      if (maxRound > 1) {
+        const semis = roundsByNum[maxRound - 1] || [];
+        if (semis.length >= 2) {
+          node.left = { round: semis[0] };
+          node.right = { round: semis[1] };
+
+          // Build quarters (third-to-last round)
+          if (maxRound > 2) {
+            const quarters = roundsByNum[maxRound - 2] || [];
+            if (quarters.length >= 4) {
+              node.left.left = { round: quarters[0] };
+              node.left.right = { round: quarters[1] };
+              node.right.left = { round: quarters[2] };
+              node.right.right = { round: quarters[3] };
+            }
+          }
+        }
+      }
+    }
+
+    return bracket;
+  };
+
+  const bracketTree = buildBracket();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -208,10 +382,20 @@ export default function Tournament() {
           </div>
         )}
 
-        {/* Bracket history */}
-        {completedRounds.length > 0 && (
+        {/* Bracket visualization */}
+        {bracketTree.length > 0 && (
           <div>
-            <h2 className="font-display text-lg font-bold mb-4">Bracket</h2>
+            <h2 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" /> Tournament Bracket
+            </h2>
+            <BracketView tree={bracketTree[0]} />
+          </div>
+        )}
+
+        {/* Linear history fallback */}
+        {completedRounds.length > 0 && bracketTree.length === 0 && (
+          <div>
+            <h2 className="font-display text-lg font-bold mb-4">Results</h2>
             <div className="space-y-3">
               {completedRounds.map(r => (
                 <div key={r.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
