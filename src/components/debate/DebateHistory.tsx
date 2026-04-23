@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, X, Copy, Trash2, Clock, Trophy, Play } from "lucide-react";
+import { History, X, Copy, Trash2, Clock, Trophy, Play, Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 20;
 import { getSavedDebates, deleteDebate, clearHistory, formatTranscriptForExport, type SavedDebate } from "@/services/debateHistory";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DebateReplay } from "./DebateReplay";
@@ -16,6 +18,8 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
   const [selectedDebate, setSelectedDebate] = useState<SavedDebate | null>(null);
   const [replayDebate, setReplayDebate] = useState<SavedDebate | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const handleClose = useCallback(() => onClose(), [onClose]);
   const focusRef = useFocusTrap(open, handleClose);
 
@@ -24,8 +28,24 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
       setDebates(getSavedDebates());
       setSelectedDebate(null);
       setConfirmClear(false);
+      setSearch("");
+      setPage(0);
     }
   }, [open]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return debates;
+    const q = search.toLowerCase();
+    return debates.filter(d =>
+      d.topic.title.toLowerCase().includes(q) ||
+      d.personas.some(p => p.name.toLowerCase().includes(q))
+    );
+  }, [debates, search]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const handleSearch = (q: string) => { setSearch(q); setPage(0); };
 
   const handleCopy = (debate: SavedDebate) => {
     const text = formatTranscriptForExport(debate);
@@ -34,6 +54,19 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
     }).catch(() => {
       toast.error("Failed to copy");
     });
+  };
+
+  const handleDownload = (debate: SavedDebate) => {
+    const text = formatTranscriptForExport(debate);
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const slug = debate.topic.title.replace(/[^a-z0-9]/gi, "_").toLowerCase().slice(0, 40);
+    a.href = url;
+    a.download = `roundtaible_${slug}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Transcript downloaded");
   };
 
   const handleDelete = (id: string) => {
@@ -90,11 +123,11 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <History className="w-5 h-5 text-primary" />
                 <h2 className="font-display text-xl font-bold text-foreground">Debate History</h2>
-                <span className="text-xs font-body text-muted-foreground">({debates.length})</span>
+                <span className="text-xs font-body text-muted-foreground">({filtered.length}{search ? ` of ${debates.length}` : ""})</span>
               </div>
               <div className="flex items-center gap-2">
                 {debates.length > 0 && (
@@ -122,6 +155,20 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                 </button>
               </div>
             </div>
+
+            {/* Search */}
+            {!selectedDebate && debates.length > 0 && (
+              <div className="relative mb-3 flex-shrink-0">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e => handleSearch(e.target.value)}
+                  placeholder="Search topics or personas..."
+                  className="w-full pl-8 pr-3 py-1.5 text-xs font-body bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            )}
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -153,12 +200,18 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap">
                       <button
                         onClick={() => setReplayDebate(selectedDebate)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                       >
                         <Play className="w-3.5 h-3.5" /> Replay
+                      </button>
+                      <button
+                        onClick={() => handleDownload(selectedDebate)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download
                       </button>
                       <button
                         onClick={() => handleCopy(selectedDebate)}
@@ -186,10 +239,15 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                     })}
                   </div>
                 </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-8">
+                  <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="font-body text-sm text-muted-foreground">No debates match your search.</p>
+                </div>
               ) : (
                 /* Debate list */
                 <div className="space-y-2">
-                  {debates.map((debate) => {
+                  {paginated.map((debate) => {
                     const winner = debate.winnerId
                       ? debate.personas.find(p => p.id === debate.winnerId)
                       : null;
@@ -233,6 +291,14 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                         {/* Actions */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
+                            onClick={(e) => { e.stopPropagation(); handleDownload(debate); }}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            title="Download transcript"
+                            aria-label="Download transcript"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(debate); }}
                             className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                             title="Copy transcript"
@@ -255,6 +321,31 @@ export function DebateHistory({ open, onClose }: DebateHistoryProps) {
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {!selectedDebate && totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 mt-3 border-t border-border flex-shrink-0">
+                <span className="text-xs font-body text-muted-foreground">
+                  Page {page + 1} of {totalPages}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                    className="p-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-40 transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={page >= totalPages - 1}
+                    className="p-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-40 transition-colors"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

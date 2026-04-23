@@ -16,6 +16,9 @@ const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const ClassView = lazy(() => import("./pages/ClassView"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Assignments = lazy(() => import("./pages/Assignments"));
+const Tournament = lazy(() => import("./pages/Tournament"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -65,6 +68,30 @@ const App = () => (
               }
             />
             <Route path="/pricing" element={<Pricing />} />
+            <Route
+              path="/analytics"
+              element={
+                <AuthGuard>
+                  <Analytics />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/assignments"
+              element={
+                <AuthGuard>
+                  <Assignments />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/tournament/:tournamentId"
+              element={
+                <AuthGuard>
+                  <Tournament />
+                </AuthGuard>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

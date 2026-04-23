@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play, Brain } from "lucide-react";
+import { Mic, MicOff, Zap, Shuffle, FileText, Send, Volume2, VolumeX, GraduationCap, Pause, Play, Brain, PenLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { debateTopics } from "@/data/debateData";
 import type { Persona } from "@/data/debateData";
@@ -27,6 +27,7 @@ interface ControlBarProps {
   isPaused?: boolean;
   onPauseDebate?: () => void;
   onResumeDebate?: () => void;
+  onCustomTopic?: (title: string) => void;
 }
 
 export function ControlBar({
@@ -46,12 +47,15 @@ export function ControlBar({
   isPaused,
   onPauseDebate,
   onResumeDebate,
+  onCustomTopic,
 }: ControlBarProps) {
   const [micOn, setMicOn] = useState(false);
   const [pitchText, setPitchText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [topicCategory, setTopicCategory] = useState<string>("All");
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customTopicText, setCustomTopicText] = useState("");
   const { mode: debateMode, setMode, educationalConfig, updateEducationalConfig } = useDebateMode();
 
   const navigate = useNavigate();
@@ -299,6 +303,43 @@ export function ControlBar({
         >
           <Shuffle className="w-3.5 h-3.5" /> Surprise Me
         </button>
+
+        {/* Custom topic */}
+        {onCustomTopic && !showCustomInput && (
+          <button
+            onClick={() => setShowCustomInput(true)}
+            aria-label="Enter a custom topic"
+            className="px-3 py-1.5 text-xs font-display font-semibold rounded-lg border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-1"
+          >
+            <PenLine className="w-3.5 h-3.5" /> Custom Topic
+          </button>
+        )}
+        {onCustomTopic && showCustomInput && (
+          <form
+            className="flex items-center gap-1"
+            onSubmit={e => {
+              e.preventDefault();
+              if (customTopicText.trim()) {
+                onCustomTopic(customTopicText.trim());
+                setShowCustomInput(false);
+                setCustomTopicText("");
+              }
+            }}
+          >
+            <input
+              autoFocus
+              type="text"
+              value={customTopicText}
+              onChange={e => setCustomTopicText(e.target.value)}
+              placeholder="Type your topic..."
+              className="px-2 py-1.5 text-xs font-body bg-background border border-primary rounded-lg w-44 focus:outline-none focus:ring-1 focus:ring-primary"
+              onKeyDown={e => e.key === "Escape" && (setShowCustomInput(false), setCustomTopicText(""))}
+            />
+            <button type="submit" disabled={!customTopicText.trim()} className="p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors">
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        )}
 
         <button
           onClick={isDebating ? onStopDebate : onLightningRound}

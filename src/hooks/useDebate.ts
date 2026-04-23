@@ -7,6 +7,27 @@ import { saveDebate } from "@/services/debateHistory";
 import { track } from "@/services/analytics";
 import { canStartDebate } from "@/lib/debateLimits";
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
+import { supabase } from "@/services/supabaseClient";
+
+async function syncLeaderboardWin(userId: string, personaId: string, personaName: string) {
+  if (!supabase || !userId) return;
+  try {
+    await supabase.from("rt_leaderboards").upsert(
+      { user_id: userId, persona_id: personaId, persona_name: personaName, wins: 1, updated_at: new Date().toISOString() },
+      {
+        onConflict: "user_id,persona_id",
+        ignoreDuplicates: false,
+      }
+    );
+    // Increment wins using RPC — fall back to select+update if RPC unavailable
+    await supabase.rpc("increment_leaderboard_win", { p_user_id: userId, p_persona_id: personaId, p_persona_name: personaName }).catch(async () => {
+      const { data } = await supabase!.from("rt_leaderboards").select("wins").eq("user_id", userId).eq("persona_id", personaId).single();
+      await supabase!.from("rt_leaderboards").update({ wins: (data?.wins ?? 0) + 1, updated_at: new Date().toISOString() }).eq("user_id", userId).eq("persona_id", personaId);
+    });
+  } catch (err) {
+    console.warn("Failed to sync leaderboard win:", err);
+  }
+}
 
 interface DebateOptions {
   educationalConfig?: EducationalConfig;
@@ -299,6 +320,21 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
     }
   }, [stopDebate]);
 
+  const setCustomTopic = useCallback((title: string) => {
+    if (!title.trim()) return;
+    const custom: DebateTopic = {
+      id: `custom_${Date.now()}`,
+      title: title.trim(),
+      category: "Custom",
+    };
+    if (isDebatingRef.current) stopDebate();
+    setActiveTopic(custom);
+    activeTopicRef.current = custom;
+    setTranscript([]);
+    setHeatLevel(20);
+    track({ event: "topic_select", topic: custom.title, category: "Custom" });
+  }, [stopDebate]);
+
   const surpriseMe = useCallback(() => {
     const idx = Math.floor(Math.random() * debateTopics.length);
     selectTopic(debateTopics[idx].id);
@@ -360,8 +396,12 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
         localStorage.setItem("roundtaible_leaderboard", JSON.stringify(wins));
         return updated;
       });
+      // Sync win to Supabase for authenticated users
+      if (userId) {
+        syncLeaderboardWin(userId, personaId, persona.name);
+      }
     }
-  }, [stopDebate, leaderboard]);
+  }, [stopDebate, leaderboard, userId]);
 
   const addReaction = useCallback((emoji: string) => {
     setReactions((prev) => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));
@@ -510,6 +550,7 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
     startDebate,
     stopDebate,
     selectTopic,
+    setCustomTopic,
     surpriseMe,
     startLightningRound,
     addTranscriptEntry,

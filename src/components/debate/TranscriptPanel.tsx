@@ -2,6 +2,27 @@ import { useRef, useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { TranscriptEntry, Persona } from "@/data/debateData";
 
+const MARKER_CONFIG: Record<string, { icon: string; label: string; classes: string; titlePrefix: string }> = {
+  Fact: {
+    icon: "📋",
+    label: "Fact",
+    classes: "bg-blue-500/15 text-blue-300 border-blue-500/30 hover:bg-blue-500/25",
+    titlePrefix: "Historical fact",
+  },
+  Question: {
+    icon: "💭",
+    label: "Discuss",
+    classes: "bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25",
+    titlePrefix: "Discussion question",
+  },
+  Vocabulary: {
+    icon: "📖",
+    label: "Vocab",
+    classes: "bg-purple-500/15 text-purple-300 border-purple-500/30 hover:bg-purple-500/25",
+    titlePrefix: "Vocabulary term",
+  },
+};
+
 // Parse educational markers like [Fact: ...], [Question: ...], [Vocabulary: ...]
 function renderTextWithMarkers(text: string): ReactNode {
   const markerPattern = /\[(Fact|Question|Vocabulary):\s*([^\]]+)\]/g;
@@ -19,18 +40,15 @@ function renderTextWithMarkers(text: string): ReactNode {
     const type = match[1];
     const content = match[2];
 
-    const styles: Record<string, string> = {
-      Fact: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-      Question: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-      Vocabulary: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    };
-
+    const cfg = MARKER_CONFIG[type];
     parts.push(
       <span
         key={key++}
-        className={`inline-block mt-1 px-1.5 py-0.5 text-[10px] font-display font-semibold rounded border ${styles[type] || ""}`}
+        title={cfg ? `${cfg.titlePrefix}: ${content}` : content}
+        className={`inline-flex items-center gap-1 mt-1 ml-0.5 px-2 py-0.5 text-[10px] font-display font-semibold rounded-full border cursor-help transition-colors ${cfg?.classes || "bg-muted text-muted-foreground border-border"}`}
       >
-        {type}: {content}
+        <span aria-hidden="true">{cfg?.icon}</span>
+        <span>{cfg?.label ?? type}: {content}</span>
       </span>
     );
 

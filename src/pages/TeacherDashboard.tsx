@@ -92,6 +92,8 @@ export default function TeacherDashboard() {
             <span className="text-sm text-muted-foreground font-body">
               {profile?.full_name || profile?.email}
             </span>
+            <button onClick={() => navigate("/assignments")} className="text-sm text-muted-foreground hover:text-foreground font-body">Assignments</button>
+            <button onClick={() => navigate("/analytics")} className="text-sm text-muted-foreground hover:text-foreground font-body">Analytics</button>
             <button
               onClick={() => navigate("/app")}
               className="text-sm text-primary hover:underline font-body"

@@ -18,7 +18,8 @@ import { DebateHistory } from "@/components/debate/DebateHistory";
 import { MultiplayerPanel } from "@/components/debate/MultiplayerPanel";
 import { debateTopics } from "@/data/debateData";
 import { motion, AnimatePresence } from "framer-motion";
-import { History, Sun, Moon, Keyboard, Users } from "lucide-react";
+import { History, Sun, Moon, Keyboard, Users, Zap } from "lucide-react";
+import { canStartDebate, getMonthlyLimit } from "@/lib/debateLimits";
 import { useNavigate } from "react-router-dom";
 import type { Persona } from "@/data/debateData";
 import type { RealtimeMessage } from "@/services/realtime";
@@ -30,6 +31,9 @@ const Index = () => {
   const mp = useMultiplayer();
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [quotaUsed, setQuotaUsed] = useState(0);
+  const [quotaLoaded, setQuotaLoaded] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [multiplayerOpen, setMultiplayerOpen] = useState(false);
@@ -43,13 +47,14 @@ const Index = () => {
     return params.get("demo") === "true";
   }, []);
 
+  // Load quota for authenticated paid users
   useEffect(() => {
-    if (isDemoMode) return;
-    if (!profile) return;
-    if (profile.subscription_tier === "free") {
-      navigate("/pricing", { replace: true });
-    }
-  }, [profile, isDemoMode, navigate]);
+    if (isDemoMode || !profile || profile.subscription_tier === "free") { setQuotaLoaded(true); return; }
+    canStartDebate(profile.id, profile.subscription_tier).then(({ used }) => {
+      setQuotaUsed(used);
+      setQuotaLoaded(true);
+    });
+  }, [profile, isDemoMode]);
   const demoTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Quiz CTA: ?persona=edison pre-selects that persona and highlights their seat
@@ -266,9 +271,19 @@ const Index = () => {
     setHistoryOpen(prev => !prev);
   }, []);
 
+  // Gated start: check free tier / quota before launching debate
+  const handleStartDebate = useCallback(async () => {
+    if (isDemoMode) { debate.startDebate(); return; }
+    if (!profile || profile.subscription_tier === "free") { setShowPaywall(true); return; }
+    const { allowed, used } = await canStartDebate(profile.id, profile.subscription_tier);
+    setQuotaUsed(used);
+    if (!allowed) { setShowPaywall(true); return; }
+    debate.startDebate();
+  }, [isDemoMode, profile, debate]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
-    onStartDebate: () => debate.startDebate(),
+    onStartDebate: handleStartDebate,
     onStopDebate: debate.stopDebate,
     onLightningRound: debate.startLightningRound,
     onSurpriseMe: debate.surpriseMe,
@@ -316,6 +331,28 @@ const Index = () => {
             <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-display font-bold tracking-widest uppercase rounded bg-primary/15 text-primary border border-primary/30">
               Demo Mode
             </span>
+          )}
+          {/* Quota bar */}
+          {!isDemoMode && profile && profile.subscription_tier !== "free" && quotaLoaded && (
+            <button
+              onClick={() => setShowPaywall(true)}
+              className="inline-flex items-center gap-1.5 mt-1.5 group"
+              title="View plan usage"
+            >
+              <span className="text-[10px] font-body text-muted-foreground">
+                {quotaUsed}/{getMonthlyLimit(profile.subscription_tier)} debates
+              </span>
+              <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    quotaUsed / getMonthlyLimit(profile.subscription_tier) > 0.8
+                      ? "bg-destructive"
+                      : "bg-primary"
+                  }`}
+                  style={{ width: `${Math.min(100, (quotaUsed / getMonthlyLimit(profile.subscription_tier)) * 100)}%` }}
+                />
+              </div>
+            </button>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -479,7 +516,8 @@ const Index = () => {
           <ControlBar
             isDebating={debate.isDebating}
             personasState={debate.personasState}
-            onStartDebate={debate.startDebate}
+            onStartDebate={handleStartDebate}
+            onCustomTopic={debate.setCustomTopic}
             onStopDebate={debate.stopDebate}
             onSelectTopic={debate.selectTopic}
             onSurpriseMe={debate.surpriseMe}
@@ -537,6 +575,63 @@ const Index = () => {
         onAdd={debate.addPersona}
         onAddFromRoster={debate.addFromRoster}
       />
+
+      {/* Paywall modal */}
+      <AnimatePresence>
+        {showPaywall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setShowPaywall(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-8 text-center"
+            >
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Zap className="h-7 w-7 text-primary" />
+              </div>
+              {profile && profile.subscription_tier !== "free" ? (
+                <>
+                  <h2 className="font-display text-2xl font-bold mb-2">Monthly Limit Reached</h2>
+                  <p className="text-muted-foreground font-body mb-2">
+                    You've used <strong>{quotaUsed}</strong> of <strong>{getMonthlyLimit(profile.subscription_tier)}</strong> debates this month.
+                  </p>
+                  <p className="text-sm text-muted-foreground font-body mb-6">
+                    Your quota resets on the 1st of next month, or upgrade to get more debates.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2 className="font-display text-2xl font-bold mb-2">Unlock The Roundtaible</h2>
+                  <p className="text-muted-foreground font-body mb-6">
+                    You're watching a demo. Subscribe to start your own debates, save history, and access all 14 personas.
+                  </p>
+                </>
+              )}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { setShowPaywall(false); navigate("/pricing"); }}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-sm hover:bg-primary/90 transition-colors"
+                >
+                  {profile && profile.subscription_tier !== "free" ? "Upgrade Plan" : "See Plans"}
+                </button>
+                <button
+                  onClick={() => setShowPaywall(false)}
+                  className="w-full py-2 text-sm text-muted-foreground hover:text-foreground font-body transition-colors"
+                >
+                  Continue watching
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
