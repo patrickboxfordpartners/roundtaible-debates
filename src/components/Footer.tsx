@@ -112,9 +112,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="grid gap-12 md:grid-cols-4">
+        <div className="grid gap-12 text-center md:grid-cols-4 md:text-left">
           {/* Brand */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 flex flex-col items-center md:items-start">
             <Logo size="md" />
             <p className="text-[10px] tracking-widest uppercase text-muted-foreground/60 mt-3 border border-border rounded px-3 py-1.5 inline-block">
               A Boxford Partners Company
@@ -193,7 +193,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-16 border-t border-border pt-6">
+        <div className="mt-16 border-t border-border pt-6 text-center md:text-left">
           <p className="text-xs text-muted-foreground/50">
             © {new Date().getFullYear()} Boxford Partners LLC DBA ROUNDTAIBLE. All rights reserved.
           </p>
