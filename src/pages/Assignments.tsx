@@ -15,6 +15,9 @@ interface Assignment {
   is_active: boolean;
   created_at: string;
   rt_classes?: { name: string } | null;
+  submitted?: boolean; // For students
+  submission_count?: number; // For teachers
+  total_students?: number; // For teachers
 }
 
 interface ClassOption { id: string; name: string }
@@ -47,16 +50,60 @@ export default function Assignments() {
           supabase.from("rt_assignments").select("*, rt_classes(name)").eq("teacher_id", profile.id).order("created_at", { ascending: false }),
           supabase.from("rt_classes").select("id, name").eq("teacher_id", profile.id).eq("is_active", true),
         ]);
-        setAssignments((asgn as Assignment[]) || []);
+
+        // Fetch submission counts for each assignment
+        if (asgn && asgn.length > 0) {
+          const assignmentIds = asgn.map((a: Assignment) => a.id);
+          const [{ data: submissions }, { data: classMembers }] = await Promise.all([
+            supabase.from("rt_assignment_submissions").select("assignment_id").in("assignment_id", assignmentIds),
+            supabase.from("rt_class_members").select("class_id").in("class_id", asgn.map((a: Assignment) => a.class_id)),
+          ]);
+
+          // Count submissions per assignment
+          const submissionCounts = new Map<string, number>();
+          (submissions || []).forEach((s: { assignment_id: string }) => {
+            submissionCounts.set(s.assignment_id, (submissionCounts.get(s.assignment_id) || 0) + 1);
+          });
+
+          // Count students per class
+          const studentCounts = new Map<string, number>();
+          (classMembers || []).forEach((m: { class_id: string }) => {
+            studentCounts.set(m.class_id, (studentCounts.get(m.class_id) || 0) + 1);
+          });
+
+          // Add counts to assignments
+          const enriched = asgn.map((a: Assignment) => ({
+            ...a,
+            submission_count: submissionCounts.get(a.id) || 0,
+            total_students: studentCounts.get(a.class_id) || 0,
+          }));
+          setAssignments(enriched);
+        } else {
+          setAssignments([]);
+        }
+
         setClasses((cls as ClassOption[]) || []);
         if (cls?.length) setForm(f => ({ ...f, classId: cls[0].id }));
       } else {
-        // Student: see assignments for their classes
+        // Student: see assignments for their classes + check if submitted
         const { data: memberships } = await supabase.from("rt_class_members").select("class_id").eq("student_id", profile.id);
         if (memberships && memberships.length > 0) {
           const classIds = memberships.map(m => m.class_id);
           const { data: asgn } = await supabase.from("rt_assignments").select("*, rt_classes(name)").in("class_id", classIds).eq("is_active", true).order("due_date", { ascending: true });
-          setAssignments((asgn as Assignment[]) || []);
+
+          if (asgn && asgn.length > 0) {
+            const assignmentIds = asgn.map((a: Assignment) => a.id);
+            const { data: submissions } = await supabase.from("rt_assignment_submissions").select("assignment_id").eq("student_id", profile.id).in("assignment_id", assignmentIds);
+
+            const submittedIds = new Set((submissions || []).map((s: { assignment_id: string }) => s.assignment_id));
+            const enriched = asgn.map((a: Assignment) => ({
+              ...a,
+              submitted: submittedIds.has(a.id),
+            }));
+            setAssignments(enriched);
+          } else {
+            setAssignments([]);
+          }
         }
       }
     } finally {
@@ -156,15 +203,30 @@ export default function Assignments() {
                         {a.due_date && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Due {new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
                       </div>
                       {a.instructions && <p className="text-sm font-body text-muted-foreground mt-2">{a.instructions}</p>}
+                      {isTeacher && a.total_students !== undefined && (
+                        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground font-body">
+                          <span>
+                            <span className="font-semibold text-foreground">{a.submission_count || 0}</span> / {a.total_students} submitted
+                          </span>
+                          {a.submission_count && a.submission_count > 0 && (
+                            <span className="text-primary hover:underline cursor-pointer">View submissions</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {!isTeacher && (
+                      {!isTeacher && !a.submitted && (
                         <button
-                          onClick={() => navigate(`/app?topic=${encodeURIComponent(a.topic_title)}`)}
+                          onClick={() => navigate(`/app?topic=${encodeURIComponent(a.topic_title)}&assignment=${a.id}`)}
                           className="px-3 py-1.5 text-xs font-display font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                         >
                           Start Debate
                         </button>
+                      )}
+                      {!isTeacher && a.submitted && (
+                        <span className="px-3 py-1.5 text-xs font-display font-semibold bg-green-500/10 text-green-400 rounded-lg flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Submitted
+                        </span>
                       )}
                       {isTeacher && (
                         <button onClick={() => handleDeactivate(a.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
