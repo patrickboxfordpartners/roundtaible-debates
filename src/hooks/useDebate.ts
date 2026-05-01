@@ -25,7 +25,6 @@ async function syncLeaderboardWin(userId: string, personaId: string, personaName
       await supabase!.from("rt_leaderboards").update({ wins: (data?.wins ?? 0) + 1, updated_at: new Date().toISOString() }).eq("user_id", userId).eq("persona_id", personaId);
     });
   } catch (err) {
-    console.warn("Failed to sync leaderboard win:", err);
   }
 }
 
@@ -53,7 +52,6 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
           .sort((a, b) => b.wins - a.wins);
       }
     } catch (e) {
-      console.warn("Failed to load leaderboard:", e);
     }
     return [...personas].sort((a, b) => b.wins - a.wins);
   });
@@ -129,7 +127,6 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
 
       setHeatLevel((h) => Math.min(100, h + Math.random() * 8 + 2));
     } catch (error: unknown) {
-      console.error("Error generating response:", error);
 
       if (!isAPIAvailable()) {
         setSpeakingId(null);

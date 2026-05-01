@@ -22,7 +22,6 @@ export async function getMonthlyDebateCount(userId: string): Promise<number> {
     .gte("created_at", startOfMonth);
 
   if (error) {
-    console.warn("Failed to check debate count:", error);
     return 0;
   }
 

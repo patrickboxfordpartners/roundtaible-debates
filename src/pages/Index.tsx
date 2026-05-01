@@ -74,7 +74,7 @@ const Index = () => {
     }
     // Open their context dialog so the user lands on something meaningful
     setSelectedPersona(match);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when quizPersonaId changes
   }, [quizPersonaId]);
 
   // Demo: auto-start first debate after 2s
@@ -84,7 +84,7 @@ const Index = () => {
       debate.startDebate();
     }, 2000);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount in demo mode
   }, [isDemoMode]);
 
   // Demo: when timer hits 0, auto-pick winner, then advance

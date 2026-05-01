@@ -10,30 +10,11 @@ type BillingCycle = "monthly" | "annual";
 
 const plans = [
   {
-    id: "starter",
-    name: "Starter",
-    tagline: "For individuals exploring AI-powered debate.",
-    monthly: 9.99,
-    annual: 7.99,
-    cta: "Get Starter",
-    priceIds: {
-      monthly: import.meta.env.VITE_STRIPE_PRICE_STARTER_MONTHLY ?? "",
-      annual: import.meta.env.VITE_STRIPE_PRICE_STARTER_YEARLY ?? "",
-    },
-    features: [
-      "10 debates per month",
-      "Public debate rooms",
-      "Pre-built personas",
-      "Debate history",
-      "Personality quiz",
-    ],
-  },
-  {
     id: "pro",
     name: "Pro",
     tagline: "Unlock the full Roundtaible experience.",
-    monthly: 19.99,
-    annual: 15.99,
+    monthly: 9.99,
+    annual: 99,
     cta: "Get Pro",
     featured: true,
     priceIds: {
@@ -53,8 +34,8 @@ const plans = [
     id: "edu",
     name: "Edu / Team",
     tagline: "Built for classrooms and organizations.",
-    monthly: 39.99,
-    annual: 31.99,
+    monthly: 29.99,
+    annual: 249,
     cta: "Get Edu / Team",
     priceIds: {
       monthly: import.meta.env.VITE_STRIPE_PRICE_EDU_MONTHLY ?? "",
@@ -73,43 +54,43 @@ const plans = [
 ];
 
 type Cell = boolean | string;
-type ComparisonGroup = { name: string; rows: { label: string; values: [Cell, Cell, Cell] }[] };
+type ComparisonGroup = { name: string; rows: { label: string; values: [Cell, Cell] }[] };
 
 const comparison: ComparisonGroup[] = [
   {
     name: "Core",
     rows: [
-      { label: "Debates per month", values: ["10", "25", "100"] },
-      { label: "Debate rooms", values: ["Public", "Public + Private", "Public + Private"] },
-      { label: "Personas", values: ["Pre-built", "Custom", "Custom + Bulk"] },
-      { label: "Debate history", values: ["30 days", "Unlimited", "Unlimited"] },
+      { label: "Debates per month", values: ["25", "100"] },
+      { label: "Debate rooms", values: ["Public + Private", "Public + Private"] },
+      { label: "Personas", values: ["Custom", "Custom + Bulk"] },
+      { label: "Debate history", values: ["Unlimited", "Unlimited"] },
     ],
   },
   {
     name: "Features",
     rows: [
-      { label: "Transcript export", values: [false, true, true] },
-      { label: "Personality quiz", values: [true, true, true] },
-      { label: "Voice synthesis", values: [true, true, true] },
-      { label: "API access", values: [false, false, true] },
+      { label: "Transcript export", values: [true, true] },
+      { label: "Personality quiz", values: [true, true] },
+      { label: "Voice synthesis", values: [true, true] },
+      { label: "API access", values: [false, true] },
     ],
   },
   {
     name: "Collaboration",
     rows: [
-      { label: "Classroom management", values: [false, false, true] },
-      { label: "Student analytics", values: [false, false, true] },
-      { label: "Team workspaces", values: [false, false, true] },
-      { label: "Bulk persona upload", values: [false, false, true] },
+      { label: "Classroom management", values: [false, true] },
+      { label: "Student analytics", values: [false, true] },
+      { label: "Team workspaces", values: [false, true] },
+      { label: "Bulk persona upload", values: [false, true] },
     ],
   },
   {
     name: "Support",
     rows: [
-      { label: "Community support", values: [true, true, true] },
-      { label: "Priority support", values: [false, true, true] },
-      { label: "Dedicated account manager", values: [false, false, true] },
-      { label: "Custom onboarding", values: [false, false, true] },
+      { label: "Community support", values: [true, true] },
+      { label: "Priority support", values: [true, true] },
+      { label: "Dedicated account manager", values: [false, true] },
+      { label: "Custom onboarding", values: [false, true] },
     ],
   },
 ];

@@ -2,6 +2,7 @@
 // Falls back to browser SpeechSynthesis if Supabase is not configured
 
 import { supabase } from "./supabaseClient";
+import { toast } from "sonner";
 
 // Fallback browser TTS config (used if edge function is unavailable)
 interface BrowserVoiceConfig {
@@ -37,6 +38,7 @@ async function speakElevenLabs(text: string, personaId: string) {
 
     if (error) {
       console.error("TTS proxy error:", error);
+      toast.warning("Premium voice unavailable, using browser fallback");
       speakBrowserTTS(text, personaId);
       return;
     }
@@ -50,6 +52,7 @@ async function speakElevenLabs(text: string, personaId: string) {
     } else {
       // If we got JSON back, it's an error
       console.error("TTS proxy returned non-audio data:", data);
+      toast.warning("Voice service error, using browser TTS");
       speakBrowserTTS(text, personaId);
       return;
     }
@@ -72,6 +75,7 @@ async function speakElevenLabs(text: string, personaId: string) {
     await currentAudio.play();
   } catch (error) {
     console.error("ElevenLabs TTS error:", error);
+    toast.warning("Voice service temporarily unavailable, using browser TTS");
     speakBrowserTTS(text, personaId);
   }
 }

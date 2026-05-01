@@ -140,7 +140,6 @@ export async function generatePersonaResponse(
 
     return data?.text || "...";
   } catch (error: unknown) {
-    console.error("AI proxy error:", (error as Error).message || error);
 
     // Check if it's a function invocation error with status info
     const errObj = error as { context?: { status?: number }; message?: string };
@@ -207,7 +206,6 @@ export async function generateDebateSummary(
       narratorId: data?.narratorId || "twain",
     };
   } catch (error: unknown) {
-    console.error("AI summary error:", (error as Error).message || error);
     const errObj = error as { context?: { status?: number } };
     if (errObj.context?.status === 429 || errObj.context?.status === 401) {
       circuitOpen = true;

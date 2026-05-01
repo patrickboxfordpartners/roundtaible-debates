@@ -50,7 +50,6 @@ async function persistToSupabase(
       educational_mode: educationalMode || false,
     });
   } catch (err) {
-    console.warn("Failed to persist debate to Supabase:", err);
   }
 }
 

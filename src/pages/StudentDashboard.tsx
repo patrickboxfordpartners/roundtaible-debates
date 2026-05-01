@@ -90,7 +90,6 @@ export default function StudentDashboard() {
       setJoinCode("");
       fetchMemberships();
     } catch (err) {
-      console.error("Error joining class:", err);
       setJoinError("Failed to join class. Try again.");
     } finally {
       setJoining(false);

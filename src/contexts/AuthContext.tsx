@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error && error.code !== "PGRST116") {
-        console.error("Error fetching profile:", error);
+        // Silent fail - profile doesn't exist yet
       }
 
       setProfile(data as Profile | null);
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch (err) {
-      console.error("Profile fetch error:", err);
+      // Silent fail - non-critical error
     } finally {
       setLoading(false);
     }

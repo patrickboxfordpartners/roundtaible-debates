@@ -40,7 +40,6 @@ const Footer = () => {
       setEmail("");
       setMessage("");
     } catch (error) {
-      console.error("Contact form error:", error);
       toast({
         title: "Send failed",
         description: "Please email us directly at hello@boxfordpartners.com",

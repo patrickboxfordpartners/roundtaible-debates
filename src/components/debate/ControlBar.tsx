@@ -112,7 +112,6 @@ export function ControlBar({
           }
         },
         onError: (error) => {
-          console.error("Voice error:", error);
           toast.error(typeof error === "string" ? error : "Voice input error");
           setMicOn(false);
           setIsListening(false);
