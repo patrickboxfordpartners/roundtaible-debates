@@ -134,11 +134,15 @@ function buildEducationalSuffix(config?: EducationalConfig): string {
   const socratic = config.socraticLevel || "medium";
   if (socratic === "high") {
     parts.push(
-      "- [Question: ...] end with a thought-provoking Socratic question that challenges the audience to think critically about both sides of the argument"
+      "- [Question: ...] end with a deep Socratic question that probes assumptions, explores logical contradictions, examines edge cases, or challenges the fundamental premises of both arguments. Push thinking to its limits."
     );
   } else if (socratic === "medium") {
     parts.push(
-      "- [Question: ...] end with a brief discussion question for the audience"
+      "- [Question: ...] end with a thought-provoking question that challenges assumptions and asks the audience to examine the reasoning behind the arguments. Use the Socratic method to explore contradictions."
+    );
+  } else if (socratic === "low") {
+    parts.push(
+      "- [Question: ...] end with a simple clarifying question that helps the audience understand the reasoning behind your argument."
     );
   }
 

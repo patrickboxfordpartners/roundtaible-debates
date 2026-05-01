@@ -493,7 +493,12 @@ const Index = () => {
           aria-label="Debate transcript and leaderboard"
         >
           <div className="flex-1 overflow-hidden min-h-0">
-            <TranscriptPanel entries={debate.transcript} personasState={debate.personasState} />
+            <TranscriptPanel
+              entries={debate.transcript}
+              personasState={debate.personasState}
+              highlightVocabulary={educationalConfig.vocabularyHighlights}
+              gradeLevel={educationalConfig.gradeLevel}
+            />
           </div>
           <div className="border-t border-border shrink-0">
             <Leaderboard leaderboard={debate.leaderboard} onReset={debate.resetLeaderboard} hideReset={isDemoMode} />
