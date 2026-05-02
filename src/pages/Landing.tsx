@@ -147,7 +147,7 @@ export default function Landing() {
       {/* Hero */}
       <section className="pt-32 pb-24 px-6 text-center max-w-4xl mx-auto">
         <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-6">
-          theroundtaible.com
+          Historical AI Platform
         </p>
         <h1 className="font-playfair text-5xl md:text-7xl font-bold leading-tight mb-6">
           History's Greatest Minds.
