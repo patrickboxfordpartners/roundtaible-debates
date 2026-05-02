@@ -6,6 +6,27 @@ import Footer from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
 
+const TESTIMONIALS = [
+  {
+    quote: "I used it before a board meeting on AI strategy. Having Jefferson and Machiavelli argue both sides in 20 minutes clarified my thinking more than any consultant deck.",
+    name: "David K.",
+    role: "Strategy Director",
+    avatar: "DK",
+  },
+  {
+    quote: "My students were bored by primary sources. I put Roundtaible on the projector and asked Lincoln and Marx to debate student debt. They didn't stop talking for 40 minutes.",
+    name: "Ms. Rachel T.",
+    role: "AP History Teacher",
+    avatar: "RT",
+  },
+  {
+    quote: "Set it up at our booth with 'Does price or trust win the sale?' Three historical minds debating it drew a crowd every time. Best demo tool we've ever had.",
+    name: "Marcus W.",
+    role: "Sales Leader",
+    avatar: "MW",
+  },
+];
+
 const USE_CASES = [
   {
     icon: "🏛️",
@@ -208,6 +229,100 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Debate Preview */}
+      <section className="py-24 px-6 bg-card/50 border-y border-border">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">See It Live</p>
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
+              The Table Is Already Set.
+            </h2>
+            <p className="font-lora text-muted-foreground max-w-xl mx-auto">
+              A round table. History's sharpest minds. Your question in the middle.
+            </p>
+          </div>
+
+          {/* Browser chrome + app mockup */}
+          <div className="relative mx-auto max-w-4xl">
+            <div className="absolute -inset-3 rounded-3xl bg-primary/5 blur-2xl pointer-events-none" />
+            <div className="relative rounded-2xl overflow-hidden border border-border shadow-2xl">
+              {/* Chrome bar */}
+              <div className="bg-card border-b border-border px-4 py-2.5 flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
+                </div>
+                <div className="flex-1 max-w-xs mx-auto bg-background/60 rounded px-3 py-1 text-[10px] text-muted-foreground font-mono text-center">
+                  theroundtaible.com/app
+                </div>
+              </div>
+
+              {/* Debate mockup */}
+              <div className="bg-[#f5f0e8] p-6 md:p-10">
+                <p className="font-playfair text-center text-sm text-foreground/50 mb-6 tracking-wide">
+                  Algonquin Roundtaible — <span className="italic">Where history's greatest minds debate the future</span>
+                </p>
+
+                {/* Round table visual */}
+                <div className="flex items-center justify-center gap-6 mb-8">
+                  {[
+                    { name: "Jefferson", color: "#8B6914", initial: "J" },
+                    { name: "Curie", color: "#4A7C8E", initial: "C" },
+                    { name: "Machiavelli", color: "#6B3A3A", initial: "M" },
+                    { name: "Lincoln", color: "#2D5016", initial: "L" },
+                  ].map((p) => (
+                    <div key={p.name} className="flex flex-col items-center gap-2">
+                      <div
+                        className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center text-white font-bold text-lg shadow-md"
+                        style={{ backgroundColor: p.color, borderColor: p.color }}
+                      >
+                        {p.initial}
+                      </div>
+                      <span className="font-lora text-[10px] text-foreground/50">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Sample transcript */}
+                <div className="bg-background/60 rounded-xl border border-border/50 p-5 space-y-4 max-w-2xl mx-auto text-sm font-lora">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8B6914" }}>Jefferson</span>
+                    <p className="text-foreground/80 mt-1 leading-relaxed">"The question is not whether AI shall govern — but whether men shall govern AI. Every technology is merely an extension of the will that directs it."</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6B3A3A" }}>Machiavelli</span>
+                    <p className="text-foreground/80 mt-1 leading-relaxed">"A prince who relies upon others' virtue shall soon find himself without either. AI is a new form of power — and power, unchecked, does not wait for philosophy."</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-primary/70 text-xs pt-1">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span>Curie is formulating a response...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating badge */}
+            <div className="absolute -bottom-4 -right-2 md:-right-6 bg-card border border-border rounded-xl shadow-xl px-4 py-3 flex items-center gap-2.5">
+              <span className="text-lg">🎭</span>
+              <div>
+                <p className="text-xs font-semibold text-foreground">14 historical personas</p>
+                <p className="text-[10px] text-muted-foreground">Any question. Any topic.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <button
+              onClick={() => navigate("/app")}
+              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
+            >
+              Watch a Live Debate
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Use cases */}
       <section className="py-24 px-6 bg-card/50 border-y border-border">
         <div className="max-w-5xl mx-auto">
@@ -231,6 +346,32 @@ export default function Landing() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-24 px-6 max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">What People Say</p>
+          <h2 className="font-playfair text-3xl md:text-4xl font-bold">
+            From the Table.
+          </h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.name} className="bg-card rounded-xl border border-border p-7 flex flex-col">
+              <p className="font-lora text-sm text-muted-foreground leading-relaxed flex-1 mb-6">"{t.quote}"</p>
+              <div className="flex items-center gap-3 pt-5 border-t border-border">
+                <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                  {t.avatar}
+                </div>
+                <div>
+                  <p className="font-playfair text-sm font-semibold text-foreground">{t.name}</p>
+                  <p className="font-lora text-xs text-muted-foreground">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
