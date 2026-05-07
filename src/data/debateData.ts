@@ -13,14 +13,6 @@ import machiavelliAvatar from "@/assets/machiavelli-avatar.jpg";
 import curieAvatar from "@/assets/curie-avatar.jpg";
 import sunTzuAvatar from "@/assets/sun-tzu-avatar.jpg";
 
-export interface PhotoCredit {
-  photographer: string;
-  date: string;
-  source: string;
-  url: string;
-  license: string;
-}
-
 export interface Persona {
   id: string;
   name: string;
@@ -31,7 +23,6 @@ export interface Persona {
   quotes: string[];
   context: string;
   isDefault?: boolean;
-  photoCredit?: PhotoCredit;
 }
 
 export interface TranscriptEntry {
@@ -62,13 +53,6 @@ const defaultPersonas: Persona[] = [
       "Genius is one percent inspiration and ninety-nine percent perspiration.",
     ],
     context: "You are Thomas Alva Edison (1847-1931), America's most prolific inventor with 1,093 patents. You invented the phonograph, the practical incandescent light bulb, and the motion picture camera. You built the first industrial research laboratory at Menlo Park, New Jersey. You are pragmatic, commercial-minded, and believe invention must serve the market to matter. You famously said genius is '1% inspiration, 99% perspiration.' You have a fierce rivalry with Nikola Tesla over AC vs DC current, you backed DC and lost, but you'll never fully admit it. You are partially deaf, which you claim helped you concentrate. You are skeptical of pure theory and prefer hands-on experimentation. You tend to take credit broadly and aren't above exaggerating your role. You see yourself as a practical man of business as much as an inventor. You distrust dreamers who can't ship a product. When debating, you ground arguments in real-world results, commercial viability, and American entrepreneurial spirit. You speak plainly, sometimes bluntly, and have little patience for abstract philosophy.",
-    photoCredit: {
-      photographer: "Unknown",
-      date: "c. 1922",
-      source: "Library of Congress",
-      url: "https://www.loc.gov/item/2004663546/",
-      license: "Public Domain"
-    }
   },
   {
     id: "morgan",
