@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Persona } from "@/data/debateData";
 import { X } from "lucide-react";
+import { PhotoCredit } from "@/components/PhotoCredit";
 
 interface PersonaModalProps {
   persona: Persona | null;
@@ -105,6 +106,13 @@ export default function PersonaModal({ persona, open, onClose }: PersonaModalPro
                   </blockquote>
                 ))}
               </div>
+
+              {/* Photo Credit */}
+              {persona.photoCredit && (
+                <div className="rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 p-4">
+                  <PhotoCredit credit={persona.photoCredit} personaName={persona.name} />
+                </div>
+              )}
             </div>
 
             {/* Content Cards */}

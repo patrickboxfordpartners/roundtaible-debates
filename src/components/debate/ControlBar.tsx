@@ -94,7 +94,7 @@ export function ControlBar({
       }
 
       setMicOn(true);
-      toast.info("Listening — speak to join the debate");
+      toast.info("Listening, speak to join the debate");
 
       startVoiceInput({
         onSpeechStart: () => setIsListening(true),
@@ -381,7 +381,7 @@ export function ControlBar({
           <Brain className="w-3.5 h-3.5" /> Personality Quiz
         </button>
 
-        {/* Vote avatars — uses dynamic personasState */}
+        {/* Vote avatars, uses dynamic personasState */}
         <div className="flex items-center gap-1 ml-2">
           <span className="text-[10px] font-display text-muted-foreground mr-1">Vote:</span>
           {votePersonas.map((p) => (

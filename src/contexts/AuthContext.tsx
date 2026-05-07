@@ -65,6 +65,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Listen for profile changes (subscription updates from Stripe webhook)
+  useEffect(() => {
+    if (!supabase || !profile?.id) return;
+
+    const channel = supabase
+      .channel(`profile:${profile.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "rt_profiles",
+          filter: `id=eq.${profile.id}`,
+        },
+        (payload) => {
+          const newProfile = payload.new as Profile;
+          // If subscription tier changed, refetch profile to update limits
+          if (newProfile.subscription_tier !== profile.subscription_tier) {
+            fetchProfile(profile.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, profile?.subscription_tier]);
+
   async function fetchProfile(userId: string) {
     if (!supabase) return;
     try {

@@ -78,12 +78,12 @@ export function saveDebate(
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (e) {
-    // QuotaExceededError — trim older debates and retry
+    // QuotaExceededError, trim older debates and retry
     const trimmed = updated.slice(0, Math.floor(MAX_SAVED / 2));
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
     } catch {
-      // Storage completely full — clear debate history to free space
+      // Storage completely full, clear debate history to free space
       localStorage.removeItem(STORAGE_KEY);
     }
   }
@@ -107,7 +107,7 @@ export function clearHistory() {
 export function formatTranscriptForExport(
   debate: SavedDebate
 ): string {
-  const header = `ALGONQUIN ROUNDTAIBLE — "${debate.topic.title}"`;
+  const header = `ALGONQUIN ROUNDTAIBLE, "${debate.topic.title}"`;
   const date = new Date(debate.savedAt).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
   });

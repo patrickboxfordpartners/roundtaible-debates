@@ -91,7 +91,7 @@ const Index = () => {
   useEffect(() => {
     if (!isDemoMode) return;
     if (debate.timeRemaining !== 0 || debate.isDebating) return;
-    // Timer just expired — pick a random winner after 3s
+    // Timer just expired, pick a random winner after 3s
     demoTimerRef.current = setTimeout(() => {
       const eligible = debate.personasState.filter(p => p.id !== "human");
       if (eligible.length > 0) {
@@ -132,7 +132,7 @@ const Index = () => {
           debate.addFromRoster(msg.payload);
           break;
         case "request_sync":
-          // Guest reconnected — send them the full current state
+          // Guest reconnected, send them the full current state
           mp.broadcastState({
             topic: debate.activeTopic,
             transcript: debate.transcript,
@@ -226,7 +226,7 @@ const Index = () => {
     if (mp.isGuest) {
       mp.sendGuestMessage(`[Gallery]: ${text}`);
     } else {
-      debate.addTranscriptEntry("adams", `[Gallery suggestion]: "${text}" — An intriguing proposition from the audience.`);
+      debate.addTranscriptEntry("adams", `[Gallery suggestion]: "${text}", An intriguing proposition from the audience.`);
     }
   };
 
@@ -427,7 +427,7 @@ const Index = () => {
       {mp.isGuest && (
         <div className="px-4 py-1.5 bg-primary/10 border-b border-primary/20 text-center relative z-20">
           <p className="text-xs font-display text-primary">
-            Spectating — your messages are sent to the host
+            Spectating, your messages are sent to the host
           </p>
         </div>
       )}

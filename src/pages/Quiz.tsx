@@ -149,7 +149,7 @@ function ResultCard({ result, onRestart }: { result: QuizResult; onRestart: () =
         <blockquote className="border-l-4 pl-4 mb-6 italic font-lora text-muted-foreground text-sm leading-relaxed"
           style={{ borderColor: persona.color }}>
           "{quote}"
-          <footer className="mt-1 text-xs not-italic">— {persona.name}</footer>
+          <footer className="mt-1 text-xs not-italic">,  {persona.name}</footer>
         </blockquote>
       )}
 
@@ -260,7 +260,7 @@ export default function Quiz() {
           {!result && currentIndex === 0 && Object.keys(answers).length === 0 && (
             <div className="text-center mb-10">
               <p className="font-lora text-muted-foreground text-base leading-relaxed">
-                Seven questions. One historical archetype. Answer honestly — these minds have seen it all.
+                Seven questions. One historical archetype. Answer honestly, these minds have seen it all.
               </p>
             </div>
           )}

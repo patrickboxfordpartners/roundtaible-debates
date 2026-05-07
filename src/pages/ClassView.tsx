@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/services/supabaseClient";
 import { toast } from "sonner";
 import { Trophy, Plus, Play } from "lucide-react";
+import { useTournamentCreation } from "@/hooks/useTournamentCreation";
+import { personas } from "@/data/debateData";
 
 interface ClassDetail {
   id: string;
@@ -53,9 +55,10 @@ export default function ClassView() {
   const [loading, setLoading] = useState(true);
   const [showTournamentCreate, setShowTournamentCreate] = useState(false);
   const [tournamentName, setTournamentName] = useState("");
-  const [tournamentDesc, setTournamentDesc] = useState("");
-  const [totalRounds, setTotalRounds] = useState(3);
-  const [creating, setCreating] = useState(false);
+  const [tournamentTopic, setTournamentTopic] = useState("");
+  const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
+  const [seedingStrategy, setSeedingStrategy] = useState<"random" | "alphabetical">("random");
+  const { createTournament, creating } = useTournamentCreation();
 
   const fetchClassData = useCallback(async () => {
     if (!supabase || !classId) return;
@@ -120,51 +123,38 @@ export default function ClassView() {
 
   async function handleCreateTournament(e: React.FormEvent) {
     e.preventDefault();
-    if (!supabase || !profile || !classId) return;
-    setCreating(true);
+    if (!classId) return;
 
-    try {
-      const { data: tournament, error } = await supabase
-        .from("rt_tournaments")
-        .insert({
-          class_id: classId,
-          created_by: profile.id,
-          name: tournamentName.trim(),
-          description: tournamentDesc.trim() || null,
-          total_rounds: totalRounds,
-          status: "setup",
-        })
-        .select()
-        .single();
+    // Validate power of 2
+    const validCounts = [4, 8, 16];
+    if (!validCounts.includes(selectedPersonas.length)) {
+      toast.error("Please select 4, 8, or 16 personas for the tournament");
+      return;
+    }
 
-      if (error) throw error;
+    const tournamentId = await createTournament(
+      tournamentName.trim(),
+      tournamentTopic.trim(),
+      classId,
+      selectedPersonas,
+      seedingStrategy
+    );
 
-      // Create initial rounds (for now, all pending)
-      const rounds = [];
-      for (let i = 1; i <= totalRounds; i++) {
-        rounds.push({
-          tournament_id: tournament.id,
-          round_number: i,
-          topic_title: `Round ${i}`,
-          persona_a: `Debater A${i}`,
-          persona_b: `Debater B${i}`,
-          status: i === 1 ? "active" : "pending",
-        });
-      }
-
-      await supabase.from("rt_tournament_rounds").insert(rounds);
-
-      toast.success("Tournament created!");
+    if (tournamentId) {
       setTournamentName("");
-      setTournamentDesc("");
-      setTotalRounds(3);
+      setTournamentTopic("");
+      setSelectedPersonas([]);
+      setSeedingStrategy("random");
       setShowTournamentCreate(false);
       fetchClassData();
-    } catch (err) {
-      toast.error("Failed to create tournament");
-    } finally {
-      setCreating(false);
+      navigate(`/tournament/${tournamentId}`);
     }
+  }
+
+  function togglePersona(personaId: string) {
+    setSelectedPersonas((prev) =>
+      prev.includes(personaId) ? prev.filter((id) => id !== personaId) : [...prev, personaId]
+    );
   }
 
   if (loading) {
@@ -263,31 +253,52 @@ export default function ClassView() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 font-body">Description (optional)</label>
-                <textarea
-                  value={tournamentDesc}
-                  onChange={(e) => setTournamentDesc(e.target.value)}
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body h-20 resize-none"
-                  placeholder="Brief description of the tournament format and goals"
+                <label className="block text-sm font-medium mb-1 font-body">Debate Topic</label>
+                <input
+                  required
+                  value={tournamentTopic}
+                  onChange={(e) => setTournamentTopic(e.target.value)}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body"
+                  placeholder="e.g., Should AI be regulated?"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 font-body">Number of Rounds</label>
+                <label className="block text-sm font-medium mb-2 font-body">
+                  Select Personas ({selectedPersonas.length} selected, need 4, 8, or 16)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 bg-background border border-border rounded-lg">
+                  {personas.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => togglePersona(p.id)}
+                      className={`text-left p-2 rounded-lg text-sm font-body transition-colors ${
+                        selectedPersonas.includes(p.id)
+                          ? "bg-primary/20 border-2 border-primary"
+                          : "bg-muted hover:bg-muted/70 border border-transparent"
+                      }`}
+                    >
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-xs text-muted-foreground">{p.role}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 font-body">Seeding Strategy</label>
                 <select
-                  value={totalRounds}
-                  onChange={(e) => setTotalRounds(Number(e.target.value))}
+                  value={seedingStrategy}
+                  onChange={(e) => setSeedingStrategy(e.target.value as "random" | "alphabetical")}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg font-body"
                 >
-                  <option value={3}>3 rounds</option>
-                  <option value={4}>4 rounds (quarterfinals)</option>
-                  <option value={5}>5 rounds</option>
-                  <option value={7}>7 rounds</option>
+                  <option value="random">Random</option>
+                  <option value="alphabetical">Alphabetical</option>
                 </select>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="submit"
-                  disabled={creating}
+                  disabled={creating || ![4, 8, 16].includes(selectedPersonas.length)}
                   className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
                   {creating ? "Creating..." : "Create Tournament"}

@@ -19,7 +19,7 @@ async function syncLeaderboardWin(userId: string, personaId: string, personaName
         ignoreDuplicates: false,
       }
     );
-    // Increment wins using RPC — fall back to select+update if RPC unavailable
+    // Increment wins using RPC, fall back to select+update if RPC unavailable
     await supabase.rpc("increment_leaderboard_win", { p_user_id: userId, p_persona_id: personaId, p_persona_name: personaName }).catch(async () => {
       const { data } = await supabase!.from("rt_leaderboards").select("wins").eq("user_id", userId).eq("persona_id", personaId).single();
       await supabase!.from("rt_leaderboards").update({ wins: (data?.wins ?? 0) + 1, updated_at: new Date().toISOString() }).eq("user_id", userId).eq("persona_id", personaId);
@@ -138,7 +138,7 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
         setIsLightningRound(false);
         clearInterval(timerRef.current);
         clearTimeout(speakerRef.current);
-        const errMsg = getAPIError() || "API connection lost — debate paused";
+        const errMsg = getAPIError() || "API connection lost, debate paused";
         setApiError(errMsg);
         toast.error(errMsg);
         return;

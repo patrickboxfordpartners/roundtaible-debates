@@ -1,5 +1,5 @@
 /**
- * Lightweight usage analytics — tracks debate events locally with optional Supabase sync.
+ * Lightweight usage analytics, tracks debate events locally with optional Supabase sync.
  * All data is anonymous (no PII). Stored in localStorage for local dashboards.
  */
 
@@ -48,11 +48,11 @@ function storeEvent(event: StoredEvent): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
-    // Quota exceeded — trim aggressively
+    // Quota exceeded, trim aggressively
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated.slice(-100)));
     } catch {
-      // Give up silently — analytics should never break the app
+      // Give up silently, analytics should never break the app
     }
   }
 }
@@ -68,7 +68,7 @@ async function syncToSupabase(event: StoredEvent): Promise<void> {
       created_at: new Date(event.timestamp).toISOString(),
     });
   } catch {
-    // Silent failure — analytics should never block the user
+    // Silent failure, analytics should never block the user
   }
 }
 

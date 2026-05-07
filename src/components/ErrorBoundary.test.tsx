@@ -53,7 +53,7 @@ describe("ErrorBoundary", () => {
     );
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
-    // Click Try Again — this resets the error state, but the child still throws
+    // Click Try Again, this resets the error state, but the child still throws
     // so we need to rerender with a non-throwing child after reset
     fireEvent.click(screen.getByText("Try Again"));
 

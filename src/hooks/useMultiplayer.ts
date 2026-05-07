@@ -202,7 +202,7 @@ export function useMultiplayer() {
   // Check for room ID in URL on mount (auto-join)
   const pendingRoomId = getRoomIdFromUrl();
 
-  // Session restore on mount — reconnect to room after page refresh
+  // Session restore on mount, reconnect to room after page refresh
   useEffect(() => {
     const session = loadSession();
     if (!session) return;

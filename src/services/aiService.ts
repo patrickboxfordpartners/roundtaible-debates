@@ -39,10 +39,10 @@ export function getDebateMode(): DebateMode {
   return currentMode;
 }
 
-// Fallback responses when API is unavailable — rotated to avoid repetition
+// Fallback responses when API is unavailable, rotated to avoid repetition
 const fallbacks: Record<string, string[]> = {
   edison: [
-    "I seem to have lost my train of thought — perhaps the telegraph lines are down. Give me a moment to gather my notes.",
+    "I seem to have lost my train of thought, perhaps the telegraph lines are down. Give me a moment to gather my notes.",
     "The filament in my thinking lamp appears to have burned out. A temporary setback, I assure you.",
     "Even at Menlo Park, we had power outages. Let me recalibrate my argument.",
   ],
@@ -57,9 +57,9 @@ const fallbacks: Record<string, string[]> = {
     "From the Monongahela to this table, I have weathered interruptions before. One moment.",
   ],
   twain: [
-    "I appear to have swallowed my own wit. A rare condition, I assure you — it shall pass momentarily.",
+    "I appear to have swallowed my own wit. A rare condition, I assure you, it shall pass momentarily.",
     "Reports of my silence have been greatly exaggerated. I shall return with something worth saying.",
-    "The typewriter of my mind has jammed. Probably for the best — I was about to be devastatingly clever.",
+    "The typewriter of my mind has jammed. Probably for the best, I was about to be devastatingly clever.",
   ],
   adams: [
     "History teaches us patience. Let me pause and reconsider my argument from a different angle.",
@@ -133,7 +133,7 @@ export async function generatePersonaResponse(
       circuitOpenedAt = Date.now();
       circuitReason =
         data.status === 429
-          ? "API quota exceeded — will retry in 60 seconds"
+          ? "API quota exceeded, will retry in 60 seconds"
           : "API key is invalid or unauthorized";
       throw new Error(circuitReason);
     }
@@ -146,7 +146,7 @@ export async function generatePersonaResponse(
     if (errObj.context?.status === 429 || errObj.context?.status === 401) {
       circuitOpen = true;
       circuitOpenedAt = Date.now();
-      circuitReason = "API unavailable — will retry in 60 seconds";
+      circuitReason = "API unavailable, will retry in 60 seconds";
       throw error;
     }
 
@@ -171,7 +171,7 @@ export async function generateDebateSummary(
 
   if (!supabase) {
     return {
-      text: "If I may summarize: we've argued in circles — much like this table — and arrived precisely where we started, only more exhausted. But wasn't that the point?",
+      text: "If I may summarize: we've argued in circles, much like this table, and arrived precisely where we started, only more exhausted. But wasn't that the point?",
       narratorId: "twain",
     };
   }
@@ -210,10 +210,10 @@ export async function generateDebateSummary(
     if (errObj.context?.status === 429 || errObj.context?.status === 401) {
       circuitOpen = true;
       circuitOpenedAt = Date.now();
-      circuitReason = "API quota exceeded — will retry in 60 seconds";
+      circuitReason = "API quota exceeded, will retry in 60 seconds";
     }
     return {
-      text: "If I may summarize: we've argued in circles — much like this table — and arrived precisely where we started, only more exhausted. But wasn't that the point?",
+      text: "If I may summarize: we've argued in circles, much like this table, and arrived precisely where we started, only more exhausted. But wasn't that the point?",
       narratorId: "twain",
     };
   }

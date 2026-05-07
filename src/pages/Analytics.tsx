@@ -104,6 +104,9 @@ export default function Analytics() {
   const avgDuration = totalDebates > 0 ? Math.round(totalDuration / totalDebates) : 0;
   const eduDebates = debates.filter(d => d.educational_mode).length;
 
+  // Estimate AI cost (rough: $0.02 per debate based on avg token usage)
+  const estimatedCost = (totalDebates * 0.02).toFixed(2);
+
   const personaWins: Record<string, { name: string; color: string; wins: number }> = {};
   debates.forEach(d => {
     if (d.winner_id && d.winner_id !== "human") {
@@ -204,11 +207,12 @@ export default function Analytics() {
         ) : (
           <>
             {/* KPI cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard label="Total Debates" value={totalDebates} sub="all time" icon={BarChart2} />
               <StatCard label="Avg Duration" value={fmt(avgDuration)} sub="per debate" icon={Clock} color="text-amber-500" />
               <StatCard label="Educational Mode" value={eduDebates} sub={`${totalDebates > 0 ? Math.round(eduDebates / totalDebates * 100) : 0}% of debates`} icon={BookOpen} color="text-blue-500" />
               <StatCard label="Unique Topics" value={new Set(debates.map(d => d.topic_title)).size} sub="debated" icon={TrendingUp} color="text-green-500" />
+              <StatCard label="Est. AI Cost" value={`$${estimatedCost}`} sub="~$0.02 per debate" icon={Trophy} color="text-purple-500" />
             </div>
 
             {/* Weekly trend */}

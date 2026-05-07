@@ -113,7 +113,7 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
         {persona.avatar ? (
           <motion.img
             src={persona.avatar}
-            alt={`${persona.name} — ${persona.role}`}
+            alt={`${persona.name}, ${persona.role}`}
             className="w-full h-full object-cover pointer-events-none"
             initial={{ scale: 1.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

@@ -43,7 +43,7 @@ async function speakElevenLabs(text: string, personaId: string) {
       return;
     }
 
-    // data is the raw response — convert to blob
+    // data is the raw response, convert to blob
     let blob: Blob;
     if (data instanceof Blob) {
       blob = data;

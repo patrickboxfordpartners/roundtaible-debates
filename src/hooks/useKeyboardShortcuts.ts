@@ -19,7 +19,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
 
       switch (e.key.toLowerCase()) {
-        case " ": // Space — start/stop debate
+        case " ": // Space, start/stop debate
           e.preventDefault();
           if (handlers.isDebating) {
             handlers.onStopDebate();
@@ -27,26 +27,26 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
             handlers.onStartDebate();
           }
           break;
-        case "l": // L — lightning round
+        case "l": // L, lightning round
           handlers.onLightningRound();
           break;
-        case "s": // S — surprise me
+        case "s": // S, surprise me
           if (!e.metaKey && !e.ctrlKey) {
             handlers.onSurpriseMe();
           }
           break;
-        case "m": // M — toggle mute
+        case "m": // M, toggle mute
           handlers.onToggleMute();
           break;
-        case "r": // R — summarize
+        case "r": // R, summarize
           if (!e.metaKey && !e.ctrlKey) {
             handlers.onSummarize();
           }
           break;
-        case "h": // H — toggle history
+        case "h": // H, toggle history
           handlers.onToggleHistory();
           break;
-        case "escape": // Esc — stop debate
+        case "escape": // Esc, stop debate
           if (handlers.isDebating) {
             handlers.onStopDebate();
           }

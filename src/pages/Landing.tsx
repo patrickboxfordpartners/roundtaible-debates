@@ -49,7 +49,7 @@ const USE_CASES = [
 ];
 
 const STEPS = [
-  { n: "1", heading: "Pick a topic", body: "From AI rights to whether empires create progress — or bring your own question." },
+  { n: "1", heading: "Pick a topic", body: "From AI rights to whether empires create progress, or bring your own question." },
   { n: "2", heading: "Watch the debate", body: "Historical personas argue in their authentic voices, citing real philosophy, real experience." },
   { n: "3", heading: "Jump in", body: "Pitch your own idea, vote for the best argument, or take the personality quiz to find your historical match." },
 ];
@@ -99,7 +99,7 @@ export default function Landing() {
 
       if (dbError) {
         if (dbError.code === "23505") {
-          // Duplicate — treat as success
+          // Duplicate, treat as success
           setSubmitted(true);
           return;
         }
@@ -155,7 +155,7 @@ export default function Landing() {
           <span className="text-primary">Your Hardest Questions.</span>
         </h1>
         <p className="font-lora text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-          Roundtaible puts history's sharpest minds at your table — debating the
+          Roundtaible puts history's sharpest minds at your table, debating the
           questions your team is actually wrestling with.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -261,7 +261,7 @@ export default function Landing() {
               {/* Debate mockup */}
               <div className="bg-[#f5f0e8] p-6 md:p-10">
                 <p className="font-playfair text-center text-sm text-foreground/50 mb-6 tracking-wide">
-                  Algonquin Roundtaible — <span className="italic">Where history's greatest minds debate the future</span>
+                  Algonquin Roundtaible, <span className="italic">Where history's greatest minds debate the future</span>
                 </p>
 
                 {/* Round table visual */}
@@ -288,11 +288,11 @@ export default function Landing() {
                 <div className="bg-background/60 rounded-xl border border-border/50 p-5 space-y-4 max-w-2xl mx-auto text-sm font-lora">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8B6914" }}>Jefferson</span>
-                    <p className="text-foreground/80 mt-1 leading-relaxed">"The question is not whether AI shall govern — but whether men shall govern AI. Every technology is merely an extension of the will that directs it."</p>
+                    <p className="text-foreground/80 mt-1 leading-relaxed">"The question is not whether AI shall govern, but whether men shall govern AI. Every technology is merely an extension of the will that directs it."</p>
                   </div>
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6B3A3A" }}>Machiavelli</span>
-                    <p className="text-foreground/80 mt-1 leading-relaxed">"A prince who relies upon others' virtue shall soon find himself without either. AI is a new form of power — and power, unchecked, does not wait for philosophy."</p>
+                    <p className="text-foreground/80 mt-1 leading-relaxed">"A prince who relies upon others' virtue shall soon find himself without either. AI is a new form of power, and power, unchecked, does not wait for philosophy."</p>
                   </div>
                   <div className="flex items-center gap-2 text-primary/70 text-xs pt-1">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -413,7 +413,7 @@ export default function Landing() {
             <div className="bg-primary/10 border border-primary/30 rounded-xl px-8 py-10">
               <p className="font-playfair text-2xl font-semibold mb-2">You're on the list.</p>
               <p className="font-lora text-muted-foreground text-sm">
-                We'll be in touch. In the meantime — the debate is already live.
+                We'll be in touch. In the meantime, the debate is already live.
               </p>
               <button
                 onClick={() => navigate("/app")}

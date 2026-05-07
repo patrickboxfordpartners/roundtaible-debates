@@ -150,7 +150,7 @@ function createBroadcastProvider(roomId: string): RealtimeProvider {
       messageListener = callback;
     },
     onPresenceSync() {
-      // BroadcastChannel doesn't support presence — guest tracking via messages
+      // BroadcastChannel doesn't support presence, guest tracking via messages
     },
     trackPresence() {
       // No-op for BroadcastChannel

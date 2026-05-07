@@ -84,7 +84,7 @@ export function MultiplayerPanel({
             </div>
 
             {role === "solo" ? (
-              /* Not in a room — show create/join options */
+              /* Not in a room, show create/join options */
               <div className="space-y-4">
                 <p className="text-xs font-body text-muted-foreground">
                   Create a room to host a debate, or join an existing room to watch and participate.
@@ -132,7 +132,7 @@ export function MultiplayerPanel({
                 </p>
               </div>
             ) : (
-              /* In a room — show room info */
+              /* In a room, show room info */
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className={`px-2 py-0.5 text-[10px] font-display font-semibold rounded-full ${
@@ -163,7 +163,7 @@ export function MultiplayerPanel({
                     ))}
                     {guests.length === 0 && role === "host" && (
                       <p className="text-[10px] font-body text-muted-foreground italic">
-                        No guests yet — share the link below
+                        No guests yet, share the link below
                       </p>
                     )}
                   </div>

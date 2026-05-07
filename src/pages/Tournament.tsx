@@ -322,7 +322,7 @@ export default function Tournament() {
           <div className="bg-card border border-primary/30 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <span className="text-xs font-display font-bold text-primary uppercase tracking-wider">Round {activeRound.round_number} — Live</span>
+                <span className="text-xs font-display font-bold text-primary uppercase tracking-wider">Round {activeRound.round_number}, Live</span>
                 <h2 className="font-display text-lg font-bold mt-0.5">{activeRound.topic_title}</h2>
               </div>
               <button

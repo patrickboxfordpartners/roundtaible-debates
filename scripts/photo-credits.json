@@ -1,0 +1,114 @@
+{
+  "edison": {
+    "photographer": "Unknown",
+    "date": "c. 1922",
+    "source": "Library of Congress",
+    "url": "https://www.loc.gov/item/2004663546/",
+    "license": "Public Domain",
+    "notes": "Prints and Photographs Division, LC-USZ62-117121"
+  },
+  "twain": {
+    "photographer": "A.F. Bradley",
+    "date": "1907",
+    "source": "Library of Congress",
+    "url": "https://www.loc.gov/item/96522612/",
+    "license": "Public Domain",
+    "notes": "Prints and Photographs Division, LC-USZ62-5513"
+  },
+  "tesla": {
+    "photographer": "Napoleon Sarony",
+    "date": "c. 1890",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:N.Tesla.JPG",
+    "license": "Public Domain",
+    "notes": "Original from Napoleon Sarony studio"
+  },
+  "carnegie": {
+    "photographer": "Unknown",
+    "date": "c. 1913",
+    "source": "Library of Congress",
+    "url": "https://www.loc.gov/item/2004664436/",
+    "license": "Public Domain",
+    "notes": "Prints and Photographs Division, LC-USZ62-25564"
+  },
+  "morgan": {
+    "photographer": "Edward Steichen",
+    "date": "1903",
+    "source": "Wikimedia Commons / National Portrait Gallery",
+    "url": "https://commons.wikimedia.org/wiki/File:Jpmorgan.jpg",
+    "license": "Public Domain",
+    "notes": "Famous portrait emphasizing Morgan's intimidating presence"
+  },
+  "adams": {
+    "photographer": "Unknown",
+    "date": "c. 1880s",
+    "source": "Library of Congress",
+    "url": "https://www.loc.gov/item/2004663891/",
+    "license": "Public Domain",
+    "notes": "Prints and Photographs Division"
+  },
+  "wilde": {
+    "photographer": "Napoleon Sarony",
+    "date": "1882",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Oscar_Wilde_Sarony.jpg",
+    "license": "Public Domain",
+    "notes": "Taken during Wilde's American lecture tour"
+  },
+  "einstein": {
+    "photographer": "Unknown",
+    "date": "1921",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Albert_Einstein_Head.jpg",
+    "license": "Public Domain",
+    "notes": "Around the time of his Nobel Prize"
+  },
+  "darwin": {
+    "photographer": "Julia Margaret Cameron",
+    "date": "1868-1869",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Charles_Darwin_by_Julia_Margaret_Cameron_2.jpg",
+    "license": "Public Domain",
+    "notes": "Famous portrait by pioneering Victorian photographer"
+  },
+  "curie": {
+    "photographer": "Unknown",
+    "date": "c. 1920s",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Marie_Curie_c._1920s.jpg",
+    "license": "Public Domain",
+    "notes": "Later portrait, mature scientist"
+  },
+  "cleopatra": {
+    "photographer": "N/A (Ancient coin)",
+    "date": "c. 32-31 BCE",
+    "source": "Wikimedia Commons / Metropolitan Museum",
+    "url": "https://commons.wikimedia.org/wiki/File:Cleopatra_VII_tetradrachm_Syracuse_mint.jpg",
+    "license": "Public Domain",
+    "notes": "Contemporary silver tetradrachm from Syracuse mint"
+  },
+  "hypatia": {
+    "photographer": "N/A (19th century rendering)",
+    "date": "1908",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Hypatia_portrait.png",
+    "license": "Public Domain",
+    "notes": "Artistic interpretation, no contemporary portraits exist"
+  },
+  "machiavelli": {
+    "photographer": "N/A (Painting by Santi di Tito)",
+    "date": "c. 1550s",
+    "source": "Wikimedia Commons / Palazzo Vecchio",
+    "url": "https://commons.wikimedia.org/wiki/File:Santi_di_Tito_-_Niccolo_Machiavelli%27s_portrait_headcrop.jpg",
+    "license": "Public Domain",
+    "notes": "Most famous portrait of Machiavelli"
+  },
+  "suntzu": {
+    "photographer": "N/A (Traditional Chinese portrait)",
+    "date": "Unknown (traditional depiction)",
+    "source": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/File:Enchoen27.jpg",
+    "license": "Public Domain",
+    "notes": "Traditional representation, historical accuracy uncertain"
+  }
+}
