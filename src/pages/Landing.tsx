@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { allPersonas, Persona } from "@/data/debateData";
-import { supabase } from "@/services/supabaseClient";
 import Footer from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
+import { ContactForm } from "@/components/ContactForm";
 
 const TESTIMONIALS = [
   {
@@ -56,11 +56,6 @@ const STEPS = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const waitlistRef = useRef<HTMLDivElement>(null);
@@ -76,42 +71,7 @@ export default function Landing() {
 
   const handleModalClose = () => {
     setModalOpen(false);
-    setTimeout(() => setSelectedPersona(null), 200); // Delay cleanup for animation
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      if (!supabase) throw new Error("Database not configured");
-
-      const { error: dbError } = await supabase
-        .from("rt_waitlist")
-        .insert({ email: email.trim().toLowerCase(), name: name.trim() || null });
-
-      if (dbError) {
-        if (dbError.code === "23505") {
-          // Duplicate, treat as success
-          setSubmitted(true);
-          return;
-        }
-        throw new Error(dbError.message);
-      }
-
-      setSubmitted(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    setTimeout(() => setSelectedPersona(null), 200);
   };
 
   return (
@@ -395,65 +355,22 @@ export default function Landing() {
         </button>
       </section>
 
-      {/* Waitlist */}
+      {/* Contact */}
       <section ref={waitlistRef} className="py-24 px-6 bg-card/50 border-t border-border">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">
-            Early Access
-          </p>
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
-            Get a Seat at the Table
-          </h2>
-          <p className="font-lora text-muted-foreground mb-10 leading-relaxed">
-            Roundtaible is rolling out to teams and classrooms. Drop your email and
-            we'll reach out when your spot is ready.
-          </p>
-
-          {submitted ? (
-            <div className="bg-primary/10 border border-primary/30 rounded-xl px-8 py-10">
-              <p className="font-playfair text-2xl font-semibold mb-2">You're on the list.</p>
-              <p className="font-lora text-muted-foreground text-sm">
-                We'll be in touch. In the meantime, the debate is already live.
-              </p>
-              <button
-                onClick={() => navigate("/app")}
-                className="mt-6 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
-              >
-                Enter the Debate
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name (optional)"
-                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-lora"
-              />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring font-lora"
-              />
-              {error && (
-                <p className="text-sm text-destructive font-lora">{error}</p>
-              )}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60"
-              >
-                {submitting ? "Saving..." : "Join the Waitlist"}
-              </button>
-              <p className="text-xs text-muted-foreground font-lora">
-                No spam. No pitches. Just access when it's ready.
-              </p>
-            </form>
-          )}
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">
+              Get Access
+            </p>
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
+              Get a Seat at the Table
+            </h2>
+            <p className="font-lora text-muted-foreground leading-relaxed">
+              Roundtaible is rolling out to teams and classrooms. Tell us how you'd
+              use it and we'll reach out when your spot is ready.
+            </p>
+          </div>
+          <ContactForm />
         </div>
       </section>
 
