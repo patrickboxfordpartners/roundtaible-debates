@@ -7,9 +7,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { DebateModeProvider } from "@/contexts/DebateModeContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CookieBanner } from "@/components/CookieBanner";
 import Index from "./pages/Index";
 
 const Landing = lazy(() => import("./pages/Landing"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 const Quiz = lazy(() => import("./pages/Quiz"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
@@ -92,9 +94,11 @@ const App = () => (
                 </AuthGuard>
               }
             />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
+        <CookieBanner />
       </BrowserRouter>
     </TooltipProvider>
     </DebateModeProvider>
