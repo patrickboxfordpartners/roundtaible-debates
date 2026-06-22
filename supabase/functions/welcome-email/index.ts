@@ -28,9 +28,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendKey) {
-      console.error("Missing RESEND_API_KEY");
+    const postmarkKey = Deno.env.get("POSTMARK_API_KEY");
+    if (!postmarkKey) {
+      console.error("Missing POSTMARK_API_KEY");
       return new Response("Server misconfigured", { status: 500, headers: corsHeaders });
     }
 
@@ -92,23 +92,25 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.postmarkapp.com/email", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${resendKey}`,
+        "Accept": "application/json",
         "Content-Type": "application/json",
+        "X-Postmark-Server-Token": postmarkKey,
       },
       body: JSON.stringify({
-        from: "Roundtaible <hello@theroundtaible.com>",
-        to: [email],
-        subject: "Welcome to Roundtaible — your first 3 debates are free",
-        html: htmlBody,
+        From: "Roundtaible <hello@theroundtaible.com>",
+        To: email,
+        Subject: "Welcome to Roundtaible — your first 3 debates are free",
+        HtmlBody: htmlBody,
+        MessageStream: "outbound",
       }),
     });
 
     if (!res.ok) {
       const errBody = await res.text();
-      console.error("Resend API error:", res.status, errBody);
+      console.error("Postmark API error:", res.status, errBody);
       return new Response("Email send failed", { status: 502, headers: corsHeaders });
     }
 
