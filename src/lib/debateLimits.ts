@@ -1,6 +1,7 @@
 import { supabase } from "@/services/supabaseClient";
 
 const LIMITS: Record<string, number> = {
+  free: 3,
   pro: 25,
   edu: 100,
 };

@@ -16,11 +16,12 @@ import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
 import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
 import { DebateHistory } from "@/components/debate/DebateHistory";
 import { MultiplayerPanel } from "@/components/debate/MultiplayerPanel";
-import { debateTopics } from "@/data/debateData";
+import { debateTopics, DEMO_TOPICS } from "@/data/debateData";
 import { motion, AnimatePresence } from "framer-motion";
 import { History, Sun, Moon, Keyboard, Users, Zap } from "lucide-react";
 import { canStartDebate, getMonthlyLimit } from "@/lib/debateLimits";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import type { Persona } from "@/data/debateData";
 import type { RealtimeMessage } from "@/services/realtime";
 
@@ -47,9 +48,21 @@ const Index = () => {
     return params.get("demo") === "true";
   }, []);
 
-  // Load quota for authenticated paid users
+  // Post-checkout success toast
   useEffect(() => {
-    if (isDemoMode || !profile || profile.subscription_tier === "free") { setQuotaLoaded(true); return; }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribed") === "true") {
+      toast.success("Welcome to Roundtaible Pro! You're all set.");
+      params.delete("subscribed");
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
+
+  // Load quota for authenticated users (all tiers including free)
+  useEffect(() => {
+    if (isDemoMode || !profile) { setQuotaLoaded(true); return; }
     canStartDebate(profile.id, profile.subscription_tier).then(({ used }) => {
       setQuotaUsed(used);
       setQuotaLoaded(true);
@@ -76,6 +89,25 @@ const Index = () => {
     setSelectedPersona(match);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when quizPersonaId changes
   }, [quizPersonaId]);
+
+  // Demo: if a topic= param is present, pre-select it before auto-start
+  useEffect(() => {
+    if (!isDemoMode) return;
+    const params = new URLSearchParams(window.location.search);
+    const topicId = params.get("topic");
+    if (!topicId) return;
+    // Search debateTopics first (selectTopic handles these), then DEMO_TOPICS
+    const inDebateTopics = debateTopics.find((t) => t.id === topicId);
+    if (inDebateTopics) {
+      debate.selectTopic(topicId);
+    } else {
+      const inDemoTopics = DEMO_TOPICS.find((t) => t.id === topicId);
+      if (inDemoTopics) {
+        debate.setCustomTopic(inDemoTopics.title);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount in demo mode
+  }, [isDemoMode]);
 
   // Demo: auto-start first debate after 2s
   useEffect(() => {
@@ -274,7 +306,7 @@ const Index = () => {
   // Gated start: check free tier / quota before launching debate
   const handleStartDebate = useCallback(async () => {
     if (isDemoMode) { debate.startDebate(); return; }
-    if (!profile || profile.subscription_tier === "free") { setShowPaywall(true); return; }
+    if (!profile) { setShowPaywall(true); return; }
     const { allowed, used } = await canStartDebate(profile.id, profile.subscription_tier);
     setQuotaUsed(used);
     if (!allowed) { setShowPaywall(true); return; }
@@ -333,7 +365,7 @@ const Index = () => {
             </span>
           )}
           {/* Quota bar */}
-          {!isDemoMode && profile && profile.subscription_tier !== "free" && quotaLoaded && (
+          {!isDemoMode && profile && quotaLoaded && (
             <button
               onClick={() => setShowPaywall(true)}
               className="inline-flex items-center gap-1.5 mt-1.5 group"
@@ -611,11 +643,18 @@ const Index = () => {
                     Your quota resets on the 1st of next month, or upgrade to get more debates.
                   </p>
                 </>
+              ) : profile && profile.subscription_tier === "free" ? (
+                <>
+                  <h2 className="font-display text-2xl font-bold mb-2">You've Used Your 3 Free Debates</h2>
+                  <p className="text-muted-foreground font-body mb-6">
+                    Subscribe to get unlimited debates, save your history, and access all 14 personas.
+                  </p>
+                </>
               ) : (
                 <>
                   <h2 className="font-display text-2xl font-bold mb-2">Unlock The Roundtaible</h2>
                   <p className="text-muted-foreground font-body mb-6">
-                    You're watching a demo. Subscribe to start your own debates, save history, and access all 14 personas.
+                    Sign in to start your own debates, save history, and access all 14 personas. First 3 debates are free.
                   </p>
                 </>
               )}

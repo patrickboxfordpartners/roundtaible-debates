@@ -115,6 +115,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: data.role,
           plan: data.subscription_tier ?? "free",
         });
+
+        // Fire welcome email for new users (created within last 30 seconds)
+        const isNewUser =
+          data.subscription_tier === "free" &&
+          data.created_at &&
+          Date.now() - new Date(data.created_at).getTime() < 30_000;
+
+        if (isNewUser) {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+          fetch(`${supabaseUrl}/functions/v1/welcome-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+              "apikey": supabaseAnonKey,
+            },
+            body: JSON.stringify({
+              email: data.email,
+              name: data.full_name,
+              role: data.role,
+            }),
+          }).catch(() => {
+            // Fire and forget — do not block auth on email failure
+          });
+        }
       }
     } catch (err) {
       // Silent fail - non-critical error

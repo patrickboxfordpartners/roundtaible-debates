@@ -168,11 +168,54 @@ export default function TeacherDashboard() {
 
         {loading ? (
           <div className="text-center text-muted-foreground font-body py-12">Loading classes...</div>
-        ) : classes.length === 0 ? (
-          <div className="text-center py-12 bg-card border border-border rounded-lg">
-            <p className="text-muted-foreground font-body">No classes yet. Create your first class to get started.</p>
+        ) : classes.length === 0 && !showCreate ? (
+          <div className="bg-card border border-border rounded-xl p-8 space-y-6">
+            <div className="text-center">
+              <h3 className="font-display text-2xl font-bold mb-2">Welcome to Roundtaible for Educators</h3>
+              <p className="text-muted-foreground font-body text-sm max-w-lg mx-auto">
+                Get your classroom set up in three steps. Debates start the moment students enter the room.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4 pt-2">
+              {/* Step 1 */}
+              <div className="bg-background border border-border rounded-lg p-6 flex flex-col gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center shrink-0">
+                  <span className="font-display font-bold text-primary text-sm">1</span>
+                </div>
+                <h4 className="font-display font-semibold text-base">Create your first class</h4>
+                <p className="text-sm text-muted-foreground font-body leading-relaxed flex-1">
+                  Name it, set a grade level, and Roundtaible will calibrate vocabulary and debate depth automatically.
+                </p>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm font-semibold hover:bg-primary/90 transition-colors w-full"
+                >
+                  Create Class
+                </button>
+              </div>
+              {/* Step 2 */}
+              <div className="bg-background border border-border rounded-lg p-6 flex flex-col gap-3">
+                <div className="w-9 h-9 rounded-full bg-muted border-2 border-border flex items-center justify-center shrink-0">
+                  <span className="font-display font-bold text-muted-foreground text-sm">2</span>
+                </div>
+                <h4 className="font-display font-semibold text-base">Share the join code</h4>
+                <p className="text-sm text-muted-foreground font-body leading-relaxed flex-1">
+                  Students enter your 6-character code at <span className="text-primary font-medium">theroundtaible.com/auth</span> to join your class. No app download required.
+                </p>
+              </div>
+              {/* Step 3 */}
+              <div className="bg-background border border-border rounded-lg p-6 flex flex-col gap-3">
+                <div className="w-9 h-9 rounded-full bg-muted border-2 border-border flex items-center justify-center shrink-0">
+                  <span className="font-display font-bold text-muted-foreground text-sm">3</span>
+                </div>
+                <h4 className="font-display font-semibold text-base">Start your first debate</h4>
+                <p className="text-sm text-muted-foreground font-body leading-relaxed flex-1">
+                  Open a class and launch a debate. Students join live and can vote on arguments, pitch ideas, and see the transcript in real time.
+                </p>
+              </div>
+            </div>
           </div>
-        ) : (
+        ) : classes.length === 0 ? null : (
           <div className="grid gap-4">
             {classes.map((cls) => (
               <div

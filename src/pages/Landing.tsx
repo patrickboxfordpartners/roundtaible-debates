@@ -119,12 +119,15 @@ export default function Landing() {
           questions your team is actually wrestling with.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={() => navigate("/app")}
-            className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
-          >
-            Watch a Debate
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
+            >
+              Try 3 debates free
+            </button>
+            <p className="text-sm text-muted-foreground">No credit card required</p>
+          </div>
           <button
             onClick={scrollToWaitlist}
             className="px-8 py-4 rounded-lg border-2 border-border bg-card font-semibold text-base hover:border-primary/60 hover:bg-primary/10 transition-all"
@@ -305,6 +308,64 @@ export default function Landing() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* For Educators */}
+      <section className="py-24 px-6 bg-muted/30 border-y border-border">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">For Teachers</p>
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
+              Built for the Classroom
+            </h2>
+            <p className="font-lora text-muted-foreground max-w-xl mx-auto">
+              A debate tool that scales from middle school to college, with zero prep and full curriculum alignment.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-lg">🎓</span>
+              </div>
+              <div>
+                <h3 className="font-playfair text-lg font-semibold mb-2">Grade-level settings</h3>
+                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
+                  Debate complexity scales from middle school to college. Vocabulary, depth, and Socratic questioning all adapt.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-lg">🏫</span>
+              </div>
+              <div>
+                <h3 className="font-playfair text-lg font-semibold mb-2">Class management</h3>
+                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
+                  Create classes, share a 6-character join code, track which students participated. No app download required.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-lg">📜</span>
+              </div>
+              <div>
+                <h3 className="font-playfair text-lg font-semibold mb-2">Curriculum-ready topics</h3>
+                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
+                  American Revolution, Cold War, atomic bomb, civil rights — historical debates tied to real curricula.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="text-center">
+            <button
+              onClick={() => navigate("/auth?role=teacher")}
+              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
+            >
+              Set up your classroom
+            </button>
           </div>
         </div>
       </section>

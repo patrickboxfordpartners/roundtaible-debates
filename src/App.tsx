@@ -21,6 +21,7 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Assignments = lazy(() => import("./pages/Assignments"));
 const Tournament = lazy(() => import("./pages/Tournament"));
+const Kiosk = lazy(() => import("./pages/Kiosk"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -94,6 +95,7 @@ const App = () => (
                 </AuthGuard>
               }
             />
+            <Route path="/kiosk" element={<Kiosk />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
