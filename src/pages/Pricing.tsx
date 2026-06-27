@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Minus, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import { useBilling } from "@/hooks/useBilling";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -110,7 +111,7 @@ const faqs = [
   },
   {
     q: "How does annual billing work?",
-    a: "Annual plans are billed up front and save you up to 20% compared to paying monthly. We send a reminder 14 days before renewal.",
+    a: "Annual plans are billed up front. We send a reminder 14 days before renewal.",
   },
   {
     q: "What are custom personas?",
@@ -144,14 +145,14 @@ function CellValue({ value, featured }: { value: Cell; featured?: boolean }) {
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-border">
+    <div className="border-b border-border/60">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between py-5 text-left"
       >
         <span className="font-playfair font-semibold text-foreground">{q}</span>
         <ChevronDown
-          className={["h-4 w-4 shrink-0 text-muted-foreground transition-transform", open ? "rotate-180" : ""].join(" ")}
+          className={["h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", open ? "rotate-180" : ""].join(" ")}
         />
       </button>
       {open && (
@@ -179,11 +180,12 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-secondary/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <button onClick={() => navigate("/")}>
-            <Logo size="md" />
+            <Logo size="md" className="text-secondary-foreground" />
           </button>
           <div className="flex items-center gap-3">
             <button
@@ -196,134 +198,182 @@ export default function Pricing() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="px-6 pb-16 pt-32 text-center">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Pricing
-        </p>
-        <h1 className="font-playfair mb-4 text-4xl font-bold leading-tight md:text-5xl">
-          Pick Your Plan
-        </h1>
-        <p className="font-lora mx-auto mb-10 max-w-xl text-muted-foreground">
-          Unlock custom personas, private rooms, and the full Roundtaible experience. Cancel anytime.
-        </p>
-
-        {/* Billing toggle */}
-        <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card px-2 py-1.5 text-sm">
-          <button
-            onClick={() => setCycle("monthly")}
-            className={[
-              "rounded-full px-4 py-1 font-semibold transition-colors",
-              cycle === "monthly"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            ].join(" ")}
+      {/* ─── HERO (dark) ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-secondary pt-32 pb-0 text-center text-secondary-foreground">
+        {/* Rotating table motif */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <motion.svg
+            viewBox="0 0 400 400"
+            className="w-[700px] h-[700px] opacity-[0.06]"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 180, repeat: Infinity, ease: "linear" }}
+            aria-hidden="true"
           >
-            Monthly
-          </button>
-          <button
-            onClick={() => setCycle("annual")}
-            className={[
-              "rounded-full px-4 py-1 font-semibold transition-colors",
-              cycle === "annual"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            ].join(" ")}
-          >
-            Annual
-          </button>
-          {cycle === "annual" && (
-            <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-              Save up to 31%
-            </span>
-          )}
+            <circle cx="200" cy="200" r="180" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="200" cy="200" r="120" fill="none" stroke="currentColor" strokeWidth="1" />
+            <circle cx="200" cy="200" r="90" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            {Array.from({ length: 14 }).map((_, i) => {
+              const a = (i / 14) * 2 * Math.PI - Math.PI / 2;
+              return <circle key={i} cx={200 + 180 * Math.cos(a)} cy={200 + 180 * Math.sin(a)} r="10" fill="currentColor" />;
+            })}
+            {Array.from({ length: 14 }).map((_, i) => {
+              const a = (i / 14) * 2 * Math.PI - Math.PI / 2;
+              return <line key={i} x1={200 + 95 * Math.cos(a)} y1={200 + 95 * Math.sin(a)} x2={200 + 165 * Math.cos(a)} y2={200 + 165 * Math.sin(a)} stroke="currentColor" strokeWidth="0.75" />;
+            })}
+          </motion.svg>
         </div>
-      </section>
 
-      {/* Plan cards */}
-      <section className="px-6 pb-24">
-        <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
-          {plans.map((plan) => {
-            const price = cycle === "annual" ? plan.annualMonthly : plan.monthly;
-            const isCurrentPlan = profile?.subscription_tier === plan.id;
-            return (
-              <div
-                key={plan.id}
-                className={[
-                  "relative flex flex-col rounded-2xl border bg-card p-8 transition-shadow",
-                  plan.featured
-                    ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary/30"
-                    : "border-border hover:border-primary/40",
-                ].join(" ")}
-              >
-                {plan.featured && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
+        {/* Amber glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[400px] h-[400px] rounded-full bg-primary/15 blur-3xl" />
+        </div>
 
-                {cycle === "annual" && (
-                  <div className="absolute top-4 right-4">
-                    <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                      Save {plan.annualSavings}%
-                    </span>
-                  </div>
-                )}
+        <div className="relative px-6 pb-20">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
+            Pricing
+          </p>
+          <h1 className="font-playfair mb-4 text-4xl font-bold leading-tight md:text-6xl text-secondary-foreground">
+            Pick Your Plan
+          </h1>
+          <p className="font-lora mx-auto mb-10 max-w-xl text-secondary-foreground/60">
+            Unlock custom personas, private rooms, and the full Roundtaible experience. Cancel anytime.
+          </p>
 
-                <div className="mb-6">
-                  <h3 className="font-playfair text-xl font-bold text-foreground">{plan.name}</h3>
-                  <p className="font-lora mt-1 text-sm text-muted-foreground">{plan.tagline}</p>
-                </div>
+          {/* Billing toggle */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-2 py-1.5 text-sm backdrop-blur-sm">
+            <button
+              onClick={() => setCycle("monthly")}
+              className={[
+                "rounded-full px-4 py-1 font-semibold transition-colors",
+                cycle === "monthly"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-secondary-foreground/60 hover:text-secondary-foreground",
+              ].join(" ")}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setCycle("annual")}
+              className={[
+                "rounded-full px-4 py-1 font-semibold transition-colors",
+                cycle === "annual"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-secondary-foreground/60 hover:text-secondary-foreground",
+              ].join(" ")}
+            >
+              Annual
+            </button>
+            {cycle === "annual" && (
+              <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                Save up to 31%
+              </span>
+            )}
+          </div>
+        </div>
 
-                <div className="mb-6">
-                  <div className="flex items-end gap-1">
-                    <span className="font-playfair text-4xl font-bold text-foreground">
-                      ${price.toFixed(2)}
-                    </span>
-                    <span className="font-lora mb-1 text-sm text-muted-foreground">/mo</span>
-                  </div>
-                  <p className="font-lora mt-1 text-xs text-muted-foreground">
-                    {cycle === "annual" ? `Billed $${plan.annualTotal}/yr` : "Billed monthly"}
-                  </p>
-                </div>
-
-                <ul className="mb-8 flex flex-col gap-3 flex-grow">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5">
-                      <Check size={15} className="mt-0.5 shrink-0 text-primary" />
-                      <span className="font-lora text-sm text-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handleSelect(plan)}
-                  disabled={loading || isCurrentPlan}
+        {/* Cards bleed up from below the dark band */}
+        <div className="relative px-6 pb-0">
+          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2 translate-y-16">
+            {plans.map((plan) => {
+              const price = cycle === "annual" ? plan.annualMonthly : plan.monthly;
+              const isCurrentPlan = profile?.subscription_tier === plan.id;
+              return (
+                <div
+                  key={plan.id}
                   className={[
-                    "w-full rounded-lg px-6 py-3 text-sm font-semibold transition-all",
-                    isCurrentPlan
-                      ? "cursor-default bg-primary/10 text-primary"
-                      : plan.featured
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50"
-                      : "border-2 border-border bg-card text-foreground hover:border-primary/60 hover:bg-primary/10 disabled:opacity-50",
+                    "relative flex flex-col rounded-2xl p-8 transition-shadow",
+                    plan.featured
+                      ? "bg-wood-dark border border-amber-glow/30 shadow-2xl shadow-black/40 text-secondary-foreground"
+                      : "bg-card border border-border shadow-lg hover:border-primary/40",
                   ].join(" ")}
                 >
-                  {isCurrentPlan ? "Current plan" : loading ? "Redirecting..." : plan.cta}
-                </button>
-              </div>
-            );
-          })}
+                  {plan.featured && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary-foreground shadow-lg">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  {cycle === "annual" && (
+                    <div className="absolute top-4 right-4">
+                      <span className={[
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                        plan.featured ? "bg-primary/25 text-primary" : "bg-primary/15 text-primary",
+                      ].join(" ")}>
+                        Save {plan.annualSavings}%
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mb-6">
+                    <h3 className={["font-playfair text-xl font-bold", plan.featured ? "text-secondary-foreground" : "text-foreground"].join(" ")}>
+                      {plan.name}
+                    </h3>
+                    <p className={["font-lora mt-1 text-sm", plan.featured ? "text-secondary-foreground/60" : "text-muted-foreground"].join(" ")}>
+                      {plan.tagline}
+                    </p>
+                  </div>
+
+                  <div className="mb-8">
+                    <div className="flex items-end gap-1">
+                      <span className={["font-playfair text-5xl font-bold", plan.featured ? "text-secondary-foreground" : "text-foreground"].join(" ")}>
+                        ${price.toFixed(2)}
+                      </span>
+                      <span className={["font-lora mb-1.5 text-sm", plan.featured ? "text-secondary-foreground/50" : "text-muted-foreground"].join(" ")}>/mo</span>
+                    </div>
+                    <p className={["font-lora mt-1 text-xs", plan.featured ? "text-secondary-foreground/50" : "text-muted-foreground"].join(" ")}>
+                      {cycle === "annual" ? `Billed $${plan.annualTotal}/yr` : "Billed monthly"}
+                    </p>
+                  </div>
+
+                  <ul className="mb-8 flex flex-col gap-3 flex-grow">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5">
+                        <span className={[
+                          "inline-flex h-4 w-4 mt-0.5 shrink-0 items-center justify-center rounded-full",
+                          plan.featured ? "bg-primary/25" : "bg-primary/15",
+                        ].join(" ")}>
+                          <Check size={10} className="text-primary" />
+                        </span>
+                        <span className={["font-lora text-sm", plan.featured ? "text-secondary-foreground/80" : "text-foreground"].join(" ")}>
+                          {f}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={() => handleSelect(plan)}
+                    disabled={loading || isCurrentPlan}
+                    className={[
+                      "w-full rounded-xl px-6 py-3.5 text-sm font-semibold transition-all disabled:opacity-50",
+                      isCurrentPlan
+                        ? "cursor-default bg-primary/10 text-primary"
+                        : plan.featured
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/40"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                    ].join(" ")}
+                  >
+                    {isCurrentPlan ? "Current plan" : loading ? "Redirecting..." : plan.cta}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Prices in USD. Taxes calculated at checkout.
-        </p>
       </section>
 
-      {/* Comparison table */}
-      <section id="compare" className="border-t border-border px-6 py-24">
-        <div className="mx-auto max-w-5xl">
+      {/* Spacer to account for card bleed */}
+      <div className="h-24 bg-background" />
+
+      <p className="text-center text-xs text-muted-foreground pb-16">
+        Prices in USD. Taxes calculated at checkout. Free tier: 3 debates, no card required.
+      </p>
+
+      {/* ─── COMPARISON TABLE ────────────────────────────────────── */}
+      <section id="compare" className="border-t border-border bg-card/30 px-6 py-24">
+        <div className="mx-auto max-w-4xl">
           <div className="mb-10 text-center">
             <h2 className="font-playfair text-3xl font-bold text-foreground md:text-4xl">
               Compare every detail
@@ -335,18 +385,18 @@ export default function Pricing() {
 
           <div className="overflow-hidden rounded-2xl border border-border">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] border-collapse">
+              <table className="w-full min-w-[480px] border-collapse">
                 <thead>
-                  <tr className="border-b border-border bg-card/50">
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
+                  <tr className="border-b border-border bg-secondary text-secondary-foreground">
+                    <th className="px-6 py-4 text-left text-sm font-medium text-secondary-foreground/50 w-1/2">
                       Features
                     </th>
                     {plans.map((p) => (
                       <th
                         key={p.id}
                         className={[
-                          "px-6 py-4 text-left text-sm font-semibold",
-                          p.featured ? "text-primary" : "text-foreground",
+                          "px-6 py-4 text-left text-sm font-bold w-1/4",
+                          p.featured ? "text-primary" : "text-secondary-foreground",
                         ].join(" ")}
                       >
                         {p.name}
@@ -359,15 +409,15 @@ export default function Pricing() {
                     <>
                       <tr key={group.name}>
                         <td
-                          colSpan={4}
-                          className="border-t border-border bg-muted/30 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                          colSpan={3}
+                          className="border-t border-border bg-muted/40 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground"
                         >
                           {group.name}
                         </td>
                       </tr>
                       {group.rows.map((row) => (
-                        <tr key={row.label} className="border-t border-border">
-                          <td className="px-6 py-4 font-lora text-sm text-foreground/80">{row.label}</td>
+                        <tr key={row.label} className="border-t border-border hover:bg-muted/20 transition-colors">
+                          <td className="px-6 py-4 font-lora text-sm text-foreground/70">{row.label}</td>
                           {row.values.map((v, i) => (
                             <td
                               key={i}
@@ -387,9 +437,9 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="border-t border-border px-6 py-24">
-        <div className="mx-auto max-w-3xl">
+      {/* ─── FAQ ─────────────────────────────────────────────────── */}
+      <section className="px-6 py-24">
+        <div className="mx-auto max-w-2xl">
           <div className="mb-10 text-center">
             <h2 className="font-playfair text-3xl font-bold text-foreground md:text-4xl">
               Frequently asked questions
@@ -402,7 +452,7 @@ export default function Pricing() {
               .
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-card px-6">
+          <div className="rounded-2xl border border-border bg-card px-8">
             {faqs.map((f) => (
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}
@@ -410,25 +460,25 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* CTA band */}
-      <section className="px-6 pb-24">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-primary/20 bg-primary/5 px-8 py-16 text-center md:px-16 md:py-20">
-          <h2 className="font-playfair text-3xl font-bold text-foreground md:text-4xl">
+      {/* ─── BOTTOM CTA (dark) ───────────────────────────────────── */}
+      <section className="bg-secondary px-6 py-24 text-center text-secondary-foreground">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="font-playfair text-3xl font-bold md:text-4xl">
             Ready to enter the debate?
           </h2>
-          <p className="font-lora mx-auto mt-3 max-w-xl text-muted-foreground">
+          <p className="font-lora mx-auto mt-3 max-w-xl text-secondary-foreground/60">
             Start with Pro for $9.99/mo. Upgrade to Edu / Team for classrooms and organizations.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => navigate("/auth")}
-              className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-all hover:bg-primary/90"
+              className="rounded-lg bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:scale-[1.02]"
             >
               Get started
             </button>
             <a
               href="mailto:hello@theroundtaible.com?subject=Edu%20/%20Team%20Inquiry"
-              className="rounded-lg border-2 border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/60 hover:bg-primary/10"
+              className="rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-white/10"
             >
               Contact sales
             </a>
