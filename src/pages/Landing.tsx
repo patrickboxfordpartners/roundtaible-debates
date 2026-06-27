@@ -1,10 +1,118 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { allPersonas, Persona } from "@/data/debateData";
 import Footer from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
-import { ContactForm } from "@/components/ContactForm";
+
+const DEBATE_TURNS = [
+  { speaker: "Jefferson", color: "#8B6914", text: "The question is not whether AI shall govern, but whether men shall govern AI. Every technology is merely an extension of the will that directs it." },
+  { speaker: "Machiavelli", color: "#6B3A3A", text: "A prince who relies upon others' virtue shall soon find himself without either. AI is a new form of power — and power, unchecked, does not wait for philosophy." },
+  { speaker: "Curie", color: "#4A7C8E", text: "We must not fear what we have discovered. The question is not whether to govern AI, but whether we have the discipline to govern ourselves first." },
+  { speaker: "Lincoln", color: "#2D5016", text: "A house divided cannot stand — and neither can a civilization that builds instruments of governance it does not yet understand. Let us proceed, but proceed carefully." },
+];
+
+const TYPING_SPEED = 22; // ms per character
+const PAUSE_AFTER = 2200; // ms to hold after full message
+const LOOP_PAUSE = 1800; // ms before restarting
+
+function DebateTranscript() {
+  const [visibleTurns, setVisibleTurns] = useState<number[]>([]);
+  const [typingIndex, setTypingIndex] = useState(0);
+  const [typedChars, setTypedChars] = useState(0);
+  const [typing, setTyping] = useState(true);
+  const [nextSpeaker, setNextSpeaker] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const current = DEBATE_TURNS[typingIndex];
+
+    if (typing) {
+      if (typedChars < current.text.length) {
+        timeoutRef.current = setTimeout(() => {
+          setTypedChars((c) => c + 1);
+        }, TYPING_SPEED);
+      } else {
+        // Finished typing this turn
+        timeoutRef.current = setTimeout(() => {
+          setVisibleTurns((prev) => [...prev, typingIndex]);
+          setTyping(false);
+
+          const nextIdx = (typingIndex + 1) % DEBATE_TURNS.length;
+          if (nextIdx === 0) {
+            // About to loop — show "thinking" pause then reset
+            setNextSpeaker(DEBATE_TURNS[0].speaker);
+            timeoutRef.current = setTimeout(() => {
+              setVisibleTurns([]);
+              setTypingIndex(0);
+              setTypedChars(0);
+              setNextSpeaker(null);
+              setTyping(true);
+            }, LOOP_PAUSE);
+          } else {
+            setNextSpeaker(DEBATE_TURNS[nextIdx].speaker);
+            timeoutRef.current = setTimeout(() => {
+              setTypingIndex(nextIdx);
+              setTypedChars(0);
+              setNextSpeaker(null);
+              setTyping(true);
+            }, PAUSE_AFTER);
+          }
+        }, 0);
+      }
+    }
+
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [typing, typedChars, typingIndex]);
+
+  const currentTurn = DEBATE_TURNS[typingIndex];
+
+  return (
+    <div className="bg-background/70 rounded-xl border border-border/60 p-6 max-w-2xl mx-auto min-h-[220px]">
+      <div className="space-y-5">
+        {/* Completed turns */}
+        {visibleTurns.map((idx) => {
+          const turn = DEBATE_TURNS[idx];
+          return (
+            <div key={idx} className={idx > 0 ? "border-t border-border/50 pt-5" : ""}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: turn.color }}>
+                {turn.speaker}
+              </span>
+              <p className="font-lora text-sm text-foreground/80 mt-1.5 leading-relaxed">
+                "{turn.text}"
+              </p>
+            </div>
+          );
+        })}
+
+        {/* Currently typing turn */}
+        {typing && (
+          <div className={visibleTurns.length > 0 ? "border-t border-border/50 pt-5" : ""}>
+            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: currentTurn.color }}>
+              {currentTurn.speaker}
+            </span>
+            <p className="font-lora text-sm text-foreground/80 mt-1.5 leading-relaxed">
+              "{currentTurn.text.slice(0, typedChars)}
+              <span className="inline-block w-0.5 h-3.5 bg-foreground/60 ml-0.5 align-middle animate-pulse" />
+            </p>
+          </div>
+        )}
+
+        {/* Thinking indicator */}
+        {!typing && nextSpeaker && (
+          <div className="flex items-center gap-2 text-primary/60 text-xs pt-1">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="font-lora">{nextSpeaker} is formulating a response...</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const TESTIMONIALS = [
   {
@@ -27,42 +135,10 @@ const TESTIMONIALS = [
   },
 ];
 
-const USE_CASES = [
-  {
-    icon: "🏛️",
-    title: "Decision Support",
-    description:
-      "Before your next big meeting, watch history's sharpest strategists debate your actual question. Walk in with every angle already considered.",
-  },
-  {
-    icon: "⚡",
-    title: "Sales & Demos",
-    description:
-      "Drop it on a tablet at your next event. People walk up, pick a topic, and suddenly you have the most interesting conversation in the room.",
-  },
-  {
-    icon: "🎓",
-    title: "Education",
-    description:
-      "Primary sources debating modern topics. Pause for class discussion. Resume. A history class that actually holds attention.",
-  },
-];
-
-const STEPS = [
-  { n: "1", heading: "Pick a topic", body: "From AI rights to whether empires create progress, or bring your own question." },
-  { n: "2", heading: "Watch the debate", body: "Historical personas argue in their authentic voices, citing real philosophy, real experience." },
-  { n: "3", heading: "Jump in", body: "Pitch your own idea, vote for the best argument, or take the personality quiz to find your historical match." },
-];
-
 export default function Landing() {
   const navigate = useNavigate();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const waitlistRef = useRef<HTMLDivElement>(null);
-
-  const scrollToWaitlist = () => {
-    waitlistRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
 
   const handlePersonaClick = (persona: Persona) => {
     setSelectedPersona(persona);
@@ -75,7 +151,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-20">
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
@@ -83,31 +159,25 @@ export default function Landing() {
           <Logo size="md" />
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/quiz")}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-            >
-              Take the Quiz
-            </button>
-            <button
               onClick={() => navigate("/pricing")}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               Pricing
             </button>
             <button
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
               className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
-              Enter the Debate
+              Try Free
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-32 pb-24 px-6 text-center max-w-4xl mx-auto">
+      {/* ─── 1. HERO ─────────────────────────────────────────────────── */}
+      <section className="pt-36 pb-28 px-6 text-center max-w-4xl mx-auto">
         <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-6">
-          Historical AI Platform
+          Historical AI Debate Platform
         </p>
         <h1 className="font-playfair text-5xl md:text-7xl font-bold leading-tight mb-6">
           History's Greatest Minds.
@@ -115,47 +185,51 @@ export default function Landing() {
           <span className="text-primary">Your Hardest Questions.</span>
         </h1>
         <p className="font-lora text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-          Roundtaible puts history's sharpest minds at your table, debating the
-          questions your team is actually wrestling with.
+          Pick a question. Watch Edison, Machiavelli, Curie, and eleven others argue it in real time — in their own voices, from their own eras.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <button
-              onClick={() => navigate("/auth")}
-              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
-            >
-              Try 3 debates free
-            </button>
-            <p className="text-sm text-muted-foreground">No credit card required</p>
-          </div>
+        <div className="flex flex-col items-center gap-3">
           <button
-            onClick={scrollToWaitlist}
-            className="px-8 py-4 rounded-lg border-2 border-border bg-card font-semibold text-base hover:border-primary/60 hover:bg-primary/10 transition-all"
+            onClick={() => navigate("/auth")}
+            className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/25"
           >
-            Join the Waitlist
+            Try 3 debates free
           </button>
+          <p className="text-sm text-muted-foreground">No credit card required</p>
         </div>
       </section>
 
-      {/* Persona grid */}
-      <section className="py-16 bg-card/50 border-y border-border overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-8 font-semibold">
-            14 Historical Minds. Infinite Debates.
+      {/* ─── 2. PERSONAS ─────────────────────────────────────────────── */}
+      <section className="py-20 border-y border-border bg-card/40">
+        <div className="max-w-5xl mx-auto px-6">
+          <p className="text-center text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-12">
+            14 Historical Minds at the Table
           </p>
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-4">
+          <div className="grid grid-cols-7 gap-6">
             {allPersonas.map((p) => (
               <button
                 key={p.id}
                 onClick={() => handlePersonaClick(p)}
-                className="flex flex-col items-center gap-2 group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg p-2 -m-2"
+                className="flex flex-col items-center gap-3 group focus:outline-none"
               >
                 <div
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all group-hover:scale-110 group-hover:shadow-lg cursor-pointer"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20"
                   style={{ borderColor: p.color }}
                 >
                   {p.avatar ? (
-                    <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
+                    <img
+                      src={p.avatar}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const t = e.currentTarget;
+                        t.style.display = "none";
+                        const parent = t.parentElement;
+                        if (parent) {
+                          parent.style.backgroundColor = p.color;
+                          parent.innerHTML = `<span style="color:white;font-weight:700;font-size:1.1rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${p.name.charAt(0)}</span>`;
+                        }
+                      }}
+                    />
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center text-white font-bold text-lg"
@@ -171,106 +245,69 @@ export default function Landing() {
               </button>
             ))}
           </div>
+          <p className="text-center text-xs text-muted-foreground mt-10 font-lora">
+            Click any figure to learn their philosophy and debate style
+          </p>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-24 px-6 max-w-5xl mx-auto">
-        <h2 className="font-playfair text-3xl md:text-4xl font-bold text-center mb-16">
-          How It Works
-        </h2>
-        <div className="grid md:grid-cols-3 gap-10">
-          {STEPS.map((s) => (
-            <div key={s.n} className="text-center">
-              <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center mx-auto mb-5">
-                <span className="font-playfair font-bold text-lg text-primary">{s.n}</span>
-              </div>
-              <h3 className="font-playfair text-xl font-semibold mb-3">{s.heading}</h3>
-              <p className="font-lora text-muted-foreground text-sm leading-relaxed">{s.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Debate Preview */}
-      <section className="py-24 px-6 bg-card/50 border-y border-border">
+      {/* ─── 3. LIVE MOCKUP ──────────────────────────────────────────── */}
+      <section className="py-28 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">See It Live</p>
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
+          <div className="text-center mb-16">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">See It In Action</p>
+            <h2 className="font-playfair text-3xl md:text-5xl font-bold mb-4">
               The Table Is Already Set.
             </h2>
-            <p className="font-lora text-muted-foreground max-w-xl mx-auto">
+            <p className="font-lora text-muted-foreground max-w-lg mx-auto text-lg">
               A round table. History's sharpest minds. Your question in the middle.
             </p>
           </div>
 
-          {/* Browser chrome + app mockup */}
           <div className="relative mx-auto max-w-4xl">
-            <div className="absolute -inset-3 rounded-3xl bg-primary/5 blur-2xl pointer-events-none" />
+            {/* Glow */}
+            <div className="absolute -inset-4 rounded-3xl bg-primary/8 blur-3xl pointer-events-none" />
+
+            {/* Browser chrome */}
             <div className="relative rounded-2xl overflow-hidden border border-border shadow-2xl">
-              {/* Chrome bar */}
-              <div className="bg-card border-b border-border px-4 py-2.5 flex items-center gap-3">
+              <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/25" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
                 </div>
                 <div className="flex-1 max-w-xs mx-auto bg-background/60 rounded px-3 py-1 text-[10px] text-muted-foreground font-mono text-center">
                   theroundtaible.com/app
                 </div>
               </div>
 
-              {/* Debate mockup */}
-              <div className="bg-[#f5f0e8] p-6 md:p-10">
-                <p className="font-playfair text-center text-sm text-foreground/50 mb-6 tracking-wide">
-                  Algonquin Roundtaible, <span className="italic">Where history's greatest minds debate the future</span>
+              <div className="bg-parchment p-8 md:p-12">
+                <p className="font-playfair text-center text-sm text-foreground/40 mb-8 tracking-wide italic">
+                  Should AI be allowed to govern?
                 </p>
 
-                {/* Round table visual */}
-                <div className="flex items-center justify-center gap-6 mb-8">
+                {/* Debaters */}
+                <div className="flex items-center justify-center gap-8 mb-10">
                   {[
-                    { name: "Jefferson", color: "#8B6914", initial: "J" },
-                    { name: "Curie", color: "#4A7C8E", initial: "C" },
-                    { name: "Machiavelli", color: "#6B3A3A", initial: "M" },
-                    { name: "Lincoln", color: "#2D5016", initial: "L" },
+                    { name: "Jefferson", color: "#8B6914" },
+                    { name: "Machiavelli", color: "#6B3A3A" },
+                    { name: "Curie", color: "#4A7C8E" },
+                    { name: "Lincoln", color: "#2D5016" },
                   ].map((p) => (
                     <div key={p.name} className="flex flex-col items-center gap-2">
                       <div
-                        className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 flex items-center justify-center text-white font-bold text-lg shadow-md"
+                        className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 flex items-center justify-center text-white font-bold text-base shadow"
                         style={{ backgroundColor: p.color, borderColor: p.color }}
                       >
-                        {p.initial}
+                        {p.name[0]}
                       </div>
                       <span className="font-lora text-[10px] text-foreground/50">{p.name}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Sample transcript */}
-                <div className="bg-background/60 rounded-xl border border-border/50 p-5 space-y-4 max-w-2xl mx-auto text-sm font-lora">
-                  <div>
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8B6914" }}>Jefferson</span>
-                    <p className="text-foreground/80 mt-1 leading-relaxed">"The question is not whether AI shall govern, but whether men shall govern AI. Every technology is merely an extension of the will that directs it."</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#6B3A3A" }}>Machiavelli</span>
-                    <p className="text-foreground/80 mt-1 leading-relaxed">"A prince who relies upon others' virtue shall soon find himself without either. AI is a new form of power, and power, unchecked, does not wait for philosophy."</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-primary/70 text-xs pt-1">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span>Curie is formulating a response...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Floating badge */}
-            <div className="absolute -bottom-4 -right-2 md:-right-6 bg-card border border-border rounded-xl shadow-xl px-4 py-3 flex items-center gap-2.5">
-              <span className="text-lg">🎭</span>
-              <div>
-                <p className="text-xs font-semibold text-foreground">14 historical personas</p>
-                <p className="text-[10px] text-muted-foreground">Any question. Any topic.</p>
+                {/* Animated transcript */}
+                <DebateTranscript />
               </div>
             </div>
           </div>
@@ -278,7 +315,7 @@ export default function Landing() {
           <div className="text-center mt-12">
             <button
               onClick={() => navigate("/app")}
-              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
+              className="px-8 py-3.5 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-all"
             >
               Watch a Live Debate
             </button>
@@ -286,158 +323,134 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Use cases */}
-      <section className="py-24 px-6 bg-card/50 border-y border-border">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold text-center mb-4">
-            Debate Anything. With Everyone Who Ever Mattered.
-          </h2>
-          <p className="font-lora text-muted-foreground text-center mb-16 max-w-xl mx-auto">
-            One engine. Three very different rooms.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {USE_CASES.map((uc) => (
-              <div
-                key={uc.title}
-                className="bg-card rounded-xl border border-border p-7 hover:border-primary/40 transition-colors"
+      {/* ─── 4. TWO-COLUMN: EDUCATORS + TEAMS ───────────────────────── */}
+      <section className="py-24 border-y border-border bg-card/40">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-3">
+              One Engine. Two Very Different Rooms.
+            </h2>
+            <p className="font-lora text-muted-foreground max-w-lg mx-auto">
+              Built for the classroom. Deployed at the conference table.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Educators */}
+            <div className="bg-card rounded-2xl border border-border p-8">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center mb-6">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="font-playfair text-xl font-bold mb-2">For Educators</h3>
+              <p className="font-lora text-muted-foreground text-sm mb-6 leading-relaxed">
+                Primary sources debating modern topics. Pause for class discussion. Resume. A history class that actually holds attention.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Grade-level settings — middle school to college",
+                  "Class management with 6-character join codes",
+                  "Curriculum-aligned topics: Revolution, Cold War, civil rights",
+                  "Socratic questioning mode built in",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm font-lora text-foreground/80">
+                    <span className="text-primary mt-0.5 shrink-0">—</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => navigate("/auth?role=teacher")}
+                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
               >
-                <div className="text-3xl mb-4">{uc.icon}</div>
-                <h3 className="font-playfair text-xl font-semibold mb-3">{uc.title}</h3>
-                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
-                  {uc.description}
-                </p>
+                Set up your classroom
+              </button>
+            </div>
+
+            {/* Teams */}
+            <div className="bg-card rounded-2xl border border-border p-8">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center mb-6">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="font-playfair text-xl font-bold mb-2">For Teams & Sales</h3>
+              <p className="font-lora text-muted-foreground text-sm mb-6 leading-relaxed">
+                Before your next big decision, watch history's sharpest strategists argue it from every angle. Walk into the room with no blind spots.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "Decision support before board meetings or pitches",
+                  "Conference booth demo — draws a crowd every time",
+                  "Kiosk mode for events and trade shows",
+                  "Any question, any industry, in under 5 minutes",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm font-lora text-foreground/80">
+                    <span className="text-primary mt-0.5 shrink-0">—</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => navigate("/auth")}
+                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+              >
+                Start a debate
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─────────────────────────────────────────────── */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">From the Table</p>
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold">
+              What People Say
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="bg-card rounded-xl border border-border p-7 flex flex-col">
+                <p className="font-lora text-sm text-muted-foreground leading-relaxed flex-1 mb-6">"{t.quote}"</p>
+                <div className="flex items-center gap-3 pt-5 border-t border-border">
+                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="font-playfair text-sm font-semibold text-foreground">{t.name}</p>
+                    <p className="font-lora text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* For Educators */}
-      <section className="py-24 px-6 bg-muted/30 border-y border-border">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">For Teachers</p>
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
-              Built for the Classroom
-            </h2>
-            <p className="font-lora text-muted-foreground max-w-xl mx-auto">
-              A debate tool that scales from middle school to college, with zero prep and full curriculum alignment.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-lg">🎓</span>
-              </div>
-              <div>
-                <h3 className="font-playfair text-lg font-semibold mb-2">Grade-level settings</h3>
-                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
-                  Debate complexity scales from middle school to college. Vocabulary, depth, and Socratic questioning all adapt.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-lg">🏫</span>
-              </div>
-              <div>
-                <h3 className="font-playfair text-lg font-semibold mb-2">Class management</h3>
-                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
-                  Create classes, share a 6-character join code, track which students participated. No app download required.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-lg">📜</span>
-              </div>
-              <div>
-                <h3 className="font-playfair text-lg font-semibold mb-2">Curriculum-ready topics</h3>
-                <p className="font-lora text-muted-foreground text-sm leading-relaxed">
-                  American Revolution, Cold War, atomic bomb, civil rights — historical debates tied to real curricula.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="text-center">
-            <button
-              onClick={() => navigate("/auth?role=teacher")}
-              className="px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg"
-            >
-              Set up your classroom
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 px-6 max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">What People Say</p>
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold">
-            From the Table.
+      {/* ─── 5. BOTTOM CTA ────────────────────────────────────────────── */}
+      <section className="py-28 px-6 bg-secondary text-secondary-foreground">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="font-playfair text-4xl md:text-5xl font-bold mb-5">
+            The Table Is Open.
           </h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="bg-card rounded-xl border border-border p-7 flex flex-col">
-              <p className="font-lora text-sm text-muted-foreground leading-relaxed flex-1 mb-6">"{t.quote}"</p>
-              <div className="flex items-center gap-3 pt-5 border-t border-border">
-                <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-                  {t.avatar}
-                </div>
-                <div>
-                  <p className="font-playfair text-sm font-semibold text-foreground">{t.name}</p>
-                  <p className="font-lora text-xs text-muted-foreground">{t.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Quiz callout */}
-      <section className="py-24 px-6 max-w-3xl mx-auto text-center">
-        <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">
-          Personality Quiz
-        </p>
-        <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-5">
-          Which Historical Mind Are You?
-        </h2>
-        <p className="font-lora text-muted-foreground mb-8 leading-relaxed">
-          Seven questions. One historical archetype. Find out whether you think like
-          Edison, argue like Machiavelli, or see the world through Curie's eyes.
-        </p>
-        <button
-          onClick={() => navigate("/quiz")}
-          className="px-8 py-4 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-all hover:scale-[1.02]"
-        >
-          Take the Quiz
-        </button>
-      </section>
-
-      {/* Contact */}
-      <section ref={waitlistRef} className="py-24 px-6 bg-card/50 border-t border-border">
-        <div className="max-w-lg mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">
-              Get Access
-            </p>
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-4">
-              Get a Seat at the Table
-            </h2>
-            <p className="font-lora text-muted-foreground leading-relaxed">
-              Roundtaible is rolling out to teams and classrooms. Tell us how you'd
-              use it and we'll reach out when your spot is ready.
-            </p>
-          </div>
-          <ContactForm />
+          <p className="font-lora text-lg opacity-70 mb-10 leading-relaxed">
+            Three debates free. No credit card. Start in under a minute.
+          </p>
+          <button
+            onClick={() => navigate("/auth")}
+            className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/30"
+          >
+            Try 3 debates free
+          </button>
         </div>
       </section>
 
       <Footer />
 
-      {/* Persona Modal */}
       <PersonaModal
         persona={selectedPersona}
         open={modalOpen}
