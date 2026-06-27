@@ -153,12 +153,12 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="https://mail.boxfordpartners.com/" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">
+                <a href="https://www.boxfordpartners.com/mail" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">
                   mailBOXFORD
                 </a>
               </li>
               <li>
-                <a href="https://crm.boxfordpartners.com/" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">
+                <a href="https://www.boxfordpartners.com/crm" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">
                   Boxford CRM
                 </a>
               </li>
