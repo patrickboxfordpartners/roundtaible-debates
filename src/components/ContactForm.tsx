@@ -103,20 +103,18 @@ export function ContactForm({ className }: ContactFormProps) {
     setSubmitting(true);
 
     try {
-      const intakeUrl = import.meta.env.VITE_CRM_INTAKE_URL;
-      const intakeKey = import.meta.env.VITE_CRM_INTAKE_KEY;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-      if (!intakeUrl || !intakeKey) {
+      if (!supabaseUrl) {
         throw new Error("CRM intake is not configured");
       }
 
       const useCase = values.use_case as UseCase;
 
-      const res = await fetch(`${intakeUrl}/api/intake`, {
+      const res = await fetch(`${supabaseUrl}/functions/v1/crm-intake`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-integration-key": intakeKey,
         },
         body: JSON.stringify({
           name: values.name.trim(),
