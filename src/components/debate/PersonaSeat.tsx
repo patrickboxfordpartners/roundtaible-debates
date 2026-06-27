@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Persona } from "@/data/debateData";
 
@@ -41,65 +41,39 @@ function TypewriterText({ text, delay, className, style }: { text: string; delay
   );
 }
 
-export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isWinner, onClickPersona, containerRef }: PersonaSeatProps) {
+// Orbit radius as % of container, tuned per count so avatars
+// never overlap each other or clip outside.
+function orbitRadius(total: number): number {
+  if (total <= 2) return 38;
+  if (total <= 4) return 40;
+  if (total <= 6) return 42;
+  return 44;
+}
+
+export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isWinner, onClickPersona }: PersonaSeatProps) {
   const angle = (index / total) * 360 - 90;
-  // Table inset is 20%, so edge is at 30% from center. Place avatar centers right on that edge.
-  const radius = 30;
+  const radius = orbitRadius(total);
   const baseDelay = index * 0.25;
-  const [isDragging, setIsDragging] = useState(false);
-  const clickStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    clickStartRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    // Only open dialog if this wasn't a drag
-    if (clickStartRef.current) {
-      const dx = Math.abs(e.clientX - clickStartRef.current.x);
-      const dy = Math.abs(e.clientY - clickStartRef.current.y);
-      if (dx < 5 && dy < 5) {
-        onClickPersona(persona);
-      }
-    }
-    clickStartRef.current = null;
-  };
-
-  const initialX = 50 + radius * Math.cos((angle * Math.PI) / 180);
-  const initialY = 50 + radius * Math.sin((angle * Math.PI) / 180);
+  const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+  const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
 
   return (
     <motion.div
-      className="absolute flex flex-col items-center gap-1 z-20 cursor-grab active:cursor-grabbing"
-      style={{
-        left: `${initialX}%`,
-        top: `${initialY}%`,
-        x: "-50%",
-        y: "-50%",
-      }}
-      drag
-      dragMomentum={false}
-      dragConstraints={containerRef}
-      dragElastic={0.1}
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={() => {
-        setTimeout(() => setIsDragging(false), 50);
-      }}
+      className="absolute flex flex-col items-center gap-1 z-20"
+      style={{ left: `${x}%`, top: `${y}%`, x: "-50%", y: "-50%" }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: baseDelay, type: "spring", stiffness: 160, damping: 14 }}
-      whileDrag={{ scale: 1.1, zIndex: 50 }}
     >
-      {/* Avatar */}
       <motion.div
         role="button"
         tabIndex={0}
         aria-label={`${persona.name}, ${persona.role}${isSpeaking ? " (speaking)" : isThinking ? " (thinking)" : ""}. Click to edit character.`}
-        onPointerDown={handlePointerDown}
-        onClick={handleClick}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } }}
+        onClick={() => onClickPersona(persona)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClickPersona(persona); } }}
         className={`
-          relative w-16 h-16 md:w-20 md:h-20 rounded-full
+          relative w-16 h-16 md:w-20 md:h-20 rounded-full cursor-pointer
           border-2 transition-all duration-500 overflow-hidden select-none
           focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
           ${isWinner ? "victory-glow border-gold" : isSpeaking ? "animate-pulse-glow border-primary" : "border-border hover:border-primary/50"}
@@ -107,8 +81,9 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
         style={{ borderColor: isSpeaking ? persona.color : undefined }}
         initial={{ opacity: 0, rotate: -10 }}
         animate={{ opacity: 1, rotate: 0 }}
+        whileHover={{ scale: 1.08 }}
         transition={{ delay: baseDelay + 0.15, duration: 0.5, ease: "easeOut" }}
-        title={`Click to edit ${persona.name}'s character • Drag to reposition`}
+        title={`Click to edit ${persona.name}'s character`}
       >
         {persona.avatar ? (
           <motion.img
@@ -119,12 +94,22 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: baseDelay + 0.25, duration: 0.6, ease: "easeOut" }}
             draggable={false}
+            onError={(e) => {
+              const t = e.currentTarget;
+              t.style.display = "none";
+              const parent = t.parentElement;
+              if (parent) {
+                parent.style.backgroundColor = persona.color;
+                parent.innerHTML = `<span style="color:white;font-weight:700;font-size:1.2rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${persona.name.split(" ").map((w: string) => w[0]).join("")}</span>`;
+              }
+            }}
           />
         ) : (
           <span className="font-display text-lg md:text-xl font-bold" style={{ color: persona.color }}>
             {persona.name.split(" ").map((w) => w[0]).join("")}
           </span>
         )}
+
         {isSpeaking && (
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
@@ -133,7 +118,7 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
             transition={{ duration: 2, repeat: Infinity }}
           />
         )}
-        {/* Thinking indicator */}
+
         {isThinking && !isSpeaking && (
           <motion.div
             className="absolute inset-0 rounded-full flex items-center justify-center bg-black/30 pointer-events-none"
@@ -149,13 +134,12 @@ export function PersonaSeat({ persona, isSpeaking, isThinking, index, total, isW
             </motion.span>
           </motion.div>
         )}
-        {/* Context indicator dot */}
+
         {persona.context && (
           <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary border border-card" title="Custom context active" />
         )}
       </motion.div>
 
-      {/* Typewriter nameplate */}
       <div className="text-center min-h-[28px] md:min-h-[32px] pointer-events-none">
         <p className="font-display text-xs md:text-sm font-semibold text-foreground leading-tight">
           <TypewriterText text={persona.name} delay={baseDelay + 0.5} />

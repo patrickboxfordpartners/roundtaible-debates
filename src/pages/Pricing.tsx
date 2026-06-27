@@ -14,7 +14,9 @@ const plans = [
     name: "Pro",
     tagline: "Unlock the full Roundtaible experience.",
     monthly: 9.99,
-    annual: 99,
+    annualTotal: 99,
+    annualMonthly: +(99 / 12).toFixed(2),
+    annualSavings: Math.round((1 - 99 / (9.99 * 12)) * 100),
     cta: "Get Pro",
     featured: true,
     priceIds: {
@@ -35,7 +37,9 @@ const plans = [
     name: "Edu / Team",
     tagline: "Built for classrooms and organizations.",
     monthly: 29.99,
-    annual: 249,
+    annualTotal: 249,
+    annualMonthly: +(249 / 12).toFixed(2),
+    annualSavings: Math.round((1 - 249 / (29.99 * 12)) * 100),
     cta: "Get Edu / Team",
     priceIds: {
       monthly: import.meta.env.VITE_STRIPE_PRICE_EDU_MONTHLY ?? "",
@@ -230,7 +234,7 @@ export default function Pricing() {
           </button>
           {cycle === "annual" && (
             <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-              Save 20%
+              Save up to 31%
             </span>
           )}
         </div>
@@ -238,9 +242,9 @@ export default function Pricing() {
 
       {/* Plan cards */}
       <section className="px-6 pb-24">
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
           {plans.map((plan) => {
-            const price = cycle === "annual" ? plan.annual : plan.monthly;
+            const price = cycle === "annual" ? plan.annualMonthly : plan.monthly;
             const isCurrentPlan = profile?.subscription_tier === plan.id;
             return (
               <div
@@ -263,7 +267,7 @@ export default function Pricing() {
                 {cycle === "annual" && (
                   <div className="absolute top-4 right-4">
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                      Save 20%
+                      Save {plan.annualSavings}%
                     </span>
                   </div>
                 )}
@@ -281,7 +285,7 @@ export default function Pricing() {
                     <span className="font-lora mb-1 text-sm text-muted-foreground">/mo</span>
                   </div>
                   <p className="font-lora mt-1 text-xs text-muted-foreground">
-                    {cycle === "annual" ? `Billed $${(plan.annual * 12).toFixed(0)}/yr` : "Billed monthly"}
+                    {cycle === "annual" ? `Billed $${plan.annualTotal}/yr` : "Billed monthly"}
                   </p>
                 </div>
 
@@ -413,7 +417,7 @@ export default function Pricing() {
             Ready to enter the debate?
           </h2>
           <p className="font-lora mx-auto mt-3 max-w-xl text-muted-foreground">
-            Start with Starter for $9.99/mo. Upgrade anytime for custom personas, private rooms, and more.
+            Start with Pro for $9.99/mo. Upgrade to Edu / Team for classrooms and organizations.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button

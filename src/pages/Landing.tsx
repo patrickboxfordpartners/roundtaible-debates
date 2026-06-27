@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { allPersonas, Persona } from "@/data/debateData";
 import Footer from "@/components/Footer";
@@ -175,26 +176,67 @@ export default function Landing() {
       </nav>
 
       {/* ─── 1. HERO ─────────────────────────────────────────────────── */}
-      <section className="pt-36 pb-28 px-6 text-center max-w-4xl mx-auto">
-        <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-6">
-          Historical AI Debate Platform
-        </p>
-        <h1 className="font-playfair text-5xl md:text-7xl font-bold leading-tight mb-6">
-          History's Greatest Minds.
-          <br />
-          <span className="text-primary">Your Hardest Questions.</span>
-        </h1>
-        <p className="font-lora text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-          Pick a question. Watch Edison, Machiavelli, Curie, and eleven others argue it in real time — in their own voices, from their own eras.
-        </p>
-        <div className="flex flex-col items-center gap-3">
-          <button
-            onClick={() => navigate("/auth")}
-            className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/25"
+      <section className="relative pt-36 pb-28 px-6 text-center overflow-hidden">
+        {/* Rotating round table background motif */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+          <motion.svg
+            viewBox="0 0 400 400"
+            className="w-[600px] h-[600px] opacity-[0.07]"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+            aria-hidden="true"
           >
-            Try 3 debates free
-          </button>
-          <p className="text-sm text-muted-foreground">No credit card required</p>
+            {/* Outer ring */}
+            <circle cx="200" cy="200" r="180" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            {/* Inner table surface */}
+            <circle cx="200" cy="200" r="120" fill="none" stroke="currentColor" strokeWidth="1" />
+            <circle cx="200" cy="200" r="90" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            {/* 14 seat positions */}
+            {Array.from({ length: 14 }).map((_, i) => {
+              const a = (i / 14) * 2 * Math.PI - Math.PI / 2;
+              const cx = 200 + 180 * Math.cos(a);
+              const cy = 200 + 180 * Math.sin(a);
+              return <circle key={i} cx={cx} cy={cy} r="10" fill="currentColor" />;
+            })}
+            {/* Spoke lines */}
+            {Array.from({ length: 14 }).map((_, i) => {
+              const a = (i / 14) * 2 * Math.PI - Math.PI / 2;
+              const x1 = 200 + 95 * Math.cos(a);
+              const y1 = 200 + 95 * Math.sin(a);
+              const x2 = 200 + 165 * Math.cos(a);
+              const y2 = 200 + 165 * Math.sin(a);
+              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="0.75" />;
+            })}
+          </motion.svg>
+        </div>
+
+        {/* Radial amber glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/10 blur-3xl" />
+        </div>
+
+        {/* Content */}
+        <div className="relative max-w-4xl mx-auto">
+          <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-6">
+            Historical AI Debate Platform
+          </p>
+          <h1 className="font-playfair text-5xl md:text-7xl font-bold leading-tight mb-6">
+            History's Greatest Minds.
+            <br />
+            <span className="text-primary">Your Hardest Questions.</span>
+          </h1>
+          <p className="font-lora text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+            Pick a question. Watch Edison, Machiavelli, Curie, and eleven others argue it in real time — in their own voices, from their own eras.
+          </p>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/25"
+            >
+              Try 3 debates free
+            </button>
+            <p className="text-sm text-muted-foreground">No credit card required</p>
+          </div>
         </div>
       </section>
 
@@ -282,29 +324,9 @@ export default function Landing() {
               </div>
 
               <div className="bg-parchment p-8 md:p-12">
-                <p className="font-playfair text-center text-sm text-foreground/40 mb-8 tracking-wide italic">
+                <p className="font-playfair text-center text-sm text-foreground/40 mb-6 tracking-wide italic">
                   Should AI be allowed to govern?
                 </p>
-
-                {/* Debaters */}
-                <div className="flex items-center justify-center gap-8 mb-10">
-                  {[
-                    { name: "Jefferson", color: "#8B6914" },
-                    { name: "Machiavelli", color: "#6B3A3A" },
-                    { name: "Curie", color: "#4A7C8E" },
-                    { name: "Lincoln", color: "#2D5016" },
-                  ].map((p) => (
-                    <div key={p.name} className="flex flex-col items-center gap-2">
-                      <div
-                        className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 flex items-center justify-center text-white font-bold text-base shadow"
-                        style={{ backgroundColor: p.color, borderColor: p.color }}
-                      >
-                        {p.name[0]}
-                      </div>
-                      <span className="font-lora text-[10px] text-foreground/50">{p.name}</span>
-                    </div>
-                  ))}
-                </div>
 
                 {/* Animated transcript */}
                 <DebateTranscript />
