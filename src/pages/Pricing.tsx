@@ -271,9 +271,9 @@ export default function Pricing() {
           </div>
         </div>
 
-        {/* Cards bleed up from below the dark band */}
-        <div className="relative px-6 pb-0">
-          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2 translate-y-16">
+        {/* Cards */}
+        <div className="relative px-6 pb-16">
+          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
             {plans.map((plan) => {
               const price = cycle === "annual" ? plan.annualMonthly : plan.monthly;
               const isCurrentPlan = profile?.subscription_tier === plan.id;
@@ -364,10 +364,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Spacer to account for card bleed */}
-      <div className="h-24 bg-background" />
-
-      <p className="text-center text-xs text-muted-foreground pb-16">
+      <p className="text-center text-xs text-muted-foreground py-8">
         Prices in USD. Taxes calculated at checkout. Free tier: 3 debates, no card required.
       </p>
 
