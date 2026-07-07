@@ -179,11 +179,11 @@ export default function Pricing() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-secondary/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <button onClick={() => navigate("/")}>
             <Logo size="md" className="text-secondary-foreground" />
           </button>
@@ -232,7 +232,7 @@ export default function Pricing() {
           <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
             Pricing
           </p>
-          <h1 className="font-playfair mb-4 text-4xl font-bold leading-tight md:text-6xl text-secondary-foreground">
+          <h1 className="font-playfair mb-4 text-3xl sm:text-4xl font-bold leading-tight md:text-6xl text-secondary-foreground">
             Pick Your Plan
           </h1>
           <p className="font-lora mx-auto mb-10 max-w-xl text-secondary-foreground/60">
@@ -272,7 +272,7 @@ export default function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="relative px-6 pb-16">
+        <div className="relative px-4 sm:px-6 pb-16">
           <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
             {plans.map((plan) => {
               const price = cycle === "annual" ? plan.annualMonthly : plan.monthly;
@@ -281,7 +281,7 @@ export default function Pricing() {
                 <div
                   key={plan.id}
                   className={[
-                    "relative flex flex-col rounded-2xl p-8 transition-shadow",
+                    "relative flex flex-col rounded-2xl p-5 sm:p-8 transition-shadow",
                     plan.featured
                       ? "bg-wood-dark border border-amber-glow/30 shadow-2xl shadow-black/40 text-secondary-foreground"
                       : "bg-card border border-border shadow-lg hover:border-primary/40",
@@ -369,7 +369,7 @@ export default function Pricing() {
       </p>
 
       {/* ─── COMPARISON TABLE ────────────────────────────────────── */}
-      <section id="compare" className="border-t border-border bg-card/30 px-6 py-24">
+      <section id="compare" className="border-t border-border bg-card/30 px-4 sm:px-6 py-16 sm:py-24">
         <div className="mx-auto max-w-4xl">
           <div className="mb-10 text-center">
             <h2 className="font-playfair text-3xl font-bold text-foreground md:text-4xl">
@@ -435,7 +435,7 @@ export default function Pricing() {
       </section>
 
       {/* ─── FAQ ─────────────────────────────────────────────────── */}
-      <section className="px-6 py-24">
+      <section className="px-4 sm:px-6 py-16 sm:py-24">
         <div className="mx-auto max-w-2xl">
           <div className="mb-10 text-center">
             <h2 className="font-playfair text-3xl font-bold text-foreground md:text-4xl">
@@ -449,7 +449,7 @@ export default function Pricing() {
               .
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-card px-8">
+          <div className="rounded-2xl border border-border bg-card px-4 sm:px-8">
             {faqs.map((f) => (
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}
@@ -458,7 +458,7 @@ export default function Pricing() {
       </section>
 
       {/* ─── BOTTOM CTA (dark) ───────────────────────────────────── */}
-      <section className="bg-secondary px-6 py-24 text-center text-secondary-foreground">
+      <section className="bg-secondary px-4 sm:px-6 py-16 sm:py-24 text-center text-secondary-foreground">
         <div className="mx-auto max-w-2xl">
           <h2 className="font-playfair text-3xl font-bold md:text-4xl">
             Ready to enter the debate?

@@ -148,7 +148,7 @@ export function ContactForm({ className }: ContactFormProps) {
     return (
       <div
         className={cn(
-          "flex flex-col items-center justify-center gap-6 rounded-2xl border border-amber-700/30 bg-stone-950/80 px-8 py-14 text-center backdrop-blur-sm",
+          "flex flex-col items-center justify-center gap-6 rounded-2xl border border-amber-700/30 bg-stone-950/80 px-5 sm:px-8 py-10 sm:py-14 text-center backdrop-blur-sm",
           className,
         )}
       >
@@ -183,7 +183,7 @@ export function ContactForm({ className }: ContactFormProps) {
       onSubmit={handleSubmit}
       noValidate
       className={cn(
-        "rounded-2xl border border-amber-700/25 bg-stone-950/80 p-8 backdrop-blur-sm",
+        "rounded-2xl border border-amber-700/25 bg-stone-950/80 p-5 sm:p-8 backdrop-blur-sm",
         className,
       )}
       aria-label="Contact Roundtaible"

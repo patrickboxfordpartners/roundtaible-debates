@@ -17,7 +17,7 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-muted-foreground font-body">Loading...</div>
       </div>
     );

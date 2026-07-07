@@ -84,12 +84,12 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-14 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
           <h1 className="font-display text-lg font-bold">Teacher Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground font-body">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <span className="text-sm text-muted-foreground font-body hidden sm:inline">
               {profile?.full_name || profile?.email}
             </span>
             <button onClick={() => navigate("/assignments")} className="text-sm text-muted-foreground hover:text-foreground font-body">Assignments</button>
@@ -110,7 +110,7 @@ export default function TeacherDashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl font-bold">My Classes</h2>
           <button
@@ -169,7 +169,7 @@ export default function TeacherDashboard() {
         {loading ? (
           <div className="text-center text-muted-foreground font-body py-12">Loading classes...</div>
         ) : classes.length === 0 && !showCreate ? (
-          <div className="bg-card border border-border rounded-xl p-8 space-y-6">
+          <div className="bg-card border border-border rounded-xl p-5 sm:p-8 space-y-6">
             <div className="text-center">
               <h3 className="font-display text-2xl font-bold mb-2">Welcome to Roundtaible for Educators</h3>
               <p className="text-muted-foreground font-body text-sm max-w-lg mx-auto">

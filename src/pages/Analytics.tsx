@@ -92,7 +92,7 @@ export default function Analytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <div className="text-muted-foreground font-body">Loading analytics...</div>
       </div>
     );
@@ -142,9 +142,9 @@ export default function Analytics() {
   const fmt = (secs: number) => `${Math.floor(secs / 60)}m ${secs % 60}s`;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
               <ArrowLeft className="w-4 h-4" />
@@ -164,17 +164,17 @@ export default function Analytics() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {view === "class" && profile?.role === "teacher" ? (
           <>
             <div>
               <h2 className="font-display text-xl font-bold mb-4">Class Participation</h2>
               {classMembers.length === 0 ? (
-                <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground font-body">
+                <div className="bg-card border border-border rounded-xl p-5 sm:p-8 text-center text-muted-foreground font-body">
                   No students have joined your classes yet.
                 </div>
               ) : (
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/40 border-b border-border">
                       <tr>
@@ -207,7 +207,7 @@ export default function Analytics() {
         ) : (
           <>
             {/* KPI cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard label="Total Debates" value={totalDebates} sub="all time" icon={BarChart2} />
               <StatCard label="Avg Duration" value={fmt(avgDuration)} sub="per debate" icon={Clock} color="text-amber-500" />
               <StatCard label="Educational Mode" value={eduDebates} sub={`${totalDebates > 0 ? Math.round(eduDebates / totalDebates * 100) : 0}% of debates`} icon={BookOpen} color="text-blue-500" />
@@ -282,7 +282,7 @@ export default function Analytics() {
 
             {/* Recent debates */}
             {debates.length === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-center">
+              <div className="bg-card border border-border rounded-xl p-5 sm:p-8 text-center">
                 <BarChart2 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="font-body text-muted-foreground">No debate data yet. Start your first debate!</p>
               </div>

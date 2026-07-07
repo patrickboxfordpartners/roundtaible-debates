@@ -152,7 +152,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-dvh bg-background text-foreground pb-20">
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
@@ -176,7 +176,7 @@ export default function Landing() {
       </nav>
 
       {/* ─── 1. HERO ─────────────────────────────────────────────────── */}
-      <section className="relative pt-36 pb-28 px-6 text-center overflow-hidden">
+      <section className="relative pt-24 sm:pt-36 pb-16 sm:pb-28 px-4 sm:px-6 text-center overflow-hidden">
         {/* Rotating round table background motif */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
           <motion.svg
@@ -220,7 +220,7 @@ export default function Landing() {
           <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-6">
             Historical AI Debate Platform
           </p>
-          <h1 className="font-playfair text-5xl md:text-7xl font-bold leading-tight mb-6">
+          <h1 className="font-playfair text-4xl sm:text-5xl md:text-7xl font-bold leading-tight mb-6">
             History's Greatest Minds.
             <br />
             <span className="text-primary">Your Hardest Questions.</span>
@@ -231,7 +231,7 @@ export default function Landing() {
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => navigate("/auth")}
-              className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/25"
+              className="px-8 sm:px-10 py-3.5 sm:py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/25"
             >
               Try 3 debates free
             </button>
@@ -241,12 +241,12 @@ export default function Landing() {
       </section>
 
       {/* ─── 2. PERSONAS ─────────────────────────────────────────────── */}
-      <section className="py-20 border-y border-border bg-card/40">
-        <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-12">
+      <section className="py-12 sm:py-20 border-y border-border bg-card/40">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <p className="text-center text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-8 sm:mb-12">
             14 Historical Minds at the Table
           </p>
-          <div className="grid grid-cols-7 gap-6">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-4 sm:gap-6">
             {allPersonas.map((p) => (
               <button
                 key={p.id}
@@ -294,7 +294,7 @@ export default function Landing() {
       </section>
 
       {/* ─── 3. LIVE MOCKUP ──────────────────────────────────────────── */}
-      <section className="py-28 px-6">
+      <section className="py-16 sm:py-28 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">See It In Action</p>
@@ -337,7 +337,7 @@ export default function Landing() {
           <div className="text-center mt-12">
             <button
               onClick={() => navigate("/app")}
-              className="px-8 py-3.5 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-all"
+              className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-all"
             >
               Watch a Live Debate
             </button>
@@ -346,10 +346,10 @@ export default function Landing() {
       </section>
 
       {/* ─── 4. TWO-COLUMN: EDUCATORS + TEAMS ───────────────────────── */}
-      <section className="py-24 border-y border-border bg-card/40">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-3">
+      <section className="py-14 sm:py-24 border-y border-border bg-card/40">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
               One Engine. Two Very Different Rooms.
             </h2>
             <p className="font-lora text-muted-foreground max-w-lg mx-auto">
@@ -359,7 +359,7 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Educators */}
-            <div className="bg-card rounded-2xl border border-border p-8">
+            <div className="bg-card rounded-2xl border border-border p-5 sm:p-8">
               <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center mb-6">
                 <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -391,7 +391,7 @@ export default function Landing() {
             </div>
 
             {/* Teams */}
-            <div className="bg-card rounded-2xl border border-border p-8">
+            <div className="bg-card rounded-2xl border border-border p-5 sm:p-8">
               <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center mb-6">
                 <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -426,7 +426,7 @@ export default function Landing() {
       </section>
 
       {/* ─── TESTIMONIALS ─────────────────────────────────────────────── */}
-      <section className="py-24 px-6">
+      <section className="py-14 sm:py-24 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">From the Table</p>
@@ -454,9 +454,9 @@ export default function Landing() {
       </section>
 
       {/* ─── 5. BOTTOM CTA ────────────────────────────────────────────── */}
-      <section className="py-28 px-6 bg-secondary text-secondary-foreground">
+      <section className="py-16 sm:py-28 px-4 sm:px-6 bg-secondary text-secondary-foreground">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-playfair text-4xl md:text-5xl font-bold mb-5">
+          <h2 className="font-playfair text-3xl sm:text-4xl md:text-5xl font-bold mb-5">
             The Table Is Open.
           </h2>
           <p className="font-lora text-lg opacity-70 mb-10 leading-relaxed">
@@ -464,7 +464,7 @@ export default function Landing() {
           </p>
           <button
             onClick={() => navigate("/auth")}
-            className="px-10 py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/30"
+            className="px-8 sm:px-10 py-3.5 sm:py-4 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/30"
           >
             Try 3 debates free
           </button>

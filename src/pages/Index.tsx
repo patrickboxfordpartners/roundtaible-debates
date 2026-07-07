@@ -326,7 +326,7 @@ const Index = () => {
   });
 
   return (
-    <div className={`min-h-screen flex flex-col bg-background parchment-texture vignette-overlay candlelight${isDemoMode ? " demo-mode" : ""}`} role="application" aria-label="Algonquin RoundtAIble debate platform">
+    <div className={`min-h-dvh flex flex-col bg-background parchment-texture vignette-overlay candlelight${isDemoMode ? " demo-mode" : ""}`} role="application" aria-label="Algonquin RoundtAIble debate platform">
       {/* Header */}
       <motion.header
         className="flex items-center justify-between py-4 px-4 border-b border-border bg-card/40 relative z-20"
@@ -424,7 +424,7 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <h3 className="font-display text-sm font-bold text-foreground mb-2">Keyboard Shortcuts</h3>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-body">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs font-body">
             <span className="text-muted-foreground">Start / Stop debate</span><kbd className="text-foreground font-mono bg-background px-1 rounded border border-border">Space</kbd>
             <span className="text-muted-foreground">Lightning round</span><kbd className="text-foreground font-mono bg-background px-1 rounded border border-border">L</kbd>
             <span className="text-muted-foreground">Surprise me</span><kbd className="text-foreground font-mono bg-background px-1 rounded border border-border">S</kbd>
@@ -481,7 +481,7 @@ const Index = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-amber-500/90 text-white px-8 py-4 rounded-2xl shadow-2xl pointer-events-auto"
+              className="bg-amber-500/90 text-white px-5 sm:px-8 py-3 sm:py-4 rounded-2xl shadow-2xl pointer-events-auto"
               initial={{ scale: 0.9 }}
               animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -628,7 +628,7 @@ const Index = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={e => e.stopPropagation()}
-              className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-8 text-center"
+              className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 text-center"
             >
               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Zap className="h-7 w-7 text-primary" />

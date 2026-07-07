@@ -233,7 +233,7 @@ export default function Tournament() {
   }
 
   if (loading || !tournament) {
-    return <div className="min-h-screen bg-background flex items-center justify-center"><div className="text-muted-foreground font-body">Loading tournament...</div></div>;
+    return <div className="min-h-dvh bg-background flex items-center justify-center"><div className="text-muted-foreground font-body">Loading tournament...</div></div>;
   }
 
   const isOwner = profile?.id === tournament.created_by;
@@ -287,19 +287,19 @@ export default function Tournament() {
   const bracketTree = buildBracket();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div>
-              <h1 className="font-display text-base font-bold">{tournament.name}</h1>
+            <div className="min-w-0">
+              <h1 className="font-display text-base font-bold truncate">{tournament.name}</h1>
               <p className="text-xs text-muted-foreground font-body capitalize">{tournament.status} · Round {tournament.current_round} of {tournament.total_rounds}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <span className={`text-xs px-2 py-1 rounded-full font-semibold capitalize ${tournament.status === "active" ? "bg-green-500/10 text-green-400" : tournament.status === "completed" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
               {tournament.status}
             </span>
@@ -307,10 +307,10 @@ export default function Tournament() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* Winner announcement */}
         {winner && (
-          <div className="bg-gradient-to-br from-amber-500/10 to-primary/10 border border-amber-500/30 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-br from-amber-500/10 to-primary/10 border border-amber-500/30 rounded-2xl p-5 sm:p-8 text-center">
             <Trophy className="w-12 h-12 text-amber-500 mx-auto mb-3" />
             <h2 className="font-display text-2xl font-bold mb-1">Tournament Champion</h2>
             <p className="text-3xl font-display font-black text-primary">{winner}</p>
@@ -333,7 +333,7 @@ export default function Tournament() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { id: activeRound.persona_a, votes: activeRound.votes_a, field: "votes_a" as const },
                 { id: activeRound.persona_b, votes: activeRound.votes_b, field: "votes_b" as const },
@@ -421,7 +421,7 @@ export default function Tournament() {
         )}
 
         {rounds.length === 0 && tournament.status === "setup" && (
-          <div className="bg-card border border-border rounded-xl p-8 text-center">
+          <div className="bg-card border border-border rounded-xl p-5 sm:p-8 text-center">
             <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="font-display font-semibold text-muted-foreground">Tournament is being set up</p>
             <p className="text-sm text-muted-foreground font-body mt-1">Rounds will appear here once the tournament begins.</p>

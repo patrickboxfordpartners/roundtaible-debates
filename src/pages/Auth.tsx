@@ -42,7 +42,7 @@ export default function Auth() {
 
   if (signUpSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-dvh flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md text-center space-y-4">
           <h2 className="font-display text-2xl font-bold text-foreground">Check your email</h2>
           <p className="text-muted-foreground font-body">
@@ -60,7 +60,7 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="font-display text-3xl font-bold text-foreground">

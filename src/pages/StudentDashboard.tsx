@@ -97,12 +97,12 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-0 sm:h-14 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
           <h1 className="font-display text-lg font-bold">My Debates</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground font-body">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <span className="text-sm text-muted-foreground font-body hidden sm:inline">
               {profile?.full_name || profile?.email}
             </span>
             <button onClick={() => navigate("/assignments")} className="text-sm text-muted-foreground hover:text-foreground font-body">Assignments</button>
@@ -123,7 +123,7 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* Join a Class */}
         <section>
           <h2 className="font-display text-xl font-bold mb-4">Join a Class</h2>
@@ -156,7 +156,7 @@ export default function StudentDashboard() {
           {loading ? (
             <div className="text-muted-foreground font-body">Loading...</div>
           ) : memberships.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="bg-card border border-border rounded-lg p-5 sm:p-8 text-center">
               <p className="text-muted-foreground font-body">
                 You haven't joined any classes yet. Ask your teacher for the join code.
               </p>
@@ -190,7 +190,7 @@ export default function StudentDashboard() {
         <section>
           <h2 className="font-display text-xl font-bold mb-4">Recent Debates</h2>
           {localDebates.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="bg-card border border-border rounded-lg p-5 sm:p-8 text-center">
               <p className="text-muted-foreground font-body">
                 No debates yet. Head to the debate room to start one!
               </p>

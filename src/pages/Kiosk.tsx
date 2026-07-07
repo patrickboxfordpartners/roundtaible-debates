@@ -37,7 +37,7 @@ export default function Kiosk() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground flex flex-col items-center justify-center relative overflow-hidden parchment-texture vignette-overlay">
+    <div className="min-h-dvh w-full bg-background text-foreground flex flex-col items-center justify-center relative overflow-hidden parchment-texture vignette-overlay">
       {/* Fullscreen toggle */}
       <button
         onClick={toggleFullscreen}

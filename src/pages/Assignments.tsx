@@ -146,16 +146,16 @@ export default function Assignments() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <div className="text-muted-foreground font-body">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
               <ArrowLeft className="w-4 h-4" />
@@ -165,17 +165,17 @@ export default function Assignments() {
           {isTeacher && (
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-display font-semibold hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-display font-semibold hover:bg-primary/90 transition-colors"
             >
-              <Plus className="w-4 h-4" /> New Assignment
+              <Plus className="w-4 h-4" /> <span className="hidden sm:inline">New</span> Assignment
             </button>
           )}
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {assignments.length === 0 ? (
-          <div className="bg-card border border-border rounded-xl p-10 text-center">
+          <div className="bg-card border border-border rounded-xl p-6 sm:p-10 text-center">
             <BookOpen className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="font-display font-semibold text-muted-foreground">No assignments yet</p>
             {isTeacher && (

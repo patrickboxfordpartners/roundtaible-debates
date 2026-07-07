@@ -48,7 +48,7 @@ export function VictoryModal({ winner, onDismiss, autoDismissMs }: VictoryModalP
             role="dialog"
             aria-modal="true"
             aria-label={winner ? `${winner.name} wins the debate` : "Victory"}
-            className="bg-card border-2 border-gold rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
+            className="bg-card border-2 border-gold rounded-2xl p-5 sm:p-8 max-w-md mx-4 text-center shadow-2xl"
             initial={{ scale: 0.5, y: 50 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.5, y: 50 }}

@@ -159,7 +159,7 @@ export default function ClassView() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-muted-foreground font-body">Loading class...</div>
       </div>
     );
@@ -167,7 +167,7 @@ export default function ClassView() {
 
   if (!classData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center">
           <h2 className="font-display text-xl font-bold mb-2">Class not found</h2>
           <button
@@ -182,9 +182,9 @@ export default function ClassView() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <header className="border-b border-border bg-card">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button
             onClick={() => navigate(isTeacher ? "/teacher" : "/student")}
             className="text-sm text-muted-foreground hover:text-foreground font-body"
@@ -200,10 +200,10 @@ export default function ClassView() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* Class Header */}
         <div>
-          <h1 className="font-display text-3xl font-bold">{classData.name}</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">{classData.name}</h1>
           {classData.description && (
             <p className="text-muted-foreground font-body mt-2">{classData.description}</p>
           )}
@@ -315,7 +315,7 @@ export default function ClassView() {
           )}
 
           {tournaments.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="bg-card border border-border rounded-lg p-5 sm:p-8 text-center">
               <p className="text-muted-foreground font-body">No tournaments yet. {isTeacher && "Create one to get started!"}</p>
             </div>
           ) : (
@@ -361,7 +361,7 @@ export default function ClassView() {
               Students ({students.length})
             </h2>
             {students.length === 0 ? (
-              <div className="bg-card border border-border rounded-lg p-8 text-center">
+              <div className="bg-card border border-border rounded-lg p-5 sm:p-8 text-center">
                 <p className="text-muted-foreground font-body">
                   No students have joined yet. Share the join code: <strong>{classData.join_code}</strong>
                 </p>
@@ -390,7 +390,7 @@ export default function ClassView() {
             {isTeacher ? "All Debates" : "My Debates"} ({debates.length})
           </h2>
           {debates.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="bg-card border border-border rounded-lg p-5 sm:p-8 text-center">
               <p className="text-muted-foreground font-body">No debates in this class yet.</p>
             </div>
           ) : (
