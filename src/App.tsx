@@ -23,6 +23,8 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Assignments = lazy(() => import("./pages/Assignments"));
 const Tournament = lazy(() => import("./pages/Tournament"));
 const Kiosk = lazy(() => import("./pages/Kiosk"));
+const Blog = lazy(() => import("./pages/Blog").then((m) => ({ default: m.Blog })));
+const BlogPost = lazy(() => import("./pages/BlogPost").then((m) => ({ default: m.BlogPost })));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -98,6 +100,8 @@ const App = () => (
             />
             <Route path="/kiosk" element={<Kiosk />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

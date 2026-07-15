@@ -1,0 +1,179 @@
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
+import Footer from "@/components/Footer";
+import { BlogFAQ } from "@/components/BlogFAQ";
+import { getPost } from "@/data/posts";
+
+export function BlogPost() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const post = slug ? getPost(slug) : undefined;
+
+  // Inject Article JSON-LD schema
+  useEffect(() => {
+    if (!post) return;
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "blog-post-schema";
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: post.title,
+      description: post.description,
+      datePublished: post.date,
+      author: {
+        "@type": "Person",
+        name: post.author,
+        url: post.authorUrl,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Roundtaible",
+        url: "https://theroundtaible.com",
+      },
+      url: post.canonical,
+    });
+
+    document.head.appendChild(script);
+    return () => {
+      const existing = document.getElementById("blog-post-schema");
+      if (existing) existing.remove();
+    };
+  }, [post]);
+
+  if (!post) {
+    return (
+      <div className="min-h-dvh bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="font-body text-muted-foreground mb-4">Post not found.</p>
+          <button
+            onClick={() => navigate("/blog")}
+            className="text-sm font-semibold text-[#C17F24] hover:text-[#C17F24]/80 transition-colors"
+          >
+            &larr; Back to Blog
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#1a1a2e]/95 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <button onClick={() => navigate("/")} className="focus:outline-none">
+            <Logo size="md" className="text-white" />
+          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/pricing")}
+              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+            >
+              Pricing
+            </button>
+            <button
+              onClick={() => navigate("/faq")}
+              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+            >
+              FAQ
+            </button>
+            <button
+              onClick={() => navigate("/auth")}
+              className="px-4 py-1.5 rounded-lg bg-[#C17F24] text-white text-sm font-semibold hover:bg-[#C17F24]/90 transition-colors"
+            >
+              Try Free
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <header className="bg-[#1a1a2e] pt-28 pb-16 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <button
+            onClick={() => navigate("/blog")}
+            className="text-xs font-body text-white/40 hover:text-[#C17F24] transition-colors mb-8 inline-block"
+          >
+            &larr; Blog
+          </button>
+          <div className="flex items-center gap-3 mb-5">
+            <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#C17F24]/20 text-[#C17F24] text-[10px] font-semibold uppercase tracking-wider">
+              {post.category}
+            </span>
+            <span className="text-white/30 text-xs font-body">{post.readTime}</span>
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white uppercase leading-tight mb-6">
+            {post.title}
+          </h1>
+          <div className="flex items-center gap-2 text-xs font-body text-white/40">
+            <a
+              href={post.authorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#C17F24] transition-colors"
+            >
+              {post.author}
+            </a>
+            <span>·</span>
+            <span>{post.date}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Body */}
+      <main className="bg-[#faf7f2] px-4 sm:px-6 py-16">
+        <div className="max-w-3xl mx-auto">
+          {/* Direct Answer box */}
+          <div className="border-l-4 border-[#C17F24] bg-white/70 rounded-r-lg px-6 py-5 mb-10">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#C17F24] mb-2">
+              Direct Answer
+            </p>
+            <p className="font-body text-[#1a1a2e]/80 text-sm leading-relaxed">
+              {post.description}
+            </p>
+          </div>
+
+          {/* Article body */}
+          <div
+            className="prose prose-sm md:prose-base max-w-none
+              prose-headings:font-display prose-headings:text-[#1a1a2e] prose-headings:font-bold
+              prose-p:font-body prose-p:text-[#1a1a2e]/75 prose-p:leading-relaxed
+              prose-h2:text-xl prose-h2:md:text-2xl prose-h2:mt-10 prose-h2:mb-4
+              prose-em:text-[#1a1a2e]/60
+              prose-a:text-[#C17F24] prose-a:no-underline hover:prose-a:underline"
+            dangerouslySetInnerHTML={{ __html: post.body }}
+          />
+        </div>
+      </main>
+
+      <BlogFAQ />
+
+      {/* CTA */}
+      <section className="bg-[#1a1a2e] py-20 px-4 sm:px-6 text-center">
+        <div className="max-w-xl mx-auto">
+          <p className="text-xs uppercase tracking-widest text-[#C17F24] font-semibold mb-4">
+            Roundtaible
+          </p>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-5">
+            Ready to think harder?
+          </h2>
+          <p className="font-body text-white/55 text-base mb-8 leading-relaxed">
+            Three debates free. No credit card. Pick a question and watch history's
+            sharpest minds argue both sides in real time.
+          </p>
+          <button
+            onClick={() => navigate("/auth")}
+            className="px-8 py-3.5 rounded-lg bg-[#C17F24] text-white font-semibold text-base hover:bg-[#C17F24]/90 transition-all hover:scale-[1.02] shadow-lg shadow-[#C17F24]/25"
+          >
+            Try 3 debates free
+          </button>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}

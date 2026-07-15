@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/services/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -176,6 +176,8 @@ const Footer = () => {
               <li><a href="https://www.boxfordpartners.com/labs" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">Labs</a></li>
               <li><a href="https://www.boxfordpartners.com/faq" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">FAQ</a></li>
               <li><a href="https://www.boxfordpartners.com/audit" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">AI Readiness Audit</a></li>
+              <li><Link to="/blog" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">Blog</Link></li>
+              <li><Link to="/faq" className="font-lora text-sm text-foreground/80 transition-colors hover:text-foreground">FAQ</Link></li>
             </ul>
           </div>
 
