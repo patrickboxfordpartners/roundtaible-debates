@@ -5,6 +5,7 @@ import { allPersonas, Persona } from "@/data/debateData";
 import Footer from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
+import { FAQSection, featuredFaqs } from "@/components/FAQSection";
 
 const DEBATE_TURNS = [
   { speaker: "Jefferson", color: "#8B6914", text: "The question is not whether AI shall govern, but whether men shall govern AI. Every technology is merely an extension of the will that directs it." },
@@ -151,8 +152,19 @@ export default function Landing() {
     setTimeout(() => setSelectedPersona(null), 200);
   };
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: featuredFaqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
   return (
     <div className="min-h-dvh bg-background text-foreground pb-20">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
@@ -164,6 +176,12 @@ export default function Landing() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               Pricing
+            </button>
+            <button
+              onClick={() => navigate("/faq")}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+            >
+              FAQ
             </button>
             <button
               onClick={() => navigate("/auth")}
@@ -471,6 +489,7 @@ export default function Landing() {
         </div>
       </section>
 
+      <FAQSection />
       <Footer />
 
       <PersonaModal

@@ -11,6 +11,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 import Index from "./pages/Index";
 
 const Landing = lazy(() => import("./pages/Landing"));
+const FAQ = lazy(() => import("./pages/FAQ"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Quiz = lazy(() => import("./pages/Quiz"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -96,7 +97,8 @@ const App = () => (
               }
             />
             <Route path="/kiosk" element={<Kiosk />} />
-            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
