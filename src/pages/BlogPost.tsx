@@ -136,15 +136,18 @@ export function BlogPost() {
             </p>
           </div>
 
+          <style>{`
+            .blog-body h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 700; color: #1a1a2e; margin: 2.5rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(26,26,46,0.12); line-height: 1.3; letter-spacing: -0.01em; }
+            .blog-body h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 600; color: #1a1a2e; margin: 1.75rem 0 0.5rem; }
+            .blog-body p { margin: 0 0 1.25rem; color: rgba(26,26,46,0.75); line-height: 1.8; font-size: 0.9375rem; }
+            .blog-body ul, .blog-body ol { margin: 0 0 1.25rem; padding-left: 1.5rem; color: rgba(26,26,46,0.75); }
+            .blog-body li { margin-bottom: 0.4rem; line-height: 1.7; }
+            .blog-body a { color: #C17F24; text-decoration: underline; }
+            .blog-body strong { font-weight: 600; color: #1a1a2e; }
+          `}</style>
           {/* Article body */}
           <div
-            className="prose prose-sm md:prose-base max-w-none
-              prose-headings:font-display prose-headings:text-[#1a1a2e] prose-headings:font-bold prose-headings:tracking-tight
-              prose-p:font-body prose-p:text-[#1a1a2e]/75 prose-p:leading-relaxed
-              prose-h2:text-xl prose-h2:md:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-[#1a1a2e]/10
-              prose-em:text-[#1a1a2e]/60
-              prose-a:text-[#C17F24] prose-a:no-underline hover:prose-a:underline
-              prose-strong:text-[#1a1a2e] prose-strong:font-semibold"
+            className="blog-body"
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
         </div>
