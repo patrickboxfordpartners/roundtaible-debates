@@ -139,11 +139,12 @@ export function BlogPost() {
           {/* Article body */}
           <div
             className="prose prose-sm md:prose-base max-w-none
-              prose-headings:font-display prose-headings:text-[#1a1a2e] prose-headings:font-bold
+              prose-headings:font-display prose-headings:text-[#1a1a2e] prose-headings:font-bold prose-headings:tracking-tight
               prose-p:font-body prose-p:text-[#1a1a2e]/75 prose-p:leading-relaxed
-              prose-h2:text-xl prose-h2:md:text-2xl prose-h2:mt-10 prose-h2:mb-4
+              prose-h2:text-xl prose-h2:md:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-[#1a1a2e]/10
               prose-em:text-[#1a1a2e]/60
-              prose-a:text-[#C17F24] prose-a:no-underline hover:prose-a:underline"
+              prose-a:text-[#C17F24] prose-a:no-underline hover:prose-a:underline
+              prose-strong:text-[#1a1a2e] prose-strong:font-semibold"
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
         </div>
@@ -152,15 +153,15 @@ export function BlogPost() {
       <BlogFAQ />
 
       {/* CTA */}
-      <section className="bg-[#1a1a2e] py-20 px-4 sm:px-6 text-center">
+      <section className="bg-secondary py-20 px-4 sm:px-6 text-center border-t border-border">
         <div className="max-w-xl mx-auto">
           <p className="text-xs uppercase tracking-widest text-[#C17F24] font-semibold mb-4">
             Roundtaible
           </p>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-5">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-secondary-foreground mb-5">
             Ready to think harder?
           </h2>
-          <p className="font-body text-white/55 text-base mb-8 leading-relaxed">
+          <p className="font-body text-secondary-foreground/60 text-base mb-8 leading-relaxed">
             Three debates free. No credit card. Pick a question and watch history's
             sharpest minds argue both sides in real time.
           </p>
