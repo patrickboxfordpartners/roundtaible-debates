@@ -49,7 +49,7 @@ const Footer = () => {
             {[
               { label: "Blog", to: "/blog", internal: true },
               { label: "FAQ", to: "/faq", internal: true },
-              { label: "Pricing", to: "/#pricing", internal: true },
+              { label: "Pricing", to: "/pricing", internal: true },
               { label: "LinkedIn", href: "https://www.linkedin.com/company/boxfordpartners" },
               { label: "Boxford Partners", href: "https://boxfordpartners.com" },
               { label: "Contact", href: "mailto:hello@theroundtaible.com" },

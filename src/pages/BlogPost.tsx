@@ -62,21 +62,21 @@ export function BlogPost() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#1a1a2e]/95 backdrop-blur-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <button onClick={() => navigate("/")} className="focus:outline-none">
-            <Logo size="md" className="text-white" />
+            <Logo size="md" />
           </button>
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/pricing")}
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               Pricing
             </button>
             <button
               onClick={() => navigate("/faq")}
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               FAQ
             </button>
@@ -91,11 +91,11 @@ export function BlogPost() {
       </nav>
 
       {/* Hero */}
-      <header className="bg-[#1a1a2e] pt-28 pb-16 px-4 sm:px-6">
+      <header className="bg-background border-b border-border pt-28 pb-16 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
           <button
             onClick={() => navigate("/blog")}
-            className="text-xs font-body text-white/40 hover:text-[#C17F24] transition-colors mb-8 inline-block"
+            className="text-xs font-body text-muted-foreground hover:text-[#C17F24] transition-colors mb-8 inline-block"
           >
             &larr; Blog
           </button>
@@ -103,12 +103,12 @@ export function BlogPost() {
             <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#C17F24]/20 text-[#C17F24] text-[10px] font-semibold uppercase tracking-wider">
               {post.category}
             </span>
-            <span className="text-white/30 text-xs font-body">{post.readTime}</span>
+            <span className="text-muted-foreground/50 text-xs font-body">{post.readTime}</span>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white uppercase leading-tight mb-6">
+          <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6">
             {post.title}
           </h1>
-          <div className="flex items-center gap-2 text-xs font-body text-white/40">
+          <div className="flex items-center gap-2 text-xs font-body text-muted-foreground">
             <a
               href={post.authorUrl}
               target="_blank"
@@ -124,7 +124,7 @@ export function BlogPost() {
       </header>
 
       {/* Body */}
-      <main className="bg-[#faf7f2] px-4 sm:px-6 py-16">
+      <main className="bg-background px-4 sm:px-6 py-16">
         <div className="max-w-3xl mx-auto">
           {/* Direct Answer box */}
           <div className="border-l-4 border-[#C17F24] bg-white/70 rounded-r-lg px-6 py-5 mb-10">

@@ -9,21 +9,21 @@ export function Blog() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#1a1a2e]/95 backdrop-blur-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <button onClick={() => navigate("/")} className="focus:outline-none">
-            <Logo size="md" className="text-white" />
+            <Logo size="md" />
           </button>
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/pricing")}
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               Pricing
             </button>
             <button
               onClick={() => navigate("/faq")}
-              className="text-sm text-white/60 hover:text-white transition-colors hidden sm:block"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >
               FAQ
             </button>
@@ -38,20 +38,20 @@ export function Blog() {
       </nav>
 
       {/* Header */}
-      <header className="bg-[#1a1a2e] pt-28 pb-16 px-4 sm:px-6 text-center">
+      <header className="bg-background border-b border-border pt-28 pb-16 px-4 sm:px-6 text-center">
         <p className="text-xs uppercase tracking-widest text-[#C17F24] font-semibold mb-4">
           The Roundtaible Blog
         </p>
-        <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
+        <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
           Ideas Worth Arguing
         </h1>
-        <p className="font-body text-white/60 max-w-lg mx-auto text-lg">
+        <p className="font-body text-muted-foreground max-w-lg mx-auto text-lg">
           Research, education, and the case for structured disagreement.
         </p>
       </header>
 
       {/* Article list */}
-      <main className="bg-[#faf7f2] py-16 px-4 sm:px-6 min-h-[40vh]">
+      <main className="bg-background py-16 px-4 sm:px-6 min-h-[40vh]">
         <div className="max-w-3xl mx-auto">
           {posts.map((post) => (
             <article
