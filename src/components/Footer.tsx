@@ -1,76 +1,96 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 
+const BG = "#1a1008";
+const MUTED = "rgba(237,220,190,0.45)";
+const DIM = "rgba(237,220,190,0.2)";
+const RULE = "rgba(237,220,190,0.08)";
+const AMBER = "#F59E0B";
+
 const Footer = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-card/30">
-      <div className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
-        <div className="flex flex-col items-center gap-8 text-center">
+    <footer style={{ backgroundColor: BG, borderTop: `1px solid ${RULE}` }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "56px 24px 0" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24, textAlign: "center" }}>
+
           {/* Logo */}
-          <div className="opacity-70">
+          <div style={{ opacity: 0.85 }}>
             <Logo size="md" />
           </div>
 
           {/* Tagline */}
-          <p className="font-lora max-w-sm text-sm text-muted-foreground">
+          <p style={{ fontSize: "0.875rem", color: MUTED, maxWidth: 360, lineHeight: 1.6, fontWeight: 300 }}>
             AI debate and critical thinking for classrooms and sales teams.
           </p>
 
-          {/* Nav row */}
-          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-            <Link to="/blog" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Blog
-            </Link>
-            <Link to="/faq" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              FAQ
-            </Link>
-            <a href="https://reviewsniper.app/" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              reviewSNIPER
-            </a>
-            <a href="https://gravitasindex.com/" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Gravitas Index
-            </a>
-            <a href="https://www.boxfordpartners.com/about" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              About
-            </a>
-            <a href="https://www.boxfordpartners.com/services" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Services
-            </a>
-            <a href="https://www.linkedin.com/company/boxfordpartners" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              LinkedIn
-            </a>
-          </nav>
+          {/* Boxford badge */}
+          <a
+            href="https://boxfordpartners.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              padding: "5px 12px 5px 10px",
+              border: `1px solid ${RULE}`,
+              borderRadius: 6, textDecoration: "none",
+              backgroundColor: `rgba(237,220,190,0.03)`,
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: AMBER, flexShrink: 0 }} />
+            <span style={{ fontSize: "0.65rem", color: DIM, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>
+              A Boxford Partners Company
+            </span>
+          </a>
 
-          {/* Contact row */}
-          <div className="flex items-center gap-4">
-            <a href="mailto:hello@boxfordpartners.com" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
-              hello@boxfordpartners.com
+          {/* Nav grid */}
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 32px", marginTop: 8 }}>
+            {[
+              { label: "Blog", to: "/blog", internal: true },
+              { label: "FAQ", to: "/faq", internal: true },
+              { label: "Pricing", to: "/#pricing", internal: true },
+              { label: "LinkedIn", href: "https://www.linkedin.com/company/boxfordpartners" },
+              { label: "Boxford Partners", href: "https://boxfordpartners.com" },
+              { label: "Contact", href: "mailto:hello@theroundtaible.com" },
+            ].map((item) =>
+              item.internal ? (
+                <Link key={item.label} to={item.to!} style={{ fontSize: "0.875rem", color: MUTED, textDecoration: "none" }}>
+                  {item.label}
+                </Link>
+              ) : (
+                <a key={item.label} href={item.href} target={item.href?.startsWith("mailto") ? undefined : "_blank"} rel="noopener noreferrer" style={{ fontSize: "0.875rem", color: MUTED, textDecoration: "none" }}>
+                  {item.label}
+                </a>
+              )
+            )}
+          </div>
+
+          {/* Contact */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.875rem" }}>
+            <a href="mailto:hello@theroundtaible.com" style={{ color: MUTED, textDecoration: "none" }}>
+              hello@theroundtaible.com
             </a>
-            <span className="text-muted-foreground/40">·</span>
-            <a href="https://cal.com/boxfordpartners" target="_blank" rel="noopener noreferrer" className="font-lora text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <span style={{ color: DIM }}>·</span>
+            <a href="https://cal.com/boxfordpartners" target="_blank" rel="noopener noreferrer" style={{ color: MUTED, textDecoration: "none" }}>
               Book a call
             </a>
           </div>
 
           {/* Legal bar */}
-          <div className="w-full pt-6 border-t border-border flex flex-wrap justify-center items-center gap-x-4 gap-y-2">
-            <p className="text-xs text-muted-foreground/50">
-              &copy; {year} Boxford Partners LLC DBA ROUNDTAIBLE. All rights reserved.
-            </p>
-            <span className="text-muted-foreground/30 text-xs hidden sm:inline">·</span>
-            <a href="https://www.boxfordpartners.com/privacy" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-              Privacy
-            </a>
-            <span className="text-muted-foreground/30 text-xs">·</span>
-            <a href="https://www.boxfordpartners.com/terms" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-              Terms
-            </a>
-            <span className="text-muted-foreground/30 text-xs">·</span>
-            <a href="https://www.boxfordpartners.com/acceptable-use" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground/50 transition-colors hover:text-muted-foreground">
-              Acceptable Use
-            </a>
+          <div style={{
+            width: "100%", paddingTop: 20, paddingBottom: 24,
+            borderTop: `1px solid ${RULE}`,
+            display: "flex", flexWrap: "wrap", justifyContent: "center",
+            alignItems: "center", gap: "4px 12px",
+          }}>
+            <span style={{ fontSize: "0.75rem", color: DIM }}>
+              © {year} Boxford Partners LLC DBA ROUNDTAIBLE. All rights reserved.
+            </span>
+            <span style={{ color: DIM, fontSize: "0.75rem" }}>·</span>
+            <Link to="/privacy" style={{ fontSize: "0.75rem", color: DIM, textDecoration: "none" }}>Privacy Policy</Link>
+            <span style={{ color: DIM, fontSize: "0.75rem" }}>·</span>
+            <Link to="/terms" style={{ fontSize: "0.75rem", color: DIM, textDecoration: "none" }}>Terms</Link>
           </div>
         </div>
       </div>
