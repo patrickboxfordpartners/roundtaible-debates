@@ -17,7 +17,7 @@ export const posts: Post[] = [
     title: "Can Debating with AI Actually Improve Critical Thinking, or Is It Just a Novelty?",
     description:
       "The research on structured argumentation and cognitive development suggests debate practice has real effects on reasoning quality. Here is what that means for AI-powered debate platforms and whether the benefit transfers.",
-    date: "July 28, 2026",
+    date: "July 17, 2026",
     author: "Patrick Mitchell",
     authorUrl: "https://linkedin.com/in/patricktmitchell",
     category: "Education / AI",
