@@ -178,6 +178,12 @@ export default function Landing() {
               Pricing
             </button>
             <button
+              onClick={() => navigate("/blog")}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+            >
+              Blog
+            </button>
+            <button
               onClick={() => navigate("/faq")}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
             >

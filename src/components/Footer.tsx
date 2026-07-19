@@ -85,6 +85,10 @@ const Footer = () => {
             alignItems: "center", gap: "4px 12px",
           }}>
             <span style={{ fontSize: "0.75rem", color: DIM }}>
+              345 California St., Suite 600, San Francisco CA 94104
+            </span>
+            <span style={{ color: DIM, fontSize: "0.75rem" }}>·</span>
+            <span style={{ fontSize: "0.75rem", color: DIM }}>
               © {year} Boxford Partners LLC DBA ROUNDTAIBLE. All rights reserved.
             </span>
             <span style={{ color: DIM, fontSize: "0.75rem" }}>·</span>
