@@ -1,0 +1,47 @@
+# The Roundtaible
+> AI-powered debate platform where historical minds argue modern questions. Used for education (critical thinking and Socratic questioning) and sales team training.
+
+## What is The Roundtaible?
+The Roundtaible is an AI debate platform that simulates conversations between history's sharpest thinkers on any topic you choose. Historical figures like Edison, Curie, Machiavelli, and others debate your actual questions in real-time, with text-to-speech bringing each voice to life. It serves two markets: K-12 and higher education (critical thinking development) and enterprise sales teams (objection handling practice).
+
+## Who is it for?
+- **Teachers (K-12 and higher ed):** Use it for Socratic questioning, critical thinking exercises, and bringing history to life
+- **Sales teams:** Practice objection handling against AI opponents who argue back
+- **Curious individuals:** Explore any topic through the lens of historical thinkers
+
+## What problems does it solve?
+- Students struggle to engage with abstract ideas when presented as lectures
+- Teachers lack tools for Socratic dialogue that scale to a full classroom
+- Sales reps need realistic objection practice but mock sessions are expensive and infrequent
+- Traditional debate tools require multiple participants and scheduling
+- Historical context is lost when modern issues are discussed without deeper frameworks
+
+## Key Features
+- **AI Debates** — Real-time multi-character debates on any topic you choose
+- **Historical Personas** — Edison, Curie, Machiavelli, Aristotle, and more with distinct voices and reasoning styles
+- **Text-to-Speech** — ElevenLabs voices bring each debater to life
+- **EdTech Mode** — Grade-level adjustment, Socratic questioning mode, transcript markers for assessment
+- **Class Management** — Teacher dashboard with join codes, student progress, debate history
+- **Kiosk Mode** — Fullscreen topic picker for live demos and presentations
+- **Free Trial** — 3 debates free before subscription required
+
+## Pricing
+- Free: 3 debates
+- Individual: $9/month
+- Teacher: $29/month (class management, student accounts)
+- Enterprise: Contact for pricing
+
+## Company
+The Roundtaible is built by Boxford Partners, an embedded operations consulting firm based in San Francisco.
+
+## Contact
+- Website: https://theroundtaible.com
+- Email: hello@theroundtaible.com
+- Parent company: https://boxfordpartners.com
+
+## Sitemap
+- / — Landing page with product demo and value proposition
+- /pricing — Subscription plans for individuals, teachers, and enterprise
+- /faq — Frequently asked questions about the platform
+- /blog — Articles about AI in education and critical thinking
+- /privacy — Privacy policy
