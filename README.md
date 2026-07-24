@@ -251,11 +251,10 @@ Test coverage includes:
 
 ## License
 
-Private repository - All rights reserved.
+Source-available. You may read and fork this code for personal or educational use. Commercial use, redistribution, or deployment in a competing product is not permitted without written permission from Boxford Partners.
 
 ## Acknowledgments
 
-- Built with [Lovable](https://lovable.dev) - AI-powered web app development
 - Historical personas inspired by the Algonquin Round Table
 - Voice synthesis by [ElevenLabs](https://elevenlabs.io)
 - AI reasoning by [xAI Grok](https://x.ai)
