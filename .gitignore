@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 .env
+.env.*
+*.bak
+.hedwig-cg/
 
 # Editor directories and files
 .vscode/*
