@@ -4,11 +4,18 @@ import { Logo } from "@/components/Logo";
 import Footer from "@/components/Footer";
 import { BlogFAQ } from "@/components/BlogFAQ";
 import { getPost } from "@/data/posts";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const post = slug ? getPost(slug) : undefined;
+
+  usePageMeta({
+    title: post ? `${post.title} - Roundtaible Blog` : "Post Not Found - Roundtaible",
+    description: post?.description ?? "Blog post not found on Roundtaible.",
+  });
 
   // Inject Article JSON-LD schema
   useEffect(() => {
@@ -91,14 +98,15 @@ export function BlogPost() {
       </nav>
 
       {/* Hero */}
-      <header className="bg-background border-b border-border pt-28 pb-16 px-4 sm:px-6">
+      <header className="bg-background border-b border-border pt-20 pb-16 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
-          <button
-            onClick={() => navigate("/blog")}
-            className="text-xs font-body text-muted-foreground hover:text-[#C17F24] transition-colors mb-8 inline-block"
-          >
-            &larr; Blog
-          </button>
+          <Breadcrumbs
+            items={[
+              { label: "Blog", to: "/blog" },
+              { label: post.title },
+            ]}
+            className="mb-8"
+          />
           <div className="flex items-center gap-3 mb-5">
             <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#C17F24]/20 text-[#C17F24] text-[10px] font-semibold uppercase tracking-wider">
               {post.category}

@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import Footer from "@/components/Footer";
 import { faqs } from "@/components/FAQSection";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 const categories = Array.from(new Set(faqs.map((f) => f.category)));
 
@@ -18,6 +20,11 @@ const faqSchema = {
 };
 
 export default function FAQPage() {
+  usePageMeta({
+    title: "FAQ - Roundtaible",
+    description: "Answers to common questions about Roundtaible's AI debate platform for educators, students, and professionals.",
+  });
+
   const navigate = useNavigate();
   const [openKey, setOpenKey] = useState<string | null>(null);
 
@@ -57,8 +64,15 @@ export default function FAQPage() {
         </div>
       </nav>
 
+      {/* Breadcrumbs */}
+      <div className="pt-20 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <Breadcrumbs items={[{ label: "FAQ" }]} />
+        </div>
+      </div>
+
       {/* Hero */}
-      <section className="pt-32 pb-14 px-4 sm:px-6 text-center border-b border-border">
+      <section className="pt-8 pb-14 px-4 sm:px-6 text-center border-b border-border">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -168,6 +182,16 @@ export default function FAQPage() {
           >
             Contact us
           </a>
+        </div>
+
+        {/* Related pages */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-sm">
+          <span className="text-muted-foreground">Explore:</span>
+          <Link to="/pricing" className="text-primary hover:underline font-medium">Pricing</Link>
+          <span className="text-muted-foreground/40">|</span>
+          <Link to="/blog" className="text-primary hover:underline font-medium">Blog</Link>
+          <span className="text-muted-foreground/40">|</span>
+          <Link to="/auth" className="text-primary hover:underline font-medium">Try Roundtaible</Link>
         </div>
       </div>
 

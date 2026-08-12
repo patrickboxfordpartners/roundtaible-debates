@@ -1,6 +1,15 @@
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+
 export default function Privacy() {
+  usePageMeta({
+    title: "Privacy Policy - Roundtaible",
+    description: "How Roundtaible collects, uses, and protects your data. Read our full privacy policy.",
+  });
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
+      <Breadcrumbs items={[{ label: "Privacy Policy" }]} className="mb-6" />
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Legal</p>
       <h1 className="mt-3 text-4xl font-bold tracking-tight">Privacy Policy</h1>
       <p className="mt-4 text-sm text-gray-500">Last updated: June 16, 2026</p>

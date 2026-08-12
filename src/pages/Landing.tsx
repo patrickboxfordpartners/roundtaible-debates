@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 import PersonaModal from "@/components/PersonaModal";
 import { FAQSection, featuredFaqs } from "@/components/FAQSection";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { StickyMobileCTA } from "@/components/StickyMobileCTA";
 
 const DEBATE_TURNS = [
   { speaker: "Jefferson", color: "#8B6914", text: "The question is not whether AI shall govern, but whether men shall govern AI. Every technology is merely an extension of the will that directs it." },
@@ -138,6 +140,11 @@ const TESTIMONIALS = [
 ];
 
 export default function Landing() {
+  usePageMeta({
+    title: "Roundtaible - AI Debates with History's Greatest Minds",
+    description: "Watch history's sharpest minds debate your actual questions. Edison, Curie, Machiavelli, and more go head-to-head in real-time AI-powered debates on any topic.",
+  });
+
   const navigate = useNavigate();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -163,7 +170,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-dvh bg-background text-foreground pb-20">
+    <div className="min-h-dvh bg-background text-foreground pb-16 sm:pb-0">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Nav */}
@@ -497,6 +504,8 @@ export default function Landing() {
 
       <FAQSection />
       <Footer />
+
+      <StickyMobileCTA />
 
       <PersonaModal
         persona={selectedPersona}

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Check, Minus, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBilling } from "@/hooks/useBilling";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
 import Footer from "@/components/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { StickyMobileCTA } from "@/components/StickyMobileCTA";
 
 type BillingCycle = "monthly" | "annual";
 
@@ -163,6 +165,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function Pricing() {
+  usePageMeta({
+    title: "Pricing - Roundtaible",
+    description: "Simple pricing for AI-powered debate. Pro at $9.99/mo for individuals, Edu/Team at $29.99/mo for classrooms and organizations. Cancel anytime.",
+  });
+
   const [cycle, setCycle] = useState<BillingCycle>("annual");
   const navigate = useNavigate();
   const { profile, isAuthenticated } = useAuth();
@@ -454,6 +461,11 @@ export default function Pricing() {
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}
           </div>
+          <div className="mt-6 text-center">
+            <Link to="/faq" className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+              See all frequently asked questions &rarr;
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -483,6 +495,7 @@ export default function Pricing() {
         </div>
       </section>
 
+      <StickyMobileCTA />
       <Footer />
     </div>
   );

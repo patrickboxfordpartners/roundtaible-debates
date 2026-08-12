@@ -1,9 +1,16 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import Footer from "@/components/Footer";
 import { posts } from "@/data/posts";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export function Blog() {
+  usePageMeta({
+    title: "Blog - Roundtaible",
+    description: "Research, education, and the case for structured disagreement. Insights on AI debate, critical thinking, and pedagogy.",
+  });
+
   const navigate = useNavigate();
 
   return (
@@ -37,8 +44,15 @@ export function Blog() {
         </div>
       </nav>
 
+      {/* Breadcrumbs */}
+      <div className="pt-20 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <Breadcrumbs items={[{ label: "Blog" }]} />
+        </div>
+      </div>
+
       {/* Header */}
-      <header className="bg-background border-b border-border pt-28 pb-16 px-4 sm:px-6 text-center">
+      <header className="bg-background border-b border-border pt-8 pb-16 px-4 sm:px-6 text-center">
         <p className="text-xs uppercase tracking-widest text-[#C17F24] font-semibold mb-4">
           The Roundtaible Blog
         </p>
@@ -92,6 +106,18 @@ export function Blog() {
               </div>
             </article>
           ))}
+
+          {/* Cross-links */}
+          <div className="mt-16 pt-10 border-t border-border text-center">
+            <p className="text-sm text-muted-foreground mb-3">Learn more about Roundtaible:</p>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <Link to="/faq" className="text-primary hover:underline font-medium">FAQ</Link>
+              <span className="text-muted-foreground/40">|</span>
+              <Link to="/pricing" className="text-primary hover:underline font-medium">Pricing</Link>
+              <span className="text-muted-foreground/40">|</span>
+              <Link to="/auth" className="text-primary hover:underline font-medium">Start Debating</Link>
+            </div>
+          </div>
         </div>
       </main>
 
