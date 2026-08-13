@@ -118,26 +118,6 @@ function DebateTranscript() {
   );
 }
 
-const TESTIMONIALS = [
-  {
-    quote: "I used it before a board meeting on AI strategy. Having Jefferson and Machiavelli argue both sides in 20 minutes clarified my thinking more than any consultant deck.",
-    name: "David K.",
-    role: "Strategy Director",
-    avatar: "DK",
-  },
-  {
-    quote: "My students were bored by primary sources. I put Roundtaible on the projector and asked Lincoln and Marx to debate student debt. They didn't stop talking for 40 minutes.",
-    name: "Ms. Rachel T.",
-    role: "AP History Teacher",
-    avatar: "RT",
-  },
-  {
-    quote: "Set it up at our booth with 'Does price or trust win the sale?' Three historical minds debating it drew a crowd every time. Best demo tool we've ever had.",
-    name: "Marcus W.",
-    role: "Sales Leader",
-    avatar: "MW",
-  },
-];
 
 export default function Landing() {
   usePageMeta({
@@ -456,33 +436,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIALS ─────────────────────────────────────────────── */}
-      <section className="py-14 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-4">From the Table</p>
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold">
-              What People Say
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-card rounded-xl border border-border p-7 flex flex-col">
-                <p className="font-lora text-sm text-muted-foreground leading-relaxed flex-1 mb-6">"{t.quote}"</p>
-                <div className="flex items-center gap-3 pt-5 border-t border-border">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="font-playfair text-sm font-semibold text-foreground">{t.name}</p>
-                    <p className="font-lora text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ─── 5. BOTTOM CTA ────────────────────────────────────────────── */}
       <section className="py-16 sm:py-28 px-4 sm:px-6 bg-secondary text-secondary-foreground">
