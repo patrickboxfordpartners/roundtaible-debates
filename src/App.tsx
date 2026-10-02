@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,8 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieBanner } from "@/components/CookieBanner";
 import Index from "./pages/Index";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
 const Landing = lazy(() => import("./pages/Landing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -37,6 +40,7 @@ function PageLoader() {
 
 const App = () => (
   <ErrorBoundary>
+  <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
   <AuthProvider>
     <DebateModeProvider>
     <TooltipProvider>
@@ -111,6 +115,7 @@ const App = () => (
     </TooltipProvider>
     </DebateModeProvider>
   </AuthProvider>
+  </ClerkProvider>
   </ErrorBoundary>
 );
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/services/supabaseClient";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useToast } from "@/hooks/use-toast";
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -7,14 +7,14 @@ const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 export function useBilling() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { getToken } = useClerkAuth();
 
   async function getAuthHeaders(): Promise<Record<string, string>> {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error("Not authenticated");
+    const token = await getToken();
+    if (!token) throw new Error("Not authenticated");
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 

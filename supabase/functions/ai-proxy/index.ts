@@ -217,10 +217,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("XAI_API_KEY");
+    const proxyKey = Deno.env.get("AI_PROXY_KEY");
+    const proxyUrl = Deno.env.get("AI_PROXY_URL");
+    const apiKey = proxyKey || Deno.env.get("XAI_API_KEY");
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "XAI_API_KEY not configured" }),
+        JSON.stringify({ error: "XAI_API_KEY or AI_PROXY_KEY not configured" }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -230,7 +232,7 @@ Deno.serve(async (req) => {
 
     const openai = new OpenAI({
       apiKey,
-      baseURL: "https://api.x.ai/v1",
+      baseURL: proxyUrl || "https://api.x.ai/v1",
     });
 
     const body = await req.json();

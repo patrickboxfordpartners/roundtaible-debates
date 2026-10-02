@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useUser, useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
 import { supabase } from "@/services/supabaseClient";
 import { posthog } from "@/lib/posthog";
-import type { Session, User } from "@supabase/supabase-js";
 
 interface Profile {
   id: string;
@@ -15,55 +15,48 @@ interface Profile {
   stripe_subscription_id: string | null;
 }
 
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  user: AuthUser | null;
   profile: Profile | null;
   loading: boolean;
   isAuthenticated: boolean;
   isTeacher: boolean;
   isStudent: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, role: "teacher" | "student") => Promise<void>;
+  signIn: () => void;
+  signUp: () => void;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { getToken } = useClerkAuth();
+  const clerk = useClerk();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
+  const userId = clerkUser?.id ?? null;
+  const userEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+
+  // Fetch (or create) profile when Clerk user changes
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
+    if (!isLoaded) return;
+
+    if (!isSignedIn || !userId) {
+      setProfile(null);
+      setProfileLoading(false);
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    setProfileLoading(true);
+    fetchOrCreateProfile(userId);
+  }, [isLoaded, isSignedIn, userId]);
 
   // Listen for profile changes (subscription updates from Stripe webhook)
   useEffect(() => {
@@ -81,9 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           const newProfile = payload.new as Profile;
-          // If subscription tier changed, refetch profile to update limits
           if (newProfile.subscription_tier !== profile.subscription_tier) {
-            fetchProfile(profile.id);
+            fetchOrCreateProfile(profile.id);
           }
         }
       )
@@ -94,97 +86,123 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [profile?.id, profile?.subscription_tier]);
 
-  async function fetchProfile(userId: string) {
-    if (!supabase) return;
+  async function fetchOrCreateProfile(uid: string) {
+    if (!supabase) { setProfileLoading(false); return; }
     try {
       const { data, error } = await supabase
         .from("rt_profiles")
         .select("*")
-        .eq("id", userId)
+        .eq("id", uid)
         .single();
 
-      if (error && error.code !== "PGRST116") {
-        // Silent fail - profile doesn't exist yet
-      }
+      if (error && error.code === "PGRST116") {
+        // Profile doesn't exist yet -- create one for new Clerk user
+        const storedRole = localStorage.getItem("roundtaible_signup_role") as "teacher" | "student" | null;
+        const role = storedRole || "student";
+        const fullName = clerkUser?.fullName || clerkUser?.firstName || "";
+        const email = clerkUser?.primaryEmailAddress?.emailAddress || "";
 
-      setProfile(data as Profile | null);
-      if (data) {
-        posthog.identify(userId, {
-          email: data.email,
-          name: data.full_name,
-          role: data.role,
-          plan: data.subscription_tier ?? "free",
-        });
+        const { data: newProfile } = await supabase
+          .from("rt_profiles")
+          .insert({
+            id: uid,
+            email,
+            full_name: fullName,
+            role,
+            subscription_tier: "free",
+            subscription_status: "active",
+          })
+          .select()
+          .single();
 
-        // Fire welcome email for new users (created within last 30 seconds)
-        const isNewUser =
-          data.subscription_tier === "free" &&
-          data.created_at &&
-          Date.now() - new Date(data.created_at).getTime() < 30_000;
-
-        if (isNewUser) {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-          fetch(`${supabaseUrl}/functions/v1/welcome-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseAnonKey}`,
-              "apikey": supabaseAnonKey,
-            },
-            body: JSON.stringify({
-              email: data.email,
-              name: data.full_name,
-              role: data.role,
-            }),
-          }).catch(() => {
-            // Fire and forget — do not block auth on email failure
-          });
+        if (newProfile) {
+          localStorage.removeItem("roundtaible_signup_role");
+          setProfile(newProfile as Profile);
+          identifyAndWelcome(uid, newProfile as Profile, true);
+          return;
         }
+        setProfile(null);
+        return;
       }
-    } catch (err) {
-      // Silent fail - non-critical error
+
+      if (error) {
+        setProfile(null);
+        return;
+      }
+
+      setProfile(data as Profile);
+      if (data) {
+        identifyAndWelcome(uid, data as Profile, false);
+      }
+    } catch (_err) {
+      // Silent fail -- non-critical error
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   }
 
-  async function signIn(email: string, password: string) {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+  function identifyAndWelcome(uid: string, data: Profile, isNew: boolean) {
+    posthog.identify(uid, {
+      email: data.email,
+      name: data.full_name,
+      role: data.role,
+      plan: data.subscription_tier ?? "free",
+    });
+
+    // Fire welcome email for newly created profiles
+    const shouldWelcome =
+      isNew ||
+      (data.subscription_tier === "free" &&
+        (data as Record<string, unknown>).created_at &&
+        Date.now() - new Date((data as Record<string, unknown>).created_at as string).getTime() < 30_000);
+
+    if (shouldWelcome) {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+      fetch(`${supabaseUrl}/functions/v1/welcome-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          email: data.email,
+          name: data.full_name,
+          role: data.role,
+        }),
+      }).catch(() => {
+        // Fire and forget -- do not block auth on email failure
+      });
+    }
   }
 
-  async function signUp(email: string, password: string, fullName: string, role: "teacher" | "student") {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, role },
-      },
-    });
-    if (error) throw error;
+  function signIn() {
+    window.location.href = "/auth";
+  }
+
+  function signUp() {
+    window.location.href = "/auth?signup=true";
   }
 
   async function signOut() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    await clerk.signOut();
     posthog.reset();
-    setSession(null);
     setProfile(null);
   }
 
-  const user = session?.user ?? null;
+  const user: AuthUser | null =
+    isSignedIn && userId ? { id: userId, email: userEmail } : null;
+
+  const loading = !isLoaded || (!!isSignedIn && profileLoading);
 
   return (
     <AuthContext.Provider
       value={{
-        session,
         user,
         profile,
         loading,
-        isAuthenticated: !!user,
+        isAuthenticated: !!isSignedIn,
         isTeacher: profile?.role === "teacher",
         isStudent: profile?.role === "student",
         signIn,
