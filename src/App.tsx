@@ -16,6 +16,7 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as stri
 const Landing = lazy(() => import("./pages/Landing"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const Quiz = lazy(() => import("./pages/Quiz"));
 const Auth = lazy(() => import("./pages/Auth"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

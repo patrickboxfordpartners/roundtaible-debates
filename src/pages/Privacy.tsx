@@ -12,7 +12,7 @@ export default function Privacy() {
       <Breadcrumbs items={[{ label: "Privacy Policy" }]} className="mb-6" />
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Legal</p>
       <h1 className="mt-3 text-4xl font-bold tracking-tight">Privacy Policy</h1>
-      <p className="mt-4 text-sm text-gray-500">Last updated: June 16, 2026</p>
+      <p className="mt-4 text-sm text-gray-500">Last updated: October 1, 2026</p>
 
       <div className="mt-12 space-y-8 text-gray-700 leading-relaxed">
         <p>The Roundtaible ("The Roundtaible," "we," "us," or "our"), a Boxford Partners LLC product, operates theroundtaible.com. This Privacy Policy explains what information we collect, how we use it, and your rights with respect to it.</p>
@@ -39,7 +39,8 @@ export default function Privacy() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Third-Party Service Providers</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Supabase</strong> — database and authentication infrastructure</li>
+            <li><strong>Supabase</strong> — database infrastructure</li>
+            <li><strong>Clerk</strong> — authentication and identity management</li>
             <li><strong>xAI / Grok</strong> — AI-powered debate generation features</li>
             <li><strong>ElevenLabs</strong> — text-to-speech audio features</li>
             <li><strong>Vercel</strong> — hosting and infrastructure</li>
@@ -63,7 +64,12 @@ export default function Privacy() {
 
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Children's Privacy</h2>
-          <p>Our services are not directed to individuals under 18. We do not knowingly collect personal information from minors.</p>
+          <p>The Roundtaible is designed for educational use by students aged 13 and older. We do not knowingly collect personal information from children under 13. If you are a teacher using The Roundtaible with students under 13, you must obtain verifiable parental consent before allowing those students to create accounts, in compliance with COPPA. If we learn that we have collected personal information from a child under 13 without parental consent, we will delete that information promptly. Contact us at <a href="mailto:hello@theroundtaible.com" className="text-blue-600 hover:underline">hello@theroundtaible.com</a> to report any concerns.</p>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">FERPA Compliance</h2>
+          <p>For schools and districts: student education records are protected under FERPA. We act as a school official with a legitimate educational interest and will not disclose student records to third parties without consent, except as permitted by FERPA.</p>
         </div>
 
         <div>
