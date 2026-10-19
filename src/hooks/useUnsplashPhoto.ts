@@ -6,7 +6,7 @@ interface UnsplashPhoto {
   photographerUrl: string;
 }
 
-const CACHE_KEY = "unsplash_login_photo";
+const CACHE_KEY = "unsplash_login_photo_v2";
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 const FALLBACK: UnsplashPhoto = {
   url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop",
@@ -14,6 +14,11 @@ const FALLBACK: UnsplashPhoto = {
   photographerUrl: "https://unsplash.com/@jasperboer",
 };
 
+/**
+ * Loads a library photo from Unsplash, reusing local cache entries for 24 hours.
+ * Keeps the fallback when no API key is configured or the request fails.
+ * @returns The current photo URL and photographer attribution.
+ */
 export function useUnsplashPhoto(): UnsplashPhoto {
   const [photo, setPhoto] = useState<UnsplashPhoto>(FALLBACK);
 
@@ -29,7 +34,7 @@ export function useUnsplashPhoto(): UnsplashPhoto {
     const key = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
     if (!key) return;
 
-    fetch("https://api.unsplash.com/photos/random?query=nature+landscape&orientation=landscape", {
+    fetch("https://api.unsplash.com/photos/random?query=old+library+books&orientation=landscape", {
       headers: { Authorization: `Client-ID ${key}` },
     })
       .then(r => r.ok ? r.json() : Promise.reject())
