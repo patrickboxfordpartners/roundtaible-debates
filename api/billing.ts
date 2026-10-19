@@ -37,7 +37,8 @@ export async function POST(req: Request): Promise<Response> {
     if (body.action === "checkout") {
       const priceId = typeof body.priceId === "string" ? body.priceId : "";
       const allowed = allowedPrices();
-      if (!priceId || (allowed.length > 0 && !allowed.includes(priceId))) throw new HttpError(400, "Unknown plan");
+      if (allowed.length === 0) throw new HttpError(503, "Stripe prices are not configured");
+      if (!priceId || !allowed.includes(priceId)) throw new HttpError(400, "Unknown plan");
 
       let customerId: string | null = profile.stripe_customer_id;
       if (!customerId) {
