@@ -61,6 +61,7 @@ interface ContactFormProps {
   className?: string;
 }
 
+/** Render the validated contact form with submission progress and confirmation states. */
 export function ContactForm({ className }: ContactFormProps) {
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -83,6 +84,7 @@ export function ContactForm({ className }: ContactFormProps) {
     setErrors((prev) => ({ ...prev, [key]: nextErrors[key as keyof FormErrors] }));
   }
 
+  /** Validate contact fields, submit them to the CRM proxy, and update success or error feedback. */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

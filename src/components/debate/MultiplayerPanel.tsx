@@ -17,6 +17,7 @@ interface MultiplayerPanelProps {
   onCopyLink: () => void;
 }
 
+/** Render room creation, joining, and sharing controls for debate sessions across tabs on the same device. */
 export function MultiplayerPanel({
   open,
   onClose,

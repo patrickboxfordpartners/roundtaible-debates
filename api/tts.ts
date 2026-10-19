@@ -87,6 +87,7 @@ const personaVoices: Record<string, VoiceConfig> = {
   },
 };
 
+/** Validate and truncate speech input, then stream ElevenLabs audio using the selected persona or default voice. */
 export async function POST(req: Request): Promise<Response> {
   try {
     rateLimit(req, "tts", 60);

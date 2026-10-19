@@ -58,6 +58,7 @@ function storeEvent(event: StoredEvent): void {
 
 // --- Public API ---
 
+/** Append an anonymous usage event with a generated ID and timestamp to bounded local storage. */
 export function track(data: AnalyticsEvent): void {
   const event: StoredEvent = {
     id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,

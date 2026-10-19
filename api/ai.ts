@@ -59,6 +59,7 @@ interface DebateTopic {
   category?: string;
 }
 
+/** Choose the built-in persona prompt or construct one from the supplied character details. */
 function getSystemPrompt(persona: Persona): string {
   return (
     personaPrompts[persona.id] ||
@@ -73,6 +74,7 @@ interface EducationalConfig {
   vocabularyHighlights?: boolean;
 }
 
+/** Build classroom response instructions, or return an empty suffix when educational mode is disabled. */
 function buildEducationalSuffix(config?: EducationalConfig): string {
   if (!config?.enabled) return "";
 
@@ -127,6 +129,7 @@ function buildEducationalSuffix(config?: EducationalConfig): string {
   return "\n\n" + parts.join("\n");
 }
 
+/** Build the debate prompt from the latest eight entries, audience input, and optional classroom instructions. */
 function buildUserPrompt(
   persona: Persona,
   topic: DebateTopic,
@@ -162,6 +165,7 @@ ${humanResponseInstruction}
 ${persona.context ? `Additional context about your character: ${persona.context}\n\n` : ""}Now respond to the debate as ${persona.name}. Stay in character. Make it conversational and natural — you can agree, disagree, interrupt, build on someone's point, or introduce a new angle. Be witty and engaging. Address other debaters by name when responding to their points.${educationalSuffix}`;
 }
 
+/** Request an xAI completion, preserving auth and quota error statuses for the client circuit breaker. */
 async function chat(system: string, user: string, maxTokens: number, temperature: number): Promise<string> {
   const apiKey = process.env.AI_PROXY_KEY || process.env.XAI_API_KEY;
   if (!apiKey) throw new HttpError(503, "XAI_API_KEY is not configured");
@@ -192,6 +196,7 @@ async function chat(system: string, user: string, maxTokens: number, temperature
   return data.choices?.[0]?.message?.content || "";
 }
 
+/** Generate a persona response or rotating narrator summary, returning validation and upstream errors as JSON. */
 export async function POST(req: Request): Promise<Response> {
   try {
     rateLimit(req, "ai", 60);

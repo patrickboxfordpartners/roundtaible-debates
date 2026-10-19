@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const BILLING_URL = "/api/billing";
 
+/** Expose authenticated Stripe checkout and portal redirects with loading state and failure notifications. */
 export function useBilling() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -18,6 +19,7 @@ export function useBilling() {
     };
   }
 
+  /** Request checkout for a plan price and redirect to Stripe, showing a toast if the request fails. */
   async function startCheckout(priceId: string): Promise<void> {
     setLoading(true);
     try {
@@ -48,6 +50,7 @@ export function useBilling() {
     }
   }
 
+  /** Request the signed-in customer’s billing portal and redirect, showing a toast on failure. */
   async function openBillingPortal(): Promise<void> {
     setLoading(true);
     try {

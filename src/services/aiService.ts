@@ -87,6 +87,7 @@ function getRandomFallback(personaId: string): string {
   return options[Math.floor(Math.random() * options.length)];
 }
 
+/** Request a persona turn, using fallback dialogue for recoverable failures and rejecting when the circuit blocks calls. */
 export async function generatePersonaResponse(
   persona: Persona,
   topic: DebateTopic,
@@ -159,6 +160,7 @@ export async function generatePersonaResponse(
   }
 }
 
+/** Request a narrated summary, returning a Twain fallback when the circuit is open or generation fails. */
 export async function generateDebateSummary(
   topic: DebateTopic,
   transcript: TranscriptEntry[],

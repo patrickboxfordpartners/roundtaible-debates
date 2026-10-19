@@ -17,6 +17,7 @@ interface ClassMembership {
   };
 }
 
+/** Render student class memberships, join controls, and locally saved debate history. */
 export default function StudentDashboard() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function StudentDashboard() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
 
+  /** Load the session user’s class memberships, reporting failures and clearing the loading state. */
   const fetchMemberships = useCallback(async () => {
     if (!profile) {
       setLoading(false);
@@ -47,6 +49,7 @@ export default function StudentDashboard() {
     setLocalDebates(getSavedDebates());
   }, [fetchMemberships]);
 
+  /** Submit a normalized class code and refresh memberships, displaying code-specific errors when available. */
   async function handleJoinClass(e: React.FormEvent) {
     e.preventDefault();
     if (!profile) return;

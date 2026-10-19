@@ -5,6 +5,7 @@
 import Stripe from "stripe";
 import { db } from "./_lib/db.js";
 
+/** Map Stripe subscription statuses to the profile’s active, canceled, past_due, or inactive states. */
 function mapStatus(status: string): string {
   switch (status) {
     case "active":
@@ -20,6 +21,7 @@ function mapStatus(status: string): string {
   }
 }
 
+/** Verify the Stripe signature and synchronize profile billing fields for supported subscription events. */
 export async function POST(req: Request): Promise<Response> {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -42,12 +44,14 @@ export async function POST(req: Request): Promise<Response> {
 
   const sql = db();
 
+  /** Resolve the first subscription price’s tier metadata, defaulting unsupported or missing tiers to pro. */
   async function resolveTier(subscription: Stripe.Subscription): Promise<string> {
     const price = subscription.items.data[0]?.price;
     const tier = price?.metadata?.tier || (price?.id ? (await stripe.prices.retrieve(price.id)).metadata?.tier : undefined);
     return tier === "pro" || tier === "edu" ? tier : "pro";
   }
 
+  /** Find a profile by a supplied Clerk ID first, then by its stored Stripe customer ID. */
   async function profileIdFor(customerId: string, metaUserId?: string | null): Promise<string | null> {
     if (metaUserId) {
       const byId = await sql`SELECT id FROM rt_profiles WHERE id = ${metaUserId}`;

@@ -159,6 +159,7 @@ function BracketView({ tree }: { tree: BracketNode }) {
   );
 }
 
+/** Render an accessible tournament bracket with voting and creator round advancement controls. */
 export default function Tournament() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const { profile } = useAuth();
@@ -169,6 +170,7 @@ export default function Tournament() {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
 
+  /** Load the accessible tournament, matches, and current user’s votes into the bracket view. */
   const fetch = useCallback(async () => {
     if (!tournamentId) return;
     try {
@@ -192,6 +194,7 @@ export default function Tournament() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
+  /** Submit the current user’s contestant vote and refresh totals; the legacy field argument is ignored. */
   async function vote(roundId: string, personaId: string, field: "votes_a" | "votes_b") {
     if (!profile) return;
     void field; // the server works out which side the vote is for
@@ -208,6 +211,7 @@ export default function Tournament() {
     }
   }
 
+  /** Request creator-authorized match advancement and refresh the bracket on success. */
   async function advanceRound(round: Round) {
     if (!tournament) return;
     try {

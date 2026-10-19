@@ -29,6 +29,7 @@ function daysUntil(dateStr: string | null): number | null {
   return Math.ceil((due.getTime() - now.getTime()) / 86400000);
 }
 
+/** Render assignments for the current role with teacher creation and removal controls. */
 export default function Assignments() {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function Assignments() {
 
   const isTeacher = profile?.role === "teacher";
 
+  /** Load assignments for the session user and populate teacher class choices when applicable. */
   const fetch = useCallback(async () => {
     if (!profile) return;
     setLoading(true);
@@ -62,6 +64,7 @@ export default function Assignments() {
 
   useEffect(() => { fetch(); }, [fetch]);
 
+  /** Submit the teacher’s assignment form, reset it on success, and refresh the assignment list. */
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!profile || !form.classId || !form.topicTitle) return;
@@ -84,6 +87,7 @@ export default function Assignments() {
     }
   }
 
+  /** Deactivate an assignment and remove it from the displayed list only after the API succeeds. */
   async function handleDeactivate(id: string) {
     try {
       await dataCall("assignments.deactivate", { id });

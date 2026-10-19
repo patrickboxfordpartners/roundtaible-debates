@@ -13,6 +13,7 @@ export function setTokenGetter(fn: TokenGetter | null): void {
 export class ApiError extends Error {
   status: number;
   code?: string;
+  /** Create an API failure with its HTTP status and optional application error code. */
   constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
@@ -20,6 +21,7 @@ export class ApiError extends Error {
   }
 }
 
+/** Build JSON request headers with a Clerk token when available, tolerating signed-out or unready sessions. */
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (getToken) {

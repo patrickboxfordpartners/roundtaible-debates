@@ -34,6 +34,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/** Provide Clerk session state, the server-backed profile, role flags, and sign-in controls to descendants. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, user: clerkUser } = useUser();
   const { getToken } = useClerkAuth();
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // (replaces the old Supabase realtime listener)
   useEffect(() => {
     if (!profile?.id) return;
+    /** Refresh the profile quietly when the document becomes visible so billing changes can appear. */
     const onFocus = () => {
       if (document.visibilityState === "visible") fetchOrCreateProfile(true);
     };
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-register only when the profile changes
   }, [profile?.id]);
 
+  /** Load or create the session profile; quiet refreshes preserve existing data on failure and skip analytics. */
   async function fetchOrCreateProfile(quiet = false) {
     try {
       const storedRole = localStorage.getItem("roundtaible_signup_role") as "teacher" | "student" | null;
@@ -93,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // The welcome email is now sent by the server when the profile is first created.
+  /** Associate the loaded profile and subscription tier with the PostHog user. */
   function identify(data: Profile) {
     posthog.identify(data.id, {
       email: data.email,

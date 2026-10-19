@@ -2,6 +2,7 @@
 
 import { HttpError, errorResponse, json, rateLimit, readJson } from "./_lib/http.js";
 
+/** Rate-limit contact submissions and forward JSON to the configured CRM, preserving its response status. */
 export async function POST(req: Request): Promise<Response> {
   try {
     rateLimit(req, "contact", 5);

@@ -10,6 +10,7 @@ export function getMonthlyLimit(tier: string): number {
   return LIMITS[tier] ?? 0;
 }
 
+/** Fetch the session user’s calendar-month debate count, returning zero on failure; the userId argument is unused. */
 export async function getMonthlyDebateCount(_userId: string): Promise<number> {
   // The server counts debates for the signed-in user this calendar month.
   try {

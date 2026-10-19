@@ -9,9 +9,11 @@ import {
   type TournamentParticipant,
 } from "@/lib/bracketGenerator";
 
+/** Expose bracket creation with submission state and success or failure notifications. */
 export function useTournamentCreation() {
   const [creating, setCreating] = useState(false);
 
+  /** Generate and validate a seeded bracket, save it through the API, and return its ID or null on submission failure. */
   async function createTournament(
     name: string,
     topic: string,

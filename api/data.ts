@@ -12,33 +12,39 @@ type Args = Record<string, any>;
 type Ctx = { userId: string | null; args: Args };
 type Row = Record<string, any>;
 
+/** Return the authenticated context user ID, or throw HTTP 401. */
 function need(ctx: Ctx): string {
   if (!ctx.userId) throw new HttpError(401, "Unauthorized");
   return ctx.userId;
 }
 
+/** Require a nonblank string, trim it, and truncate it to the field limit. */
 function str(v: unknown, field: string, max = 500): string {
   if (typeof v !== "string" || !v.trim()) throw new HttpError(400, `${field} is required`);
   return v.trim().slice(0, max);
 }
 
+/** Return trimmed, truncated optional text, or null for blank or non-string values. */
 function optStr(v: unknown, max = 2000): string | null {
   return typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Require a UUID-shaped string, or throw HTTP 400 naming the invalid field. */
 function uuid(v: unknown, field: string): string {
   if (typeof v !== "string" || !UUID_RE.test(v)) throw new HttpError(400, `${field} is invalid`);
   return v;
 }
 
 const JOIN_CODE_CHARS = "abcdefghjkmnpqrstuvwxyz23456789";
+/** Generate a six-character class join code; callers handle database collisions. */
 function joinCode(): string {
   let code = "";
   for (let i = 0; i < 6; i++) code += JOIN_CODE_CHARS[Math.floor(Math.random() * JOIN_CODE_CHARS.length)];
   return code;
 }
 
+/** Look up the stored profile role, returning null when no profile exists. */
 async function getRole(userId: string): Promise<string | null> {
   const rows = await db()`SELECT role FROM rt_profiles WHERE id = ${userId}`;
   return rows[0]?.role ?? null;
@@ -57,6 +63,7 @@ async function classAccess(userId: string, classId: string): Promise<{ isOwner: 
   return { isOwner: cls.teacher_id === userId, isMember: !!is_member, cls: rest };
 }
 
+/** Return a public or authorized class tournament, rejecting missing records and unauthorized viewers. */
 async function tournamentAccess(userId: string | null, tournamentId: string): Promise<Row> {
   const rows = await db()`SELECT * FROM rt_tournaments WHERE id = ${tournamentId}`;
   const t = rows[0];
@@ -70,6 +77,7 @@ async function tournamentAccess(userId: string | null, tournamentId: string): Pr
 
 const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   // ---- Profile ----
+  /** Load the signed-in profile or create it from Clerk data, attempting a welcome email only after insertion. */
   async "profile.get"(ctx) {
     const userId = need(ctx);
     const sql = db();
@@ -96,6 +104,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   },
 
   // ---- Debates ----
+  /** Save a bounded transcript and persona list, associating the session user and any authorized class. */
   async "debates.save"(ctx) {
     const a = ctx.args;
     const topic = a.topic || {};
@@ -118,6 +127,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { id: rows[0].id };
   },
 
+  /** Count the signed-in user’s debates since the start of the database’s current calendar month. */
   async "debates.monthlyCount"(ctx) {
     const userId = need(ctx);
     const rows = await db()`
@@ -126,6 +136,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { count: rows[0]?.count ?? 0 };
   },
 
+  /** Increment the signed-in user’s win count for the supplied persona, creating the entry if needed. */
   async "leaderboard.recordWin"(ctx) {
     const userId = need(ctx);
     const personaId = str(ctx.args.personaId, "personaId", 200);
@@ -139,6 +150,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   },
 
   // ---- Analytics page ----
+  /** Load recent personal debates and, for teachers, membership analytics for their own classes. */
   async "analytics.load"(ctx) {
     const userId = need(ctx);
     const sql = db();
@@ -165,12 +177,14 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   },
 
   // ---- Classes ----
+  /** List classes owned by the signed-in user, newest first. */
   async "classes.listTeacher"(ctx) {
     const userId = need(ctx);
     const classes = await db()`SELECT * FROM rt_classes WHERE teacher_id = ${userId} ORDER BY created_at DESC`;
     return { classes };
   },
 
+  /** Create a class for a teacher, retrying join-code collisions up to five times. */
   async "classes.create"(ctx) {
     const userId = need(ctx);
     if ((await getRole(userId)) !== "teacher") throw new HttpError(403, "Only teachers can create classes");
@@ -190,6 +204,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     throw new HttpError(500, "Could not generate a unique join code");
   },
 
+  /** List the signed-in user’s class memberships with class details, newest first. */
   async "classes.listStudent"(ctx) {
     const userId = need(ctx);
     const rows = await db()`
@@ -206,6 +221,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     };
   },
 
+  /** Join an active class by code, reporting invalid codes and existing memberships as HTTP errors. */
   async "classes.join"(ctx) {
     const userId = need(ctx);
     const code = str(ctx.args.joinCode, "joinCode", 20).toLowerCase();
@@ -219,6 +235,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { classId: cls[0].id };
   },
 
+  /** Load class activity for its owner or members, exposing the student roster only to the owner. */
   async "classes.get"(ctx) {
     const userId = need(ctx);
     const classId = uuid(ctx.args.classId, "classId");
@@ -240,6 +257,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   },
 
   // ---- Assignments ----
+  /** List owned assignments and class options for teachers, or active assignments for a student’s classes. */
   async "assignments.list"(ctx) {
     const userId = need(ctx);
     const sql = db();
@@ -265,6 +283,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { assignments, classes: [] };
   },
 
+  /** Validate and create an assignment in a class owned by the signed-in user. */
   async "assignments.create"(ctx) {
     const userId = need(ctx);
     const a = ctx.args;
@@ -281,6 +300,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { assignment: rows[0] };
   },
 
+  /** Deactivate the specified assignment only if it belongs to the signed-in teacher. */
   async "assignments.deactivate"(ctx) {
     const userId = need(ctx);
     const id = uuid(ctx.args.id, "id");
@@ -288,6 +308,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { ok: true };
   },
 
+  /** Create or replace the signed-in class member’s assignment submission and optional debate reference. */
   async "assignments.submit"(ctx) {
     const userId = need(ctx);
     const assignmentId = uuid(ctx.args.assignmentId, "assignmentId");
@@ -305,6 +326,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
   },
 
   // ---- Tournaments ----
+  /** Create a class owner’s tournament and bracket in one transaction, replacing temporary match links with UUIDs. */
   async "tournaments.create"(ctx) {
     const userId = need(ctx);
     const a = ctx.args;
@@ -326,7 +348,9 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     });
     const tournamentId = crypto.randomUUID();
     const sql = db();
+    /** Truncate string match fields to 200 characters, returning null for other values. */
     const s = (v: unknown) => (typeof v === "string" ? v.slice(0, 200) : null);
+    /** Normalize match status to active, completed, or the default pending state. */
     const status = (v: unknown) => (v === "active" || v === "completed" ? v : "pending");
     await sql.transaction([
       sql`INSERT INTO rt_tournaments (id, name, description, topics, class_id, created_by, total_rounds, status, current_round)
@@ -349,6 +373,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { id: tournamentId };
   },
 
+  /** Load an accessible tournament, its ordered matches, and the current user’s votes when signed in. */
   async "tournaments.get"(ctx) {
     const tournamentId = uuid(ctx.args.tournamentId, "tournamentId");
     const tournament = await tournamentAccess(ctx.userId, tournamentId);
@@ -364,6 +389,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { tournament, rounds, votes };
   },
 
+  /** Upsert an authorized user’s contestant vote and recalculate both match totals in one transaction. */
   async "tournaments.vote"(ctx) {
     const userId = need(ctx);
     const roundId = uuid(ctx.args.roundId, "roundId");
@@ -384,6 +410,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     return { ok: true };
   },
 
+  /** Let the tournament creator resolve a match, propagate its winner, and activate the next round or finish. */
   async "tournaments.advance"(ctx) {
     const userId = need(ctx);
     const roundId = uuid(ctx.args.roundId, "roundId");
@@ -416,6 +443,7 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
 // Ops that also work for signed-out visitors.
 const PUBLIC_OPS = new Set(["debates.save", "tournaments.get"]);
 
+/** Dispatch a named database operation with the verified session context and return JSON errors. */
 export async function POST(req: Request): Promise<Response> {
   try {
     rateLimit(req, "data", 120);

@@ -15,6 +15,7 @@ export async function getUserId(req: Request): Promise<string | null> {
   }
 }
 
+/** Return the verified Clerk user ID, or throw HTTP 401 when no valid session exists. */
 export async function requireUserId(req: Request): Promise<string> {
   const id = await getUserId(req);
   if (!id) throw new HttpError(401, "Unauthorized");

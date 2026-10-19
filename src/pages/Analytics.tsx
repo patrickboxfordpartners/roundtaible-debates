@@ -36,6 +36,7 @@ function StatCard({ label, value, sub, icon: Icon, color = "text-primary" }: {
   );
 }
 
+/** Render personal debate statistics and teacher class analytics loaded for the current session. */
 export default function Analytics() {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"personal" | "class">("personal");
 
+  /** Load personal debates and authorized class analytics, clearing the loading state even on failure. */
   const fetchData = useCallback(async () => {
     if (!profile) return;
     setLoading(true);

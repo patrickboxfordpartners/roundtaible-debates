@@ -9,6 +9,7 @@ import { canStartDebate } from "@/lib/debateLimits";
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
 import { dataCall } from "@/services/api";
 
+/** Record a persona win for the session user, ignoring failures so debate playback can continue. */
 async function syncLeaderboardWin(userId: string, personaId: string, personaName: string) {
   if (!userId) return;
   try {
@@ -24,6 +25,7 @@ interface DebateOptions {
   subscriptionTier?: string;
 }
 
+/** Manage debate playback, AI turns, speech, voting, history, and subscription usage checks. */
 export function useDebate(educationalConfig?: EducationalConfig, userId?: string, subscriptionTier?: string) {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>(sampleTranscript);
@@ -355,6 +357,7 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
     }
   }, [generateNextResponse]);
 
+  /** Save and end the debate, update local winner totals, and attempt to sync an authenticated win. */
   const voteWinner = useCallback((personaId: string) => {
     const persona = leaderboard.find((p) => p.id === personaId);
     if (persona) {

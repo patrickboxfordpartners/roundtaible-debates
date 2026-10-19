@@ -7,6 +7,7 @@ import { db } from "./_lib/db.js";
 import { getClerkUser, requireUserId } from "./_lib/auth.js";
 import { HttpError, errorResponse, json, rateLimit, readJson, siteOrigin } from "./_lib/http.js";
 
+/** Create a Stripe client from server configuration, or throw HTTP 503 when the secret key is missing. */
 function stripeClient(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new HttpError(503, "STRIPE_SECRET_KEY is not configured");
@@ -23,6 +24,7 @@ function allowedPrices(): string[] {
   ].filter((p): p is string => !!p);
 }
 
+/** Create a checkout or portal session for the authenticated profile using server-built return URLs. */
 export async function POST(req: Request): Promise<Response> {
   try {
     rateLimit(req, "billing", 20);

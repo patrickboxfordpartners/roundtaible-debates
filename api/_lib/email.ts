@@ -1,10 +1,12 @@
 // Welcome email via Postmark. Moved from the old Supabase "welcome-email" function,
 // and now only sent by the server when a new profile is created.
 
+/** Escape HTML metacharacters before inserting user text into the welcome email. */
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
+/** Send a personalized Postmark welcome email; skip missing configuration or recipients and log delivery failures. */
 export async function sendWelcomeEmail(email: string, name: string | null, role: string): Promise<void> {
   const postmarkKey = process.env.POSTMARK_API_KEY;
   if (!postmarkKey || !email) return;

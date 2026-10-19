@@ -52,6 +52,7 @@ async function persistToServer(
   }
 }
 
+/** Save a debate in bounded local history, retrying storage failures, and start best-effort server persistence. */
 export function saveDebate(
   topic: DebateTopic,
   transcript: TranscriptEntry[],

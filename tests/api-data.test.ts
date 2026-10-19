@@ -13,7 +13,9 @@ const h = vi.hoisted(() => ({ sql: null as any, user: null as string | null }));
 const pg = new PGlite();
 
 // Fake neon(): tagged template -> lazy query, plus .transaction([...])
+/** Build a Neon-compatible lazy query adapter backed by PGlite, including transactional query batches. */
 function makeSql() {
+  /** Convert template substitutions into positional SQL parameters and return a lazy, thenable PGlite query. */
   const tag: any = (strings: TemplateStringsArray, ...values: unknown[]) => {
     let text = strings[0];
     values.forEach((_, i) => { text += `$${i + 1}` + strings[i + 1]; });
@@ -40,6 +42,7 @@ vi.mock("../api/_lib/auth.ts", () => ({
 }));
 
 let POST: (r: Request) => Promise<Response>;
+/** Invoke the data handler with a mocked user and operation, returning the HTTP status and parsed body. */
 async function call(user: string | null, op: string, args: Record<string, unknown> = {}) {
   h.user = user;
   const res = await POST(new Request("https://x.test/api/data", { method: "POST", body: JSON.stringify({ op, args }), headers: { "x-forwarded-for": Math.random().toString() } }));

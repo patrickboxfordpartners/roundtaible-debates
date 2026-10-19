@@ -30,6 +30,7 @@ export function isTTSSupported(): boolean {
   return useElevenLabs || "speechSynthesis" in window;
 }
 
+/** Play proxied ElevenLabs audio or use browser speech on failure; a 503 disables premium voices for the session. */
 async function speakElevenLabs(text: string, personaId: string) {
   if (isMuted) return;
 

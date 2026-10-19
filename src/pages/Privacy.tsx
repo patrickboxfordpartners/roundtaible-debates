@@ -1,6 +1,7 @@
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
+/** Render the privacy policy describing data collection, providers, and user rights. */
 export default function Privacy() {
   usePageMeta({
     title: "Privacy Policy - Roundtaible",

@@ -18,6 +18,7 @@ if (!key) {
 
 const stripe = new Stripe(key, { apiVersion: "2024-12-18.acacia" });
 
+/** Create Pro and Edu products with monthly and yearly Stripe prices, then print their environment settings. */
 async function main() {
   // --- Pro plan ---
   const proProd = await stripe.products.create({

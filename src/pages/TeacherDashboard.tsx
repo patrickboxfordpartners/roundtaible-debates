@@ -14,6 +14,7 @@ interface ClassItem {
   created_at: string;
 }
 
+/** Render the teacher’s classes and class creation form. */
 export default function TeacherDashboard() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export default function TeacherDashboard() {
     fetchClasses();
   }, []);
 
+  /** Load classes for the session user and finish loading even when the request fails. */
   async function fetchClasses() {
     try {
       const { classes: data } = await dataCall<{ classes: ClassItem[] }>("classes.listTeacher");
@@ -40,6 +42,7 @@ export default function TeacherDashboard() {
     }
   }
 
+  /** Submit class details, then clear the form and refresh the teacher’s classes on success. */
   async function handleCreateClass(e: React.FormEvent) {
     e.preventDefault();
     if (!profile) return;

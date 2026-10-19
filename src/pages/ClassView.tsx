@@ -44,6 +44,7 @@ interface TournamentItem {
   created_at: string;
 }
 
+/** Render authorized class details, recent debates, and tournaments with teacher management controls. */
 export default function ClassView() {
   const { classId } = useParams();
   const { profile, isTeacher } = useAuth();
@@ -60,6 +61,7 @@ export default function ClassView() {
   const [seedingStrategy, setSeedingStrategy] = useState<"random" | "alphabetical">("random");
   const { createTournament, creating } = useTournamentCreation();
 
+  /** Load authorized class activity and expose the returned student roster only in the teacher view. */
   const fetchClassData = useCallback(async () => {
     if (!classId) return;
 
