@@ -70,7 +70,7 @@ export default function Assignments() {
       await dataCall("assignments.create", {
         classId: form.classId,
         topicTitle: form.topicTitle.trim(),
-        dueDate: form.dueDate || null,
+        dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : null,
         instructions: form.instructions.trim() || null,
       });
       setShowCreate(false);
