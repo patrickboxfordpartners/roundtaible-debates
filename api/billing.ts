@@ -45,7 +45,10 @@ export async function POST(req: Request): Promise<Response> {
       let customerId: string | null = profile.stripe_customer_id;
       if (!customerId) {
         const email = profile.email || (await getClerkUser(userId)).email;
-        const customer = await stripe.customers.create({ email: email || undefined, metadata: { clerk_user_id: userId } });
+        const customer = await stripe.customers.create(
+          { email: email || undefined, metadata: { clerk_user_id: userId } },
+          { idempotencyKey: `customer:${userId}` }
+        );
         customerId = customer.id;
         await sql`UPDATE rt_profiles SET stripe_customer_id = ${customerId}, updated_at = NOW() WHERE id = ${userId}`;
       }

@@ -84,8 +84,12 @@ To run the `/api` functions locally, use `vercel dev` instead of `npm run dev`.
 
 ### Database Setup
 
-Create a Neon project, then run `db/migrations/001_init.sql` once in the Neon SQL Editor.
-It is safe to re-run.
+Create a Neon project, then run the SQL files in `db/migrations/` in numerical order
+in the Neon SQL Editor. They are safe to re-run. Existing databases also need
+`002_api_guards.sql` before deploying the webhook and TTS updates.
+
+TTS remains available to guests, with a database-enforced shared budget of 60
+requests per minute in addition to the per-instance IP rate limit.
 
 ### Development
 

@@ -69,10 +69,10 @@ async function main() {
   });
 
   console.log("\n--- Add these to your .env and Vercel environment variables ---\n");
-  console.log(`STRIPE_PRICE_PRO_MONTHLY=${proMonthly.id}`);
-  console.log(`STRIPE_PRICE_PRO_YEARLY=${proYearly.id}`);
-  console.log(`STRIPE_PRICE_EDU_MONTHLY=${eduMonthly.id}`);
-  console.log(`STRIPE_PRICE_EDU_YEARLY=${eduYearly.id}`);
+  console.log(`VITE_STRIPE_PRICE_PRO_MONTHLY=${proMonthly.id}`);
+  console.log(`VITE_STRIPE_PRICE_PRO_YEARLY=${proYearly.id}`);
+  console.log(`VITE_STRIPE_PRICE_EDU_MONTHLY=${eduMonthly.id}`);
+  console.log(`VITE_STRIPE_PRICE_EDU_YEARLY=${eduYearly.id}`);
   console.log("");
   console.log("Products created:");
   console.log(`  Pro  -> ${proProd.id}`);

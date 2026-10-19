@@ -400,6 +400,8 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     await tournamentAccess(userId, round.tournament_id);
     if (personaId !== round.persona_a && personaId !== round.persona_b) throw new HttpError(400, "Not a contestant in this match");
     await sql.transaction([
+      // Serialize votes for this match before taking the recount's statement snapshot.
+      sql`SELECT id FROM rt_tournament_rounds WHERE id = ${roundId} FOR UPDATE`,
       sql`INSERT INTO rt_tournament_votes (round_id, user_id, voted_for) VALUES (${roundId}, ${userId}, ${personaId})
           ON CONFLICT (round_id, user_id) DO UPDATE SET voted_for = EXCLUDED.voted_for, created_at = NOW()`,
       sql`UPDATE rt_tournament_rounds r
@@ -419,24 +421,40 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     if (!round) throw new HttpError(404, "Round not found");
     const t = (await sql`SELECT * FROM rt_tournaments WHERE id = ${round.tournament_id}`)[0];
     if (!t || t.created_by !== userId) throw new HttpError(403, "Only the tournament creator can advance rounds");
-    const winnerId = round.votes_a >= round.votes_b ? round.persona_a : round.persona_b;
-    const next = (await sql`
-      SELECT id, round_number FROM rt_tournament_rounds
-      WHERE tournament_id = ${t.id} AND round_number = ${round.round_number + 1}
-      ORDER BY match_number NULLS LAST LIMIT 1`)[0];
-    await sql.transaction([
-      sql`UPDATE rt_tournament_rounds SET winner_id = ${winnerId}, status = 'completed' WHERE id = ${roundId}`,
+    if (round.status !== "active") throw new HttpError(409, "Only an active match can be advanced");
+    const [, completed] = await sql.transaction([
+      sql`SELECT id FROM rt_tournaments WHERE id = ${t.id} FOR UPDATE`,
+      sql`UPDATE rt_tournament_rounds
+          SET winner_id = CASE WHEN votes_a >= votes_b THEN persona_a ELSE persona_b END, status = 'completed'
+          WHERE id = ${roundId} AND status = 'active' RETURNING winner_id`,
       // Send the winner on to the match this one feeds into.
-      sql`UPDATE rt_tournament_rounds SET persona_a = ${winnerId} WHERE parent_match_a = ${roundId}`,
-      sql`UPDATE rt_tournament_rounds SET persona_b = ${winnerId} WHERE parent_match_b = ${roundId}`,
-      ...(next
-        ? [
-            sql`UPDATE rt_tournament_rounds SET status = 'active' WHERE id = ${next.id}`,
-            sql`UPDATE rt_tournaments SET current_round = ${next.round_number}, updated_at = NOW() WHERE id = ${t.id}`,
-          ]
-        : [sql`UPDATE rt_tournaments SET status = 'completed', updated_at = NOW() WHERE id = ${t.id}`]),
+      sql`UPDATE rt_tournament_rounds SET persona_a = (SELECT winner_id FROM rt_tournament_rounds WHERE id = ${roundId})
+          WHERE parent_match_a = ${roundId}`,
+      sql`UPDATE rt_tournament_rounds SET persona_b = (SELECT winner_id FROM rt_tournament_rounds WHERE id = ${roundId})
+          WHERE parent_match_b = ${roundId}`,
+      sql`UPDATE rt_tournament_rounds SET status = 'active'
+          WHERE id = (
+            SELECT id FROM rt_tournament_rounds
+            WHERE tournament_id = ${t.id} AND status = 'pending'
+              AND (round_number = ${round.round_number} OR (
+                round_number = ${round.round_number + 1} AND NOT EXISTS (
+                  SELECT 1 FROM rt_tournament_rounds
+                  WHERE tournament_id = ${t.id} AND round_number = ${round.round_number} AND status <> 'completed'
+                )
+              ))
+              AND NOT EXISTS (SELECT 1 FROM rt_tournament_rounds WHERE tournament_id = ${t.id} AND status = 'active')
+            ORDER BY round_number, match_number NULLS LAST LIMIT 1
+          )`,
+      sql`UPDATE rt_tournaments
+          SET current_round = COALESCE((SELECT round_number FROM rt_tournament_rounds
+                WHERE tournament_id = ${t.id} AND status = 'active' ORDER BY round_number LIMIT 1), current_round),
+              status = CASE WHEN NOT EXISTS (SELECT 1 FROM rt_tournament_rounds
+                WHERE tournament_id = ${t.id} AND status <> 'completed') THEN 'completed' ELSE status END,
+              updated_at = NOW()
+          WHERE id = ${t.id}`,
     ]);
-    return { ok: true, winnerId };
+    if (!completed[0]) throw new HttpError(409, "Only an active match can be advanced");
+    return { ok: true, winnerId: completed[0].winner_id };
   },
 };
 

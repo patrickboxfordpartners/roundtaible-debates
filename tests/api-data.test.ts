@@ -131,6 +131,9 @@ describe("data api against real Postgres (PGlite)", () => {
     expect(final.parent_match_a).toBeTruthy(); expect(final.parent_match_b).toBeTruthy();
     expect((await call("user_other", "tournaments.get", { tournamentId })).status).toBe(403);
     const r1 = g.body.rounds.find((r: any) => r.round_number === 1 && r.match_number === 1);
+    const r2 = g.body.rounds.find((r: any) => r.round_number === 1 && r.match_number === 2);
+    expect((await call("user_teacher", "tournaments.advance", { roundId: r2.id })).status).toBe(409);
+    expect((await call("user_teacher", "tournaments.advance", { roundId: final.id })).status).toBe(409);
     expect((await call("user_student", "tournaments.vote", { roundId: r1.id, personaId: "nobody" })).status).toBe(400);
     await call("user_student", "tournaments.vote", { roundId: r1.id, personaId: r1.persona_b });
     await call("user_student", "tournaments.vote", { roundId: r1.id, personaId: r1.persona_b });
@@ -145,9 +148,21 @@ describe("data api against real Postgres (PGlite)", () => {
     const adv = await call("user_teacher", "tournaments.advance", { roundId: r1.id });
     expect(adv.body.winnerId).toBe(r1.persona_a);
     rr = (await call("user_teacher", "tournaments.get", { tournamentId })).body;
-    const fin = rr.rounds.find((r: any) => r.round_number === 2);
-    expect(fin.status).toBe("active"); expect(fin.persona_a).toBe(r1.persona_a);
+    let fin = rr.rounds.find((r: any) => r.round_number === 2);
+    expect(fin.status).toBe("pending"); expect(fin.persona_a).toBe(r1.persona_a);
+    expect(rr.rounds.find((r: any) => r.id === r2.id).status).toBe("active");
+    expect(rr.tournament.current_round).toBe(1);
+    expect(rr.tournament.status).toBe("active");
+    expect((await call("user_teacher", "tournaments.advance", { roundId: r1.id })).status).toBe(409);
+    expect((await call("user_teacher", "tournaments.advance", { roundId: r2.id })).status).toBe(200);
+    rr = (await call("user_teacher", "tournaments.get", { tournamentId })).body;
+    fin = rr.rounds.find((r: any) => r.round_number === 2);
+    expect(fin.status).toBe("active"); expect(fin.persona_b).toBe(r2.persona_a);
     expect(rr.tournament.current_round).toBe(2);
+    expect((await call("user_teacher", "tournaments.advance", { roundId: fin.id })).status).toBe(200);
+    rr = (await call("user_teacher", "tournaments.get", { tournamentId })).body;
+    expect(rr.tournament.status).toBe("completed");
+    expect(rr.rounds.every((r: any) => r.status === "completed")).toBe(true);
     expect((await call("user_teacher", "classes.get", { classId })).body.tournaments.length).toBe(1);
   });
   it("rejects unknown ops and bad ids", async () => {

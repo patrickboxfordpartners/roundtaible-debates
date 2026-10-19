@@ -1,6 +1,7 @@
 // Text-to-speech via ElevenLabs. Moved from the old Supabase "tts-proxy" edge function.
 
 import { HttpError, errorResponse, rateLimit, readJson } from "./_lib/http.js";
+import { db } from "./_lib/db.js";
 
 // ElevenLabs voice configurations per persona
 interface VoiceConfig {
@@ -97,8 +98,20 @@ export async function POST(req: Request): Promise<Response> {
     if (!text || typeof text !== "string") throw new HttpError(400, "text is required");
     const config = personaVoices[personaId || ""] || personaVoices.human;
 
+    // A shared budget across instances also caps guests who rotate forwarded IPs.
+    const quota = await db()`
+      INSERT INTO rt_api_quotas (name, window_start, requests)
+      VALUES ('tts', date_trunc('minute', NOW()), 1)
+      ON CONFLICT (name) DO UPDATE
+        SET window_start = EXCLUDED.window_start,
+            requests = CASE WHEN rt_api_quotas.window_start < EXCLUDED.window_start THEN 1 ELSE rt_api_quotas.requests + 1 END
+        WHERE rt_api_quotas.window_start < EXCLUDED.window_start OR rt_api_quotas.requests < 60
+      RETURNING requests`;
+    if (!quota[0]) throw new HttpError(429, "TTS quota exceeded. Try again next minute.");
+
     const upstream = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${config.voiceId}`, {
       method: "POST",
+      signal: AbortSignal.timeout(15_000),
       headers: { "Content-Type": "application/json", "xi-api-key": apiKey, Accept: "audio/mpeg" },
       body: JSON.stringify({
         text: text.slice(0, 2500),

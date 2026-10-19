@@ -48,7 +48,12 @@ export async function POST(req: Request): Promise<Response> {
   async function resolveTier(subscription: Stripe.Subscription): Promise<string> {
     const price = subscription.items.data[0]?.price;
     const tier = price?.metadata?.tier || (price?.id ? (await stripe.prices.retrieve(price.id)).metadata?.tier : undefined);
-    return tier === "pro" || tier === "edu" ? tier : "pro";
+    if (tier === "pro" || tier === "edu") return tier;
+    if (!tier && price?.id) {
+      if ([process.env.VITE_STRIPE_PRICE_EDU_MONTHLY, process.env.VITE_STRIPE_PRICE_EDU_YEARLY].includes(price.id)) return "edu";
+      if ([process.env.VITE_STRIPE_PRICE_PRO_MONTHLY, process.env.VITE_STRIPE_PRICE_PRO_YEARLY].includes(price.id)) return "pro";
+    }
+    throw new Error("Unknown subscription price tier");
   }
 
   /** Find a profile by a supplied Clerk ID first, then by its stored Stripe customer ID. */
@@ -79,8 +84,9 @@ export async function POST(req: Request): Promise<Response> {
         const tier = await resolveTier(subscription);
         await sql`
           UPDATE rt_profiles SET subscription_tier = ${tier}, subscription_status = ${mapStatus(subscription.status)},
-            stripe_customer_id = ${customerId}, stripe_subscription_id = ${subscription.id}, updated_at = NOW()
-          WHERE id = ${userId}`;
+            stripe_customer_id = ${customerId}, stripe_subscription_id = ${subscription.id},
+            stripe_event_created = ${event.created}, updated_at = NOW()
+          WHERE id = ${userId} AND stripe_event_created < ${event.created}`;
         break;
       }
       case "customer.subscription.updated": {
@@ -90,8 +96,8 @@ export async function POST(req: Request): Promise<Response> {
         const tier = await resolveTier(subscription);
         await sql`
           UPDATE rt_profiles SET subscription_tier = ${tier}, subscription_status = ${mapStatus(subscription.status)},
-            stripe_subscription_id = ${subscription.id}, updated_at = NOW()
-          WHERE id = ${userId}`;
+            stripe_subscription_id = ${subscription.id}, stripe_event_created = ${event.created}, updated_at = NOW()
+          WHERE id = ${userId} AND stripe_event_created < ${event.created}`;
         break;
       }
       case "customer.subscription.deleted": {
@@ -100,8 +106,8 @@ export async function POST(req: Request): Promise<Response> {
         if (!userId) break;
         await sql`
           UPDATE rt_profiles SET subscription_tier = 'free', subscription_status = 'canceled',
-            stripe_subscription_id = NULL, updated_at = NOW()
-          WHERE id = ${userId}`;
+            stripe_subscription_id = NULL, stripe_event_created = ${event.created}, updated_at = NOW()
+          WHERE id = ${userId} AND stripe_event_created < ${event.created}`;
         break;
       }
       default:
