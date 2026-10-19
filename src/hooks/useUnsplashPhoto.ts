@@ -14,6 +14,11 @@ const FALLBACK: UnsplashPhoto = {
   photographerUrl: "https://unsplash.com/@jasperboer",
 };
 
+/**
+ * Loads a library photo from Unsplash, reusing local cache entries for 24 hours.
+ * Keeps the fallback when no API key is configured or the request fails.
+ * @returns The current photo URL and photographer attribution.
+ */
 export function useUnsplashPhoto(): UnsplashPhoto {
   const [photo, setPhoto] = useState<UnsplashPhoto>(FALLBACK);
 

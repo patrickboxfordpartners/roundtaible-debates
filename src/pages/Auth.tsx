@@ -104,6 +104,10 @@ const clerkAppearance = {
 
 const FEATURED = ["edison", "curie", "twain", "cleopatra", "tesla", "machiavelli"];
 
+/**
+ * Renders Clerk sign-in or sign-up based on the URL and persists the selected role.
+ * @returns The auth page, or a role-based redirect for authenticated users.
+ */
 export default function Auth() {
   const { isAuthenticated, isTeacher } = useAuth();
   const navigate = useNavigate();
@@ -124,8 +128,8 @@ export default function Auth() {
     return <Navigate to={isTeacher ? "/teacher" : "/student"} replace />;
   }
 
+  /** Toggles sign-in/sign-up in the URL, replacing the current history entry. */
   function switchMode() {
-    // Keep the mode in the URL so refresh and the back button behave.
     setSearchParams(isSignUp ? {} : { signup: "true" }, { replace: true });
   }
 
