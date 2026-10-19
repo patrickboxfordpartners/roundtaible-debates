@@ -1,8 +1,9 @@
 // Realtime abstraction layer
-// Uses Supabase Realtime (cross-device) with BroadcastChannel fallback (same-device)
+// Uses BroadcastChannel (same browser, across tabs). Cross-device rooms used Supabase
+// Realtime, which went away with the Supabase project. To bring cross-device rooms back,
+// add a provider here (for example Ably, Pusher or PartyKit) that implements RealtimeProvider.
 
 import type { TranscriptEntry, DebateTopic, Persona } from "@/data/debateData";
-import { supabase } from "./supabaseClient";
 
 // --- Message types ---
 
@@ -45,93 +46,6 @@ export interface RealtimeProvider {
   disconnect(): void;
 }
 
-// --- Throttle utility ---
-
-function throttle<T extends (...args: never[]) => void>(fn: T, ms: number): T {
-  let lastCall = 0;
-  let pending: ReturnType<typeof setTimeout> | null = null;
-  let lastArgs: Parameters<T> | null = null;
-
-  return ((...args: Parameters<T>) => {
-    lastArgs = args;
-    const now = Date.now();
-    const remaining = ms - (now - lastCall);
-
-    if (remaining <= 0) {
-      if (pending) { clearTimeout(pending); pending = null; }
-      lastCall = now;
-      fn(...args);
-    } else if (!pending) {
-      pending = setTimeout(() => {
-        lastCall = Date.now();
-        pending = null;
-        if (lastArgs) fn(...lastArgs);
-      }, remaining);
-    }
-  }) as T;
-}
-
-// --- Supabase Realtime implementation ---
-
-function createSupabaseProvider(roomId: string): RealtimeProvider | null {
-  if (!supabase) return null;
-
-  const channel = supabase.channel(`debate:${roomId}`, {
-    config: { broadcast: { self: false }, presence: { key: roomId } },
-  });
-
-  let messageListener: ((msg: RealtimeMessage) => void) | null = null;
-  let presenceListener: ((guests: string[]) => void) | null = null;
-
-  channel
-    .on("broadcast", { event: "message" }, ({ payload }) => {
-      messageListener?.(payload as RealtimeMessage);
-    })
-    .on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState();
-      const names: string[] = [];
-      for (const key of Object.keys(state)) {
-        for (const presence of state[key]) {
-          const p = presence as { name?: string };
-          if (p.name) names.push(p.name);
-        }
-      }
-      presenceListener?.(names);
-    })
-    .subscribe();
-
-  // Throttle high-frequency messages (timer ticks, speaking state)
-  const throttledSend = throttle((message: RealtimeMessage) => {
-    channel.send({ type: "broadcast", event: "message", payload: message });
-  }, 200);
-
-  return {
-    send(message: RealtimeMessage) {
-      // Throttle only high-frequency messages; send the rest immediately
-      if (message.type === "timer" || message.type === "speaking") {
-        throttledSend(message);
-      } else {
-        channel.send({ type: "broadcast", event: "message", payload: message });
-      }
-    },
-    subscribe(callback) {
-      messageListener = callback;
-    },
-    onPresenceSync(callback) {
-      presenceListener = callback;
-    },
-    trackPresence(name: string) {
-      channel.track({ name });
-    },
-    disconnect() {
-      messageListener = null;
-      presenceListener = null;
-      channel.untrack();
-      supabase.removeChannel(channel);
-    },
-  };
-}
-
 // --- BroadcastChannel fallback (same-device, cross-tab) ---
 
 function createBroadcastProvider(roomId: string): RealtimeProvider {
@@ -165,8 +79,6 @@ function createBroadcastProvider(roomId: string): RealtimeProvider {
 // --- Auto-select best provider ---
 
 export function createProvider(roomId: string): RealtimeProvider {
-  const sp = createSupabaseProvider(roomId);
-  if (sp) return sp;
   return createBroadcastProvider(roomId);
 }
 

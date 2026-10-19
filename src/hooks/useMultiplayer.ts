@@ -73,7 +73,7 @@ export function useMultiplayer() {
       }
     });
 
-    // Supabase Presence: automatic guest tracking with reconnect support
+    // Presence: automatic guest tracking (no-op for the BroadcastChannel provider)
     provider.onPresenceSync((names) => {
       if (isHost) {
         setState(prev => {
@@ -110,7 +110,7 @@ export function useMultiplayer() {
 
     setupProvider(provider, false);
 
-    // Track presence (Supabase) and announce (BroadcastChannel fallback)
+    // Track presence (if the provider supports it) and announce over the channel
     provider.trackPresence(name);
     provider.send({ type: "guest_join", payload: { name } });
 

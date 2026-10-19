@@ -103,15 +103,9 @@ export function ContactForm({ className }: ContactFormProps) {
     setSubmitting(true);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-      if (!supabaseUrl) {
-        throw new Error("CRM intake is not configured");
-      }
-
       const useCase = values.use_case as UseCase;
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/crm-intake`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -7,9 +7,10 @@ import {
   getDebateMode,
 } from "./aiService";
 
-// Mock supabaseClient so no real connections are made
-vi.mock("./supabaseClient", () => ({
-  supabase: null,
+// Mock the API client so no real network calls are made
+vi.mock("./api", () => ({
+  apiFetch: vi.fn(() => Promise.reject(new Error("offline"))),
+  dataCall: vi.fn(() => Promise.resolve({})),
 }));
 
 describe("aiService", () => {

@@ -1,9 +1,8 @@
 /**
- * Lightweight usage analytics, tracks debate events locally with optional Supabase sync.
+ * Lightweight usage analytics, tracks debate events locally (product analytics go to PostHog).
  * All data is anonymous (no PII). Stored in localStorage for local dashboards.
  */
 
-import { supabase } from "./supabaseClient";
 
 // --- Event types ---
 
@@ -57,21 +56,6 @@ function storeEvent(event: StoredEvent): void {
   }
 }
 
-// --- Supabase sync (fire-and-forget) ---
-
-async function syncToSupabase(event: StoredEvent): Promise<void> {
-  if (!supabase) return;
-  try {
-    await supabase.from("rt_analytics").insert({
-      event_type: event.data.event,
-      event_data: event.data,
-      created_at: new Date(event.timestamp).toISOString(),
-    });
-  } catch {
-    // Silent failure, analytics should never block the user
-  }
-}
-
 // --- Public API ---
 
 export function track(data: AnalyticsEvent): void {
@@ -81,7 +65,6 @@ export function track(data: AnalyticsEvent): void {
     data,
   };
   storeEvent(event);
-  syncToSupabase(event);
 }
 
 // --- Aggregate queries (for local dashboard / stats display) ---

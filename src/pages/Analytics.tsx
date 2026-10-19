@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 import { BarChart2, Trophy, Clock, Users, BookOpen, TrendingUp, ArrowLeft } from "lucide-react";
 
 interface DebateRecord {
@@ -45,44 +45,18 @@ export default function Analytics() {
   const [view, setView] = useState<"personal" | "class">("personal");
 
   const fetchData = useCallback(async () => {
-    if (!supabase || !profile) return;
+    if (!profile) return;
     setLoading(true);
 
     try {
-      const { data: debateData } = await supabase
-        .from("rt_debates")
-        .select("id, topic_title, topic_category, winner_id, duration, educational_mode, created_at, personas")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-      setDebates((debateData as DebateRecord[]) || []);
-
-      if (profile.role === "teacher") {
-        const { data: classData } = await supabase
-          .from("rt_classes")
-          .select("id")
-          .eq("teacher_id", profile.id);
-
-        if (classData && classData.length > 0) {
-          const classIds = classData.map(c => c.id);
-          const { data: memberData } = await supabase
-            .from("rt_class_members")
-            .select("student_id, rt_profiles(full_name, email)")
-            .in("class_id", classIds);
-
-          // Count debates per student
-          const members = (memberData as ClassMember[]) || [];
-          const enriched = await Promise.all(members.map(async m => {
-            const { count } = await supabase!
-              .from("rt_debates")
-              .select("*", { count: "exact", head: true })
-              .eq("user_id", m.student_id);
-            return { ...m, debate_count: count || 0 };
-          }));
-          setClassMembers(enriched);
-        }
-      }
+      const { debates: debateData, classMembers: members } = await dataCall<{
+        debates: DebateRecord[];
+        classMembers: ClassMember[];
+      }>("analytics.load");
+      setDebates(debateData || []);
+      setClassMembers(members || []);
+    } catch {
+      // leave empty; page shows zero state
     } finally {
       setLoading(false);
     }

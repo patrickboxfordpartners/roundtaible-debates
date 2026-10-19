@@ -5,7 +5,7 @@
  * Usage:
  *   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
  *
- * Outputs the env vars you need to add to .env and Supabase secrets.
+ * Outputs the env vars you need to add to .env and Vercel.
  */
 
 import Stripe from "stripe";
@@ -67,7 +67,7 @@ async function main() {
     metadata: { tier: "edu", cadence: "yearly" },
   });
 
-  console.log("\n--- Add these to your .env and Supabase secrets ---\n");
+  console.log("\n--- Add these to your .env and Vercel environment variables ---\n");
   console.log(`STRIPE_PRICE_PRO_MONTHLY=${proMonthly.id}`);
   console.log(`STRIPE_PRICE_PRO_YEARLY=${proYearly.id}`);
   console.log(`STRIPE_PRICE_EDU_MONTHLY=${eduMonthly.id}`);

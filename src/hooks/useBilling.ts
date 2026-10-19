@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useToast } from "@/hooks/use-toast";
 
-const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const BILLING_URL = "/api/billing";
 
 export function useBilling() {
   const [loading, setLoading] = useState(false);
@@ -22,14 +22,11 @@ export function useBilling() {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${FUNCTIONS_BASE}/stripe-checkout`, {
+      // Success and cancel URLs are built on the server from this site's address.
+      const res = await fetch(BILLING_URL, {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          priceId,
-          successUrl: `${window.location.origin}/app?subscribed=true`,
-          cancelUrl: `${window.location.origin}/pricing`,
-        }),
+        body: JSON.stringify({ action: "checkout", priceId }),
       });
 
       if (!res.ok) {
@@ -55,12 +52,10 @@ export function useBilling() {
     setLoading(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`${FUNCTIONS_BASE}/stripe-portal`, {
+      const res = await fetch(BILLING_URL, {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          returnUrl: window.location.href,
-        }),
+        body: JSON.stringify({ action: "portal" }),
       });
 
       if (!res.ok) {

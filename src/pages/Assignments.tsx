@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 import { toast } from "sonner";
 import { BookOpen, Plus, X, Clock, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 
@@ -42,70 +42,19 @@ export default function Assignments() {
   const isTeacher = profile?.role === "teacher";
 
   const fetch = useCallback(async () => {
-    if (!supabase || !profile) return;
+    if (!profile) return;
     setLoading(true);
     try {
+      const { assignments: asgn, classes: cls } = await dataCall<{ assignments: Assignment[]; classes: ClassOption[] }>(
+        "assignments.list"
+      );
+      setAssignments(asgn || []);
       if (isTeacher) {
-        const [{ data: asgn }, { data: cls }] = await Promise.all([
-          supabase.from("rt_assignments").select("*, rt_classes(name)").eq("teacher_id", profile.id).order("created_at", { ascending: false }),
-          supabase.from("rt_classes").select("id, name").eq("teacher_id", profile.id).eq("is_active", true),
-        ]);
-
-        // Fetch submission counts for each assignment
-        if (asgn && asgn.length > 0) {
-          const assignmentIds = asgn.map((a: Assignment) => a.id);
-          const [{ data: submissions }, { data: classMembers }] = await Promise.all([
-            supabase.from("rt_assignment_submissions").select("assignment_id").in("assignment_id", assignmentIds),
-            supabase.from("rt_class_members").select("class_id").in("class_id", asgn.map((a: Assignment) => a.class_id)),
-          ]);
-
-          // Count submissions per assignment
-          const submissionCounts = new Map<string, number>();
-          (submissions || []).forEach((s: { assignment_id: string }) => {
-            submissionCounts.set(s.assignment_id, (submissionCounts.get(s.assignment_id) || 0) + 1);
-          });
-
-          // Count students per class
-          const studentCounts = new Map<string, number>();
-          (classMembers || []).forEach((m: { class_id: string }) => {
-            studentCounts.set(m.class_id, (studentCounts.get(m.class_id) || 0) + 1);
-          });
-
-          // Add counts to assignments
-          const enriched = asgn.map((a: Assignment) => ({
-            ...a,
-            submission_count: submissionCounts.get(a.id) || 0,
-            total_students: studentCounts.get(a.class_id) || 0,
-          }));
-          setAssignments(enriched);
-        } else {
-          setAssignments([]);
-        }
-
-        setClasses((cls as ClassOption[]) || []);
-        if (cls?.length) setForm(f => ({ ...f, classId: cls[0].id }));
-      } else {
-        // Student: see assignments for their classes + check if submitted
-        const { data: memberships } = await supabase.from("rt_class_members").select("class_id").eq("student_id", profile.id);
-        if (memberships && memberships.length > 0) {
-          const classIds = memberships.map(m => m.class_id);
-          const { data: asgn } = await supabase.from("rt_assignments").select("*, rt_classes(name)").in("class_id", classIds).eq("is_active", true).order("due_date", { ascending: true });
-
-          if (asgn && asgn.length > 0) {
-            const assignmentIds = asgn.map((a: Assignment) => a.id);
-            const { data: submissions } = await supabase.from("rt_assignment_submissions").select("assignment_id").eq("student_id", profile.id).in("assignment_id", assignmentIds);
-
-            const submittedIds = new Set((submissions || []).map((s: { assignment_id: string }) => s.assignment_id));
-            const enriched = asgn.map((a: Assignment) => ({
-              ...a,
-              submitted: submittedIds.has(a.id),
-            }));
-            setAssignments(enriched);
-          } else {
-            setAssignments([]);
-          }
-        }
+        setClasses(cls || []);
+        if (cls?.length) setForm(f => ({ ...f, classId: f.classId || cls[0].id }));
       }
+    } catch {
+      toast.error("Failed to load assignments");
     } finally {
       setLoading(false);
     }
@@ -115,17 +64,15 @@ export default function Assignments() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!supabase || !profile || !form.classId || !form.topicTitle) return;
+    if (!profile || !form.classId || !form.topicTitle) return;
     setCreating(true);
     try {
-      const { error } = await supabase.from("rt_assignments").insert({
-        class_id: form.classId,
-        teacher_id: profile.id,
-        topic_title: form.topicTitle.trim(),
-        due_date: form.dueDate || null,
+      await dataCall("assignments.create", {
+        classId: form.classId,
+        topicTitle: form.topicTitle.trim(),
+        dueDate: form.dueDate || null,
         instructions: form.instructions.trim() || null,
       });
-      if (error) throw error;
       setShowCreate(false);
       setForm(f => ({ ...f, topicTitle: "", dueDate: "", instructions: "" }));
       fetch();
@@ -138,8 +85,12 @@ export default function Assignments() {
   }
 
   async function handleDeactivate(id: string) {
-    if (!supabase) return;
-    await supabase.from("rt_assignments").update({ is_active: false }).eq("id", id);
+    try {
+      await dataCall("assignments.deactivate", { id });
+    } catch {
+      toast.error("Failed to remove assignment");
+      return;
+    }
     setAssignments(prev => prev.filter(a => a.id !== id));
     toast.info("Assignment removed");
   }

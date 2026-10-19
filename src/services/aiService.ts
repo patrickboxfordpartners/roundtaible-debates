@@ -1,5 +1,13 @@
 import { Persona, TranscriptEntry, DebateTopic } from "@/data/debateData";
-import { supabase } from "./supabaseClient";
+import { apiFetch } from "./api";
+
+/** Calls /api/ai. Returns { data, error } shaped like the old Supabase functions.invoke. */
+async function invokeAI(body: Record<string, unknown>): Promise<{ data: { text?: string; narratorId?: string; status?: number } | null; error: { message: string; context: { status: number } } | null }> {
+  const res = await apiFetch("ai", body);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { data: null, error: { message: data?.error || "AI request failed", context: { status: res.status } } };
+  return { data, error: null };
+}
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
 
 // Circuit breaker: stop calling API after fatal errors (quota, auth)
@@ -90,38 +98,32 @@ export async function generatePersonaResponse(
     throw new Error(`API unavailable: ${circuitReason}`);
   }
 
-  if (!supabase) {
-    return getRandomFallback(persona.id) || `${persona.name} pauses thoughtfully, collecting their thoughts...`;
-  }
-
   try {
-    const { data, error } = await supabase.functions.invoke("ai-proxy", {
-      body: {
-        action: "persona_response",
-        persona: {
-          id: persona.id,
-          name: persona.name,
-          role: persona.role,
-          context: persona.context,
-        },
-        topic: {
-          id: topic.id,
-          title: topic.title,
-          category: topic.category,
-        },
-        recentTranscript: recentTranscript.map((e) => ({
-          personaId: e.personaId,
-          text: e.text,
-        })),
-        allPersonas: allPersonas.map((p) => ({
-          id: p.id,
-          name: p.name,
-          role: p.role,
-          context: p.context,
-        })),
-        mode: currentMode,
-        educationalConfig,
+    const { data, error } = await invokeAI({
+      action: "persona_response",
+      persona: {
+        id: persona.id,
+        name: persona.name,
+        role: persona.role,
+        context: persona.context,
       },
+      topic: {
+        id: topic.id,
+        title: topic.title,
+        category: topic.category,
+      },
+      recentTranscript: recentTranscript.map((e) => ({
+        personaId: e.personaId,
+        text: e.text,
+      })),
+      allPersonas: allPersonas.map((p) => ({
+        id: p.id,
+        name: p.name,
+        role: p.role,
+        context: p.context,
+      })),
+      mode: currentMode,
+      educationalConfig,
     });
 
     if (error) {
@@ -169,34 +171,25 @@ export async function generateDebateSummary(
     };
   }
 
-  if (!supabase) {
-    return {
-      text: "If I may summarize: we've argued in circles, much like this table, and arrived precisely where we started, only more exhausted. But wasn't that the point?",
-      narratorId: "twain",
-    };
-  }
-
   try {
-    const { data, error } = await supabase.functions.invoke("ai-proxy", {
-      body: {
-        action: "debate_summary",
-        topic: {
-          id: topic.id,
-          title: topic.title,
-          category: topic.category,
-        },
-        fullTranscript: transcript.map((e) => ({
-          personaId: e.personaId,
-          text: e.text,
-        })),
-        allPersonas: allPersonas.map((p) => ({
-          id: p.id,
-          name: p.name,
-          role: p.role,
-          context: p.context,
-        })),
-        mode: currentMode,
+    const { data, error } = await invokeAI({
+      action: "debate_summary",
+      topic: {
+        id: topic.id,
+        title: topic.title,
+        category: topic.category,
       },
+      fullTranscript: transcript.map((e) => ({
+        personaId: e.personaId,
+        text: e.text,
+      })),
+      allPersonas: allPersonas.map((p) => ({
+        id: p.id,
+        name: p.name,
+        role: p.role,
+        context: p.context,
+      })),
+      mode: currentMode,
     });
 
     if (error) throw error;

@@ -9,9 +9,10 @@ import {
 } from "./debateHistory";
 import type { DebateTopic, TranscriptEntry, Persona } from "@/data/debateData";
 
-// Mock supabaseClient to avoid real connections
-vi.mock("./supabaseClient", () => ({
-  supabase: null,
+// Mock the API client to avoid real network calls
+vi.mock("./api", () => ({
+  apiFetch: vi.fn(() => Promise.reject(new Error("offline"))),
+  dataCall: vi.fn(() => Promise.resolve({})),
 }));
 
 const mockTopic: DebateTopic = {

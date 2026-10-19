@@ -1,5 +1,5 @@
 import type { TranscriptEntry, DebateTopic, Persona } from "@/data/debateData";
-import { supabase } from "./supabaseClient";
+import { dataCall } from "./api";
 
 export interface SavedDebate {
   id: string;
@@ -24,8 +24,8 @@ export function getSavedDebates(): SavedDebate[] {
   }
 }
 
-/** Persist debate to Supabase (fire-and-forget, localStorage is still primary) */
-async function persistToSupabase(
+/** Persist debate to the database via /api/data (fire-and-forget, localStorage is still primary) */
+async function persistToServer(
   topic: DebateTopic,
   transcript: TranscriptEntry[],
   personas: Array<{ id: string; name: string; color: string }>,
@@ -35,21 +35,20 @@ async function persistToSupabase(
   classId?: string,
   educationalMode?: boolean
 ) {
-  if (!supabase) return;
   try {
-    await supabase.from("rt_debates").insert({
-      topic_id: topic.id,
-      topic_title: topic.title,
-      topic_category: topic.category,
+    // The server takes the user id from the Clerk session, not from this call.
+    void userId;
+    await dataCall("debates.save", {
+      topic: { id: topic.id, title: topic.title, category: topic.category },
       transcript,
       personas,
-      winner_id: winnerId,
+      winnerId,
       duration,
-      user_id: userId || null,
-      class_id: classId || null,
-      educational_mode: educationalMode || false,
+      classId: classId || null,
+      educationalMode: educationalMode || false,
     });
-  } catch (err) {
+  } catch {
+    // Non-critical: the debate is still saved locally
   }
 }
 
@@ -88,8 +87,8 @@ export function saveDebate(
     }
   }
 
-  // Also persist to Supabase for content generation pipeline
-  persistToSupabase(topic, transcript, debate.personas, winnerId, duration, userId, classId, educationalMode);
+  // Also persist to the database (debate limits, analytics, class history)
+  persistToServer(topic, transcript, debate.personas, winnerId, duration, userId, classId, educationalMode);
 
   return debate;
 }

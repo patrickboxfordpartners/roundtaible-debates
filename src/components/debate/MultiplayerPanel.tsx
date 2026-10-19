@@ -128,7 +128,7 @@ export function MultiplayerPanel({
                 </div>
 
                 <p className="text-[10px] font-body text-muted-foreground text-center">
-                  Works across browser tabs on the same device. Supabase upgrade coming for cross-device play.
+                  Works across browser tabs on the same device. Cross-device play is coming.
                 </p>
               </div>
             ) : (
