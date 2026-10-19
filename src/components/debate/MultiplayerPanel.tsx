@@ -17,6 +17,7 @@ interface MultiplayerPanelProps {
   onCopyLink: () => void;
 }
 
+/** Render room creation, joining, and sharing controls for debate sessions across tabs on the same device. */
 export function MultiplayerPanel({
   open,
   onClose,
@@ -128,7 +129,7 @@ export function MultiplayerPanel({
                 </div>
 
                 <p className="text-[10px] font-body text-muted-foreground text-center">
-                  Works across browser tabs on the same device. Supabase upgrade coming for cross-device play.
+                  Works across browser tabs on the same device. Cross-device play is coming.
                 </p>
               </div>
             ) : (

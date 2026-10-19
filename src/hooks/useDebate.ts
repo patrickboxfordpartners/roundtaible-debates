@@ -7,24 +7,15 @@ import { saveDebate } from "@/services/debateHistory";
 import { track } from "@/services/analytics";
 import { canStartDebate } from "@/lib/debateLimits";
 import type { EducationalConfig } from "@/contexts/DebateModeContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 
+/** Record a persona win for the session user, ignoring failures so debate playback can continue. */
 async function syncLeaderboardWin(userId: string, personaId: string, personaName: string) {
-  if (!supabase || !userId) return;
+  if (!userId) return;
   try {
-    await supabase.from("rt_leaderboards").upsert(
-      { user_id: userId, persona_id: personaId, persona_name: personaName, wins: 1, updated_at: new Date().toISOString() },
-      {
-        onConflict: "user_id,persona_id",
-        ignoreDuplicates: false,
-      }
-    );
-    // Increment wins using RPC, fall back to select+update if RPC unavailable
-    await supabase.rpc("increment_leaderboard_win", { p_user_id: userId, p_persona_id: personaId, p_persona_name: personaName }).catch(async () => {
-      const { data } = await supabase!.from("rt_leaderboards").select("wins").eq("user_id", userId).eq("persona_id", personaId).single();
-      await supabase!.from("rt_leaderboards").update({ wins: (data?.wins ?? 0) + 1, updated_at: new Date().toISOString() }).eq("user_id", userId).eq("persona_id", personaId);
-    });
-  } catch (err) {
+    await dataCall("leaderboard.recordWin", { personaId, personaName });
+  } catch {
+    // Non-critical
   }
 }
 
@@ -34,6 +25,7 @@ interface DebateOptions {
   subscriptionTier?: string;
 }
 
+/** Manage debate playback, AI turns, speech, voting, history, and subscription usage checks. */
 export function useDebate(educationalConfig?: EducationalConfig, userId?: string, subscriptionTier?: string) {
   const [activeTopic, setActiveTopic] = useState(debateTopics[0]);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>(sampleTranscript);
@@ -365,6 +357,7 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
     }
   }, [generateNextResponse]);
 
+  /** Save and end the debate, update local winner totals, and attempt to sync an authenticated win. */
   const voteWinner = useCallback((personaId: string) => {
     const persona = leaderboard.find((p) => p.id === personaId);
     if (persona) {
@@ -393,7 +386,7 @@ export function useDebate(educationalConfig?: EducationalConfig, userId?: string
         localStorage.setItem("roundtaible_leaderboard", JSON.stringify(wins));
         return updated;
       });
-      // Sync win to Supabase for authenticated users
+      // Sync win to the leaderboard for authenticated users
       if (userId) {
         syncLeaderboardWin(userId, personaId, persona.name);
       }

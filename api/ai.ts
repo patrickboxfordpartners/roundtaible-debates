@@ -1,44 +1,8 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import OpenAI from "https://esm.sh/openai@4.67.3";
+/* eslint-disable @typescript-eslint/no-explicit-any -- request bodies are validated field by field */
+// AI debate turns and summaries, via xAI (OpenAI-compatible API).
+// Moved from the old Supabase "ai-proxy" edge function. Prompts are unchanged.
 
-const ALLOWED_ORIGINS = [
-  "https://theroundtaible.com",
-  "http://localhost:5173",
-  "http://localhost:4173",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
-  };
-}
-
-// Rate limiting (in-memory, per-instance)
-const rateLimits = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 60; // requests per minute
-const RATE_WINDOW = 60_000; // 1 minute
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimits.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimits.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
-    // Periodic cleanup: evict expired entries every 100 requests
-    if (rateLimits.size > 100) {
-      for (const [key, val] of rateLimits) {
-        if (now > val.resetAt) rateLimits.delete(key);
-      }
-    }
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
+import { HttpError, errorResponse, json, rateLimit, readJson } from "./_lib/http.js";
 
 // Persona system prompts
 const personaPrompts: Record<string, string> = {
@@ -95,6 +59,7 @@ interface DebateTopic {
   category?: string;
 }
 
+/** Choose the built-in persona prompt or construct one from the supplied character details. */
 function getSystemPrompt(persona: Persona): string {
   return (
     personaPrompts[persona.id] ||
@@ -109,6 +74,7 @@ interface EducationalConfig {
   vocabularyHighlights?: boolean;
 }
 
+/** Build classroom response instructions, or return an empty suffix when educational mode is disabled. */
 function buildEducationalSuffix(config?: EducationalConfig): string {
   if (!config?.enabled) return "";
 
@@ -163,6 +129,7 @@ function buildEducationalSuffix(config?: EducationalConfig): string {
   return "\n\n" + parts.join("\n");
 }
 
+/** Build the debate prompt from the latest eight entries, audience input, and optional classroom instructions. */
 function buildUserPrompt(
   persona: Persona,
   topic: DebateTopic,
@@ -198,145 +165,83 @@ ${humanResponseInstruction}
 ${persona.context ? `Additional context about your character: ${persona.context}\n\n` : ""}Now respond to the debate as ${persona.name}. Stay in character. Make it conversational and natural — you can agree, disagree, interrupt, build on someone's point, or introduce a new angle. Be witty and engaging. Address other debaters by name when responding to their points.${educationalSuffix}`;
 }
 
-Deno.serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+/** Request an xAI completion, preserving auth and quota error statuses for the client circuit breaker. */
+async function chat(system: string, user: string, maxTokens: number, temperature: number): Promise<string> {
+  const apiKey = process.env.AI_PROXY_KEY || process.env.XAI_API_KEY;
+  if (!apiKey) throw new HttpError(503, "XAI_API_KEY is not configured");
+  const baseUrl = (process.env.AI_PROXY_URL || "https://api.x.ai/v1").replace(/\/$/, "");
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      // grok-3-mini (the old model) has been retired by xAI.
+      model: process.env.XAI_MODEL || "grok-4.3",
+      reasoning_effort: process.env.XAI_REASONING_EFFORT || "none",
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature,
+      max_tokens: maxTokens,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("xAI error", res.status, detail.slice(0, 500));
+    // Pass 401/403/429 through so the app's circuit breaker can back off.
+    const status = [401, 403, 429].includes(res.status) ? res.status : 502;
+    throw new HttpError(status, "AI request failed");
   }
+  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  return data.choices?.[0]?.message?.content || "";
+}
 
-  // Rate limiting
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(ip)) {
-    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-      status: 429,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
+/** Generate a persona response or rotating narrator summary, returning validation and upstream errors as JSON. */
+export async function POST(req: Request): Promise<Response> {
   try {
-    const proxyKey = Deno.env.get("AI_PROXY_KEY");
-    const proxyUrl = Deno.env.get("AI_PROXY_URL");
-    const apiKey = proxyKey || Deno.env.get("XAI_API_KEY");
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "XAI_API_KEY or AI_PROXY_KEY not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const openai = new OpenAI({
-      apiKey,
-      baseURL: proxyUrl || "https://api.x.ai/v1",
-    });
-
-    const body = await req.json();
+    rateLimit(req, "ai", 60);
+    const body = await readJson<Record<string, any>>(req);
     const { action, persona, topic, recentTranscript, allPersonas, mode, fullTranscript, educationalConfig } = body;
+    if (!topic?.title) throw new HttpError(400, "topic is required");
 
     if (action === "persona_response") {
-      const systemPrompt = getSystemPrompt(persona);
-      const userPrompt = buildUserPrompt(
-        persona,
-        topic,
-        recentTranscript || [],
-        allPersonas || [],
-        mode || "standard",
-        educationalConfig
+      if (!persona?.name) throw new HttpError(400, "persona is required");
+      const text = await chat(
+        getSystemPrompt(persona),
+        buildUserPrompt(persona, topic, recentTranscript || [], allPersonas || [], mode || "standard", educationalConfig),
+        mode === "educational" ? 250 : 150,
+        0.9
       );
-
-      // Educational mode gets more tokens for the extra markers
-      const maxTokens = mode === "educational" ? 250 : 150;
-
-      const completion = await openai.chat.completions.create({
-        model: "grok-3-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.9,
-        max_tokens: maxTokens,
-      });
-
-      return new Response(
-        JSON.stringify({
-          text: completion.choices[0]?.message?.content || "...",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return json({ text: text || "..." });
     }
 
     if (action === "debate_summary") {
-      const transcriptText = (fullTranscript || [])
-        .map((entry: TranscriptEntry) => {
-          if (entry.personaId === "human")
-            return `[Audience Member]: ${entry.text}`;
-          const speaker = (allPersonas || []).find(
-            (p: Persona) => p.id === entry.personaId
-          );
+      const transcriptText = ((fullTranscript || []) as TranscriptEntry[])
+        .slice(-200)
+        .map((entry) => {
+          if (entry.personaId === "human") return `[Audience Member]: ${entry.text}`;
+          const speaker = ((allPersonas || []) as Persona[]).find((p) => p.id === entry.personaId);
           return `${speaker?.name || "Unknown"}: ${entry.text}`;
         })
         .join("\n");
 
       const narrator = summaryNarrators[summaryIndex % summaryNarrators.length];
       summaryIndex++;
-
       const educationalSuffix =
         mode === "educational"
           ? "\n\nInclude 2-3 key takeaways that the audience can learn from this debate, noting which arguments were well-supported by evidence."
           : "";
-
-      const completion = await openai.chat.completions.create({
-        model: "grok-3-mini",
-        messages: [
-          { role: "system", content: narrator.prompt },
-          {
-            role: "user",
-            content: `Summarize this debate on "${topic.title}":\n\n${transcriptText}${educationalSuffix}`,
-          },
-        ],
-        temperature: 0.8,
-        max_tokens: 300,
-      });
-
-      return new Response(
-        JSON.stringify({
-          text:
-            completion.choices[0]?.message?.content ||
-            "A spirited debate, indeed.",
-          narratorId: narrator.id,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+      const text = await chat(
+        narrator.prompt,
+        `Summarize this debate on "${topic.title}":\n\n${transcriptText}${educationalSuffix}`,
+        300,
+        0.8
       );
+      return json({ text: text || "A spirited debate, indeed.", narratorId: narrator.id });
     }
 
-    return new Response(
-      JSON.stringify({ error: `Unknown action: ${action}` }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
-  } catch (error) {
-    console.error("ai-proxy error:", error);
-    const status = (error as { status?: number }).status || 500;
-    return new Response(
-      JSON.stringify({
-        error: (error as Error).message || "Internal server error",
-        status,
-      }),
-      {
-        status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    throw new HttpError(400, `Unknown action: ${action}`);
+  } catch (err) {
+    return errorResponse(err);
   }
-});
+}

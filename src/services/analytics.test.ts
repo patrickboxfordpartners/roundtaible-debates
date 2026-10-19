@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { track, getSummary, clearAnalytics } from "./analytics";
 
-// Mock supabaseClient
-vi.mock("./supabaseClient", () => ({
-  supabase: null,
+// Mock the API client
+vi.mock("./api", () => ({
+  apiFetch: vi.fn(() => Promise.reject(new Error("offline"))),
+  dataCall: vi.fn(() => Promise.resolve({})),
 }));
 
 describe("analytics", () => {

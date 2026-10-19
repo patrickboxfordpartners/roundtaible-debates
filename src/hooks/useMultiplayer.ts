@@ -25,6 +25,7 @@ interface MultiplayerState {
   guestName: string;
 }
 
+/** Manage room membership, messaging, and saved sessions across browser tabs on the same device. */
 export function useMultiplayer() {
   const [state, setState] = useState<MultiplayerState>({
     role: "solo",
@@ -47,6 +48,7 @@ export function useMultiplayer() {
   }, []);
 
   // Shared: set up provider subscription with guest tracking
+  /** Forward provider messages and update host guest tracking from join, leave, and presence events. */
   const setupProvider = useCallback((provider: RealtimeProvider, isHost: boolean) => {
     provider.subscribe((msg) => {
       messageHandlerRef.current?.(msg);
@@ -73,7 +75,7 @@ export function useMultiplayer() {
       }
     });
 
-    // Supabase Presence: automatic guest tracking with reconnect support
+    // Presence: automatic guest tracking (no-op for the BroadcastChannel provider)
     provider.onPresenceSync((names) => {
       if (isHost) {
         setState(prev => {
@@ -104,13 +106,14 @@ export function useMultiplayer() {
   }, [setupProvider]);
 
   // Guest: join an existing room
+  /** Join a room as a guest, announce membership, request host state, and save the session locally. */
   const joinRoom = useCallback((roomId: string, name: string) => {
     const provider = createProvider(roomId);
     providerRef.current = provider;
 
     setupProvider(provider, false);
 
-    // Track presence (Supabase) and announce (BroadcastChannel fallback)
+    // Track presence (if the provider supports it) and announce over the channel
     provider.trackPresence(name);
     provider.send({ type: "guest_join", payload: { name } });
 

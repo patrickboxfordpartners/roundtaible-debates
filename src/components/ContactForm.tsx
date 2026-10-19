@@ -61,6 +61,7 @@ interface ContactFormProps {
   className?: string;
 }
 
+/** Render the validated contact form with submission progress and confirmation states. */
 export function ContactForm({ className }: ContactFormProps) {
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -83,6 +84,7 @@ export function ContactForm({ className }: ContactFormProps) {
     setErrors((prev) => ({ ...prev, [key]: nextErrors[key as keyof FormErrors] }));
   }
 
+  /** Validate contact fields, submit them to the CRM proxy, and update success or error feedback. */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -103,15 +105,9 @@ export function ContactForm({ className }: ContactFormProps) {
     setSubmitting(true);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-      if (!supabaseUrl) {
-        throw new Error("CRM intake is not configured");
-      }
-
       const useCase = values.use_case as UseCase;
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/crm-intake`, {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

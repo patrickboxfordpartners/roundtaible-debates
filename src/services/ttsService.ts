@@ -1,7 +1,7 @@
-// Text-to-speech using Supabase Edge Function proxy to ElevenLabs
-// Falls back to browser SpeechSynthesis if Supabase is not configured
+// Text-to-speech using the /api/tts proxy to ElevenLabs
+// Falls back to browser SpeechSynthesis if the proxy is unavailable
 
-import { supabase } from "./supabaseClient";
+import { apiFetch } from "./api";
 import { toast } from "sonner";
 
 // Fallback browser TTS config (used if edge function is unavailable)
@@ -22,40 +22,42 @@ const browserVoices: Record<string, BrowserVoiceConfig> = {
 
 let isMuted = false;
 let currentAudio: HTMLAudioElement | null = null;
-const useElevenLabs = !!supabase; // Use edge function proxy if supabase is configured
+// Premium voices go through /api/tts. If the server says voice isn't set up (503),
+// stop trying for this session and quietly use the browser voice instead.
+let useElevenLabs = true;
 
 export function isTTSSupported(): boolean {
   return useElevenLabs || "speechSynthesis" in window;
 }
 
+/** Play proxied ElevenLabs audio or use browser speech on failure; a 503 disables premium voices for the session. */
 async function speakElevenLabs(text: string, personaId: string) {
-  if (!supabase || isMuted) return;
+  if (isMuted) return;
 
   try {
-    const { data, error } = await supabase.functions.invoke("tts-proxy", {
-      body: { text, personaId },
-    });
+    const res = await apiFetch("tts", { text, personaId });
 
-    if (error) {
-      console.error("TTS proxy error:", error);
+    if (res.status === 503) {
+      useElevenLabs = false;
+      speakBrowserTTS(text, personaId);
+      return;
+    }
+
+    if (!res.ok) {
+      console.error("TTS proxy error:", res.status);
       toast.warning("Premium voice unavailable, using browser fallback");
       speakBrowserTTS(text, personaId);
       return;
     }
 
-    // data is the raw response, convert to blob
-    let blob: Blob;
-    if (data instanceof Blob) {
-      blob = data;
-    } else if (data instanceof ArrayBuffer) {
-      blob = new Blob([data], { type: "audio/mpeg" });
-    } else {
-      // If we got JSON back, it's an error
-      console.error("TTS proxy returned non-audio data:", data);
+    if (!(res.headers.get("content-type") || "").includes("audio")) {
+      console.error("TTS proxy returned non-audio data");
       toast.warning("Voice service error, using browser TTS");
       speakBrowserTTS(text, personaId);
       return;
     }
+
+    const blob = await res.blob();
 
     const audioUrl = URL.createObjectURL(blob);
 
@@ -136,7 +138,7 @@ export function toggleMute(): boolean {
 }
 
 // Pre-load browser voices (some browsers load them async)
-if (!useElevenLabs && "speechSynthesis" in window) {
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.getVoices();

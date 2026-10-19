@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 import { toast } from "sonner";
 import { Trophy, Play, ChevronRight, ArrowLeft, Users, ThumbsUp, Zap } from "lucide-react";
 
@@ -159,6 +159,7 @@ function BracketView({ tree }: { tree: BracketNode }) {
   );
 }
 
+/** Render an accessible tournament bracket with voting and creator round advancement controls. */
 export default function Tournament() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const { profile } = useAuth();
@@ -169,43 +170,37 @@ export default function Tournament() {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
 
+  /** Load the accessible tournament, matches, and current user’s votes into the bracket view. */
   const fetch = useCallback(async () => {
-    if (!supabase || !tournamentId) return;
+    if (!tournamentId) return;
     try {
-      const [{ data: t }, { data: r }] = await Promise.all([
-        supabase.from("rt_tournaments").select("*").eq("id", tournamentId).single(),
-        supabase.from("rt_tournament_rounds").select("*").eq("tournament_id", tournamentId).order("round_number"),
-      ]);
-      setTournament(t as TournamentData);
-      setRounds((r as Round[]) || []);
-
-      if (profile) {
-        const { data: votes } = await supabase
-          .from("rt_tournament_votes")
-          .select("round_id, voted_for")
-          .eq("user_id", profile.id)
-          .in("round_id", (r || []).map((round: Round) => round.id));
-        const voteMap: Record<string, string> = {};
-        (votes || []).forEach((v: any) => { voteMap[v.round_id] = v.voted_for; });
-        setUserVotes(voteMap);
-      }
+      const { tournament: t, rounds: r, votes } = await dataCall<{
+        tournament: TournamentData;
+        rounds: Round[];
+        votes: Array<{ round_id: string; voted_for: string }>;
+      }>("tournaments.get", { tournamentId });
+      setTournament(t);
+      setRounds(r || []);
+      const voteMap: Record<string, string> = {};
+      (votes || []).forEach((v) => { voteMap[v.round_id] = v.voted_for; });
+      setUserVotes(voteMap);
+    } catch {
+      toast.error("Failed to load tournament");
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch votes when the user signs in
   }, [tournamentId, profile]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
+  /** Submit the current user’s contestant vote and refresh totals; the legacy field argument is ignored. */
   async function vote(roundId: string, personaId: string, field: "votes_a" | "votes_b") {
-    if (!supabase || !profile) return;
+    if (!profile) return;
+    void field; // the server works out which side the vote is for
     setVoting(roundId);
     try {
-      await supabase.from("rt_tournament_votes").upsert({ round_id: roundId, user_id: profile.id, voted_for: personaId }, { onConflict: "round_id,user_id" });
-      await supabase.rpc("increment_tournament_votes", { p_round_id: roundId, p_field: field }).catch(async () => {
-        // fallback
-        const { data } = await supabase!.from("rt_tournament_rounds").select(field).eq("id", roundId).single();
-        await supabase!.from("rt_tournament_rounds").update({ [field]: ((data as any)?.[field] || 0) + 1 }).eq("id", roundId);
-      });
+      await dataCall("tournaments.vote", { roundId, personaId });
       setUserVotes(v => ({ ...v, [roundId]: personaId }));
       fetch();
       toast.success("Vote cast!");
@@ -216,17 +211,14 @@ export default function Tournament() {
     }
   }
 
+  /** Request creator-authorized match advancement and refresh the bracket on success. */
   async function advanceRound(round: Round) {
-    if (!supabase || !tournament) return;
-    const winnerId = round.votes_a >= round.votes_b ? round.persona_a : round.persona_b;
-    await supabase.from("rt_tournament_rounds").update({ winner_id: winnerId, status: "completed" }).eq("id", round.id);
-    // Check if there's a next round
-    const nextRound = rounds.find(r => r.round_number === round.round_number + 1);
-    if (nextRound) {
-      await supabase.from("rt_tournament_rounds").update({ status: "active" }).eq("id", nextRound.id);
-      await supabase.from("rt_tournaments").update({ current_round: nextRound.round_number }).eq("id", tournament.id);
-    } else {
-      await supabase.from("rt_tournaments").update({ status: "completed" }).eq("id", tournament.id);
+    if (!tournament) return;
+    try {
+      await dataCall("tournaments.advance", { roundId: round.id });
+    } catch {
+      toast.error("Failed to advance round");
+      return;
     }
     fetch();
     toast.success("Round advanced!");

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { ApiError, dataCall } from "@/services/api";
 import { getSavedDebates, type SavedDebate } from "@/services/debateHistory";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ interface ClassMembership {
   };
 }
 
+/** Render student class memberships, join controls, and locally saved debate history. */
 export default function StudentDashboard() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -27,19 +28,15 @@ export default function StudentDashboard() {
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
 
+  /** Load the session user’s class memberships, reporting failures and clearing the loading state. */
   const fetchMemberships = useCallback(async () => {
-    if (!supabase || !profile) {
+    if (!profile) {
       setLoading(false);
       return;
     }
     try {
-      const { data, error } = await supabase
-        .from("rt_class_members")
-        .select("class_id, joined_at, rt_classes(id, name, description, grade_level, join_code)")
-        .eq("student_id", profile.id);
-
-      if (error) throw error;
-      setMemberships((data as unknown as ClassMembership[]) || []);
+      const { memberships: data } = await dataCall<{ memberships: ClassMembership[] }>("classes.listStudent");
+      setMemberships(data || []);
     } catch (err) {
       toast.error("Failed to load your classes");
     } finally {
@@ -52,45 +49,25 @@ export default function StudentDashboard() {
     setLocalDebates(getSavedDebates());
   }, [fetchMemberships]);
 
+  /** Submit a normalized class code and refresh memberships, displaying code-specific errors when available. */
   async function handleJoinClass(e: React.FormEvent) {
     e.preventDefault();
-    if (!supabase || !profile) return;
+    if (!profile) return;
     setJoining(true);
     setJoinError("");
 
     try {
-      // Find the class by join code
-      const { data: classData, error: findError } = await supabase
-        .from("rt_classes")
-        .select("id")
-        .eq("join_code", joinCode.trim().toLowerCase())
-        .eq("is_active", true)
-        .single();
-
-      if (findError || !classData) {
-        setJoinError("Invalid join code. Check with your teacher.");
-        return;
-      }
-
-      // Join the class
-      const { error: joinErr } = await supabase.from("rt_class_members").insert({
-        class_id: classData.id,
-        student_id: profile.id,
-      });
-
-      if (joinErr) {
-        if (joinErr.code === "23505") {
-          setJoinError("You're already in this class.");
-        } else {
-          throw joinErr;
-        }
-        return;
-      }
-
+      await dataCall("classes.join", { joinCode: joinCode.trim().toLowerCase() });
       setJoinCode("");
       fetchMemberships();
     } catch (err) {
-      setJoinError("Failed to join class. Try again.");
+      if (err instanceof ApiError && err.code === "invalid_code") {
+        setJoinError("Invalid join code. Check with your teacher.");
+      } else if (err instanceof ApiError && err.code === "already_member") {
+        setJoinError("You're already in this class.");
+      } else {
+        setJoinError("Failed to join class. Try again.");
+      }
     } finally {
       setJoining(false);
     }

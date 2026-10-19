@@ -1,4 +1,4 @@
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 
 const LIMITS: Record<string, number> = {
   free: 3,
@@ -10,23 +10,15 @@ export function getMonthlyLimit(tier: string): number {
   return LIMITS[tier] ?? 0;
 }
 
-export async function getMonthlyDebateCount(userId: string): Promise<number> {
-  if (!supabase) return 0;
-
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-  const { count, error } = await supabase
-    .from("rt_debates")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", startOfMonth);
-
-  if (error) {
+/** Fetch the session user’s calendar-month debate count, returning zero on failure; the userId argument is unused. */
+export async function getMonthlyDebateCount(_userId: string): Promise<number> {
+  // The server counts debates for the signed-in user this calendar month.
+  try {
+    const { count } = await dataCall<{ count: number }>("debates.monthlyCount");
+    return count ?? 0;
+  } catch {
     return 0;
   }
-
-  return count ?? 0;
 }
 
 export async function canStartDebate(

@@ -11,14 +11,14 @@ RoundtAIble brings historical figures to life through AI-powered personas that d
 ### Key Features
 
 - **6+ Historical Personas** - Edison, Morgan, Carnegie, Twain, Adams, Tesla, and more with authentic voices and debate styles
-- **Real-Time AI Debates** - Dynamic conversations powered by xAI Grok 3 Mini with persona-specific system prompts
+- **Real-Time AI Debates** - Dynamic conversations powered by xAI Grok with persona-specific system prompts
 - **Voice Synthesis** - ElevenLabs integration provides unique voices for each historical figure
 - **Voice Input** - Web Speech API allows users to inject their own comments into debates
 - **Dual Mode System**:
   - **Standard Mode** - Entertainment-focused debates for demos and general use
   - **Educational Mode** - Classroom-ready with vocabulary highlights, fact citations, Socratic questions, and grade-level adjustments (6-12, college)
 - **Lightning Rounds** - Fast-paced 60-second debates for quick demonstrations
-- **Multiplayer Viewing** - Real-time synchronization across multiple viewers using Supabase Realtime
+- **Multiplayer Viewing** - Synchronized viewing across browser tabs on the same device
 - **Analytics & Tracking** - PostHog integration for usage metrics and user behavior
 - **Subscription Tiers** - Stripe-powered Pro (25 debates/month) and Edu (100 debates/month) plans
 - **Teacher Dashboard** - Class management, assignments, and student progress tracking
@@ -36,27 +36,24 @@ RoundtAIble brings historical figures to life through AI-powered personas that d
 - **shadcn/ui** - Component library
 
 ### Backend & Services
-- **Supabase** - Authentication, PostgreSQL database, Realtime subscriptions, Edge Functions
-- **xAI Grok 3 Mini** - AI persona responses and debate summaries
-- **ElevenLabs** - Text-to-speech for persona voices
-- **Stripe** - Subscription management and payment processing
+- **Neon** - Serverless Postgres (via `@neondatabase/serverless`)
+- **Clerk** - Authentication
+- **Vercel Functions** (`/api`) - Server-side API:
+  - `data` - all database reads/writes, checked against the signed-in Clerk user
+  - `ai` - xAI Grok persona responses and debate summaries
+  - `tts` - ElevenLabs voice synthesis
+  - `billing` - Stripe checkout and customer portal
+  - `stripe-webhook` - subscription sync
+  - `contact` - contact form to Boxford CRM
 - **PostHog** - Product analytics and event tracking
-
-### Infrastructure
-- **Vercel** - Deployment and hosting
-- **Supabase Edge Functions** - Serverless API proxies:
-  - `ai-proxy` - Grok API integration with rate limiting
-  - `tts-proxy` - ElevenLabs voice synthesis
-  - `stripe-checkout` - Payment session creation
-  - `stripe-webhook` - Subscription event handling
-  - `stripe-portal` - Customer portal access
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ or Bun
-- Supabase account
+- Neon database
+- Clerk application
 - xAI API key (for Grok)
 - ElevenLabs API key (for voice synthesis)
 - Stripe account (for payments, optional for development)
@@ -79,42 +76,16 @@ cp .env.example .env
 
 ### Environment Variables
 
-Create a `.env` file with the following:
+Copy `.env.example` to `.env` and fill it in. Everything without a `VITE_` prefix is
+server-side only and is read by the `/api` functions. Set the same names in Vercel.
+The build does not need any of them.
 
-```env
-# Supabase
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Stripe (frontend)
-VITE_STRIPE_PRICE_PRO_MONTHLY=price_id
-VITE_STRIPE_PRICE_PRO_YEARLY=price_id
-VITE_STRIPE_PRICE_EDU_MONTHLY=price_id
-VITE_STRIPE_PRICE_EDU_YEARLY=price_id
-```
-
-**Supabase Edge Function Secrets** (set via Supabase CLI or dashboard):
-```bash
-XAI_API_KEY=your_xai_api_key
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-```
+To run the `/api` functions locally, use `vercel dev` instead of `npm run dev`.
 
 ### Database Setup
 
-Run the provided SQL migrations in your Supabase project:
-
-```bash
-# Tables for debates, users, and analytics
-supabase/migrations/*.sql
-
-# Or use individual files:
-debates-table-migration.sql
-waitlist-migration.sql
-supabase_contact_table.sql
-```
+Create a Neon project, then run `db/migrations/001_init.sql` once in the Neon SQL Editor.
+It is safe to re-run.
 
 ### Development
 
@@ -157,17 +128,11 @@ roundtaible-debates/
 │   ├── services/        # API integrations
 │   │   ├── aiService.ts       # Grok AI persona generation
 │   │   ├── voiceInputService.ts # Web Speech API
-│   │   ├── supabaseClient.ts
+│   │   ├── api.ts             # Client for the /api functions
 │   │   └── analytics.ts       # PostHog tracking
 │   └── App.tsx
-├── supabase/
-│   ├── functions/       # Edge Functions
-│   │   ├── ai-proxy/         # xAI Grok integration
-│   │   ├── tts-proxy/        # ElevenLabs voice synthesis
-│   │   ├── stripe-checkout/
-│   │   ├── stripe-webhook/
-│   │   └── stripe-portal/
-│   └── migrations/      # Database schema
+├── api/                 # Vercel Functions (database, AI, voice, billing)
+├── db/migrations/       # Neon schema
 ├── public/              # Static assets
 └── scripts/             # Build and deployment scripts
 ```

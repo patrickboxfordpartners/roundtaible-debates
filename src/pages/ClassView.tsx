@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 import { toast } from "sonner";
 import { Trophy, Plus, Play } from "lucide-react";
 import { useTournamentCreation } from "@/hooks/useTournamentCreation";
@@ -44,6 +44,7 @@ interface TournamentItem {
   created_at: string;
 }
 
+/** Render authorized class details, recent debates, and tournaments with teacher management controls. */
 export default function ClassView() {
   const { classId } = useParams();
   const { profile, isTeacher } = useAuth();
@@ -60,56 +61,21 @@ export default function ClassView() {
   const [seedingStrategy, setSeedingStrategy] = useState<"random" | "alphabetical">("random");
   const { createTournament, creating } = useTournamentCreation();
 
+  /** Load authorized class activity and expose the returned student roster only in the teacher view. */
   const fetchClassData = useCallback(async () => {
-    if (!supabase || !classId) return;
+    if (!classId) return;
 
     try {
-      // Fetch class info
-      const { data: cls, error: clsErr } = await supabase
-        .from("rt_classes")
-        .select("*")
-        .eq("id", classId)
-        .single();
-
-      if (clsErr) throw clsErr;
-      setClassData(cls as ClassDetail);
-
-      // Fetch debates for this class
-      const { data: debateData } = await supabase
-        .from("rt_debates")
-        .select("id, topic_title, topic_category, winner_id, duration, educational_mode, created_at, user_id")
-        .eq("class_id", classId)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      setDebates((debateData as DebateRecord[]) || []);
-
-      // Fetch tournaments
-      const { data: tournamentData } = await supabase
-        .from("rt_tournaments")
-        .select("id, name, description, status, current_round, total_rounds, created_at")
-        .eq("class_id", classId)
-        .order("created_at", { ascending: false });
-
-      setTournaments((tournamentData as TournamentItem[]) || []);
-
-      // If teacher, fetch student list
-      if (isTeacher) {
-        const { data: memberData } = await supabase
-          .from("rt_class_members")
-          .select("student_id, rt_profiles(id, full_name, email)")
-          .eq("class_id", classId);
-
-        if (memberData) {
-          const studentProfiles = memberData
-            .map((m: unknown) => {
-              const member = m as { rt_profiles: StudentProfile | null };
-              return member.rt_profiles;
-            })
-            .filter(Boolean) as StudentProfile[];
-          setStudents(studentProfiles);
-        }
-      }
+      const res = await dataCall<{
+        class: ClassDetail;
+        debates: DebateRecord[];
+        tournaments: TournamentItem[];
+        students: StudentProfile[];
+      }>("classes.get", { classId });
+      setClassData(res.class);
+      setDebates(res.debates || []);
+      setTournaments(res.tournaments || []);
+      setStudents(isTeacher ? res.students || [] : []);
     } catch (err) {
       toast.error("Failed to load class details");
     } finally {

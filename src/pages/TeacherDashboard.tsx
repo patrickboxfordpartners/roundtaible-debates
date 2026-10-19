@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/services/supabaseClient";
+import { dataCall } from "@/services/api";
 import { toast } from "sonner";
 
 interface ClassItem {
@@ -14,6 +14,7 @@ interface ClassItem {
   created_at: string;
 }
 
+/** Render the teacher’s classes and class creation form. */
 export default function TeacherDashboard() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -29,16 +30,11 @@ export default function TeacherDashboard() {
     fetchClasses();
   }, []);
 
+  /** Load classes for the session user and finish loading even when the request fails. */
   async function fetchClasses() {
-    if (!supabase) return;
     try {
-      const { data, error } = await supabase
-        .from("rt_classes")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setClasses((data as ClassItem[]) || []);
+      const { classes: data } = await dataCall<{ classes: ClassItem[] }>("classes.listTeacher");
+      setClasses(data || []);
     } catch (err) {
       toast.error("Failed to load classes");
     } finally {
@@ -46,30 +42,19 @@ export default function TeacherDashboard() {
     }
   }
 
-  function generateJoinCode(): string {
-    const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-  }
-
+  /** Submit class details, then clear the form and refresh the teacher’s classes on success. */
   async function handleCreateClass(e: React.FormEvent) {
     e.preventDefault();
-    if (!supabase || !profile) return;
+    if (!profile) return;
     setCreating(true);
 
     try {
-      const { error } = await supabase.from("rt_classes").insert({
-        teacher_id: profile.id,
+      // The server sets the teacher and generates the join code.
+      await dataCall("classes.create", {
         name: newClassName.trim(),
         description: newClassDesc.trim() || null,
-        grade_level: newGradeLevel || null,
-        join_code: generateJoinCode(),
+        gradeLevel: newGradeLevel || null,
       });
-
-      if (error) throw error;
 
       setNewClassName("");
       setNewClassDesc("");

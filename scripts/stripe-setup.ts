@@ -5,7 +5,7 @@
  * Usage:
  *   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-setup.ts
  *
- * Outputs the env vars you need to add to .env and Supabase secrets.
+ * Outputs the env vars you need to add to .env and Vercel.
  */
 
 import Stripe from "stripe";
@@ -18,6 +18,7 @@ if (!key) {
 
 const stripe = new Stripe(key, { apiVersion: "2024-12-18.acacia" });
 
+/** Create Pro and Edu products with monthly and yearly Stripe prices, then print their environment settings. */
 async function main() {
   // --- Pro plan ---
   const proProd = await stripe.products.create({
@@ -67,7 +68,7 @@ async function main() {
     metadata: { tier: "edu", cadence: "yearly" },
   });
 
-  console.log("\n--- Add these to your .env and Supabase secrets ---\n");
+  console.log("\n--- Add these to your .env and Vercel environment variables ---\n");
   console.log(`STRIPE_PRICE_PRO_MONTHLY=${proMonthly.id}`);
   console.log(`STRIPE_PRICE_PRO_YEARLY=${proYearly.id}`);
   console.log(`STRIPE_PRICE_EDU_MONTHLY=${eduMonthly.id}`);
