@@ -373,16 +373,13 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     if (!round) throw new HttpError(404, "Round not found");
     await tournamentAccess(userId, round.tournament_id);
     if (personaId !== round.persona_a && personaId !== round.persona_b) throw new HttpError(400, "Not a contestant in this match");
-    const previous = (await sql`SELECT voted_for FROM rt_tournament_votes WHERE round_id = ${roundId} AND user_id = ${userId}`)[0];
-    if (previous?.voted_for === personaId) return { ok: true };
-    const delta = (p: string) => (p === personaId ? 1 : 0) - (previous?.voted_for === p ? 1 : 0);
     await sql.transaction([
       sql`INSERT INTO rt_tournament_votes (round_id, user_id, voted_for) VALUES (${roundId}, ${userId}, ${personaId})
           ON CONFLICT (round_id, user_id) DO UPDATE SET voted_for = EXCLUDED.voted_for, created_at = NOW()`,
-      sql`UPDATE rt_tournament_rounds
-          SET votes_a = GREATEST(0, votes_a + ${delta(round.persona_a)}),
-              votes_b = GREATEST(0, votes_b + ${delta(round.persona_b)})
-          WHERE id = ${roundId}`,
+      sql`UPDATE rt_tournament_rounds r
+          SET votes_a = (SELECT COUNT(*)::int FROM rt_tournament_votes v WHERE v.round_id = r.id AND v.voted_for = r.persona_a),
+              votes_b = (SELECT COUNT(*)::int FROM rt_tournament_votes v WHERE v.round_id = r.id AND v.voted_for = r.persona_b)
+          WHERE r.id = ${roundId}`,
     ]);
     return { ok: true };
   },
