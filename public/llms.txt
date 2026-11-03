@@ -45,3 +45,27 @@ The Roundtaible is built by Boxford Partners, an embedded operations consulting 
 - /faq — Frequently asked questions about the platform
 - /blog — Articles about AI in education and critical thinking
 - /privacy — Privacy policy
+
+## Key pages
+
+- [Home](https://theroundtaible.com/): Product overview
+- [Start a debate](https://theroundtaible.com/app): The debate app
+- [Pricing](https://theroundtaible.com/pricing): Plans and prices
+- [Quiz](https://theroundtaible.com/quiz): Which thinker are you
+- [FAQ](https://theroundtaible.com/faq): Common questions
+- [Blog](https://theroundtaible.com/blog): Articles
+- [Sign in](https://theroundtaible.com/auth): Sign in or create an account
+- [About](https://theroundtaible.com/about): About The Roundtaible
+- [Contact](https://theroundtaible.com/contact): How to reach us
+- [Privacy](https://theroundtaible.com/privacy): Privacy policy
+- [Terms](https://theroundtaible.com/terms): Terms of service
+
+## Machine-readable files
+
+- [Pricing](https://theroundtaible.com/pricing.md): Plans and prices in markdown
+- [Homepage in markdown](https://theroundtaible.com/index.md): Homepage summary for agents
+- [Agent resource catalog](https://theroundtaible.com/.well-known/ard.json): ARD discovery manifest
+
+## Contact
+
+- Email: hello@theroundtaible.com

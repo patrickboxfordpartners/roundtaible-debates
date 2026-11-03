@@ -49,10 +49,79 @@
       ]
     }
     </script>
+      <link rel="alternate" type="text/markdown" href="https://theroundtaible.com/index.md" />
+    <script type="application/ld+json" id="agent-ready-ld">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://theroundtaible.com/#organization",
+      "name": "The Roundtaible",
+      "url": "https://theroundtaible.com/",
+      "logo": "https://theroundtaible.com/favicon.svg",
+      "email": "hello@theroundtaible.com",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "hello@theroundtaible.com",
+        "url": "https://theroundtaible.com/contact"
+      },
+      "sameAs": [
+        "https://www.linkedin.com/company/boxfordpartners"
+      ],
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "Boxford Partners",
+        "url": "https://www.boxfordpartners.com",
+        "sameAs": [
+          "https://www.linkedin.com/company/boxfordpartners"
+        ]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://theroundtaible.com/#website",
+      "url": "https://theroundtaible.com/",
+      "name": "The Roundtaible",
+      "publisher": {
+        "@id": "https://theroundtaible.com/#organization"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "The Roundtaible",
+      "url": "https://theroundtaible.com/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "description": "Watch history's sharpest minds debate your actual questions. Edison, Curie, Machiavelli, and more go head-to-head in real-time AI-powered debates on any topic.",
+      "publisher": {
+        "@id": "https://theroundtaible.com/#organization"
+      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Pro",
+          "price": "9.99",
+          "priceCurrency": "USD",
+          "url": "https://theroundtaible.com/pricing"
+        },
+        {
+          "@type": "Offer",
+          "name": "Edu / Team",
+          "price": "29.99",
+          "priceCurrency": "USD",
+          "url": "https://theroundtaible.com/pricing"
+        }
+      ]
+    }
+  ]
+}
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="prerender-fallback" style="font-family:system-ui,sans-serif;max-width:720px;margin:48px auto;padding:0 20px;line-height:1.6"><h1>The Roundtaible</h1><p>Watch history&#x27;s sharpest minds debate your actual questions. Edison, Curie, Machiavelli, and more go head-to-head in real-time AI-powered debates on any topic.</p><h2>Pages</h2><ul><li><a href="/">Home</a>: Product overview</li><li><a href="/app">Start a debate</a>: The debate app</li><li><a href="/pricing">Pricing</a>: Plans and prices</li><li><a href="/quiz">Quiz</a>: Which thinker are you</li><li><a href="/faq">FAQ</a>: Common questions</li><li><a href="/blog">Blog</a>: Articles</li><li><a href="/auth">Sign in</a>: Sign in or create an account</li><li><a href="/about">About</a>: About The Roundtaible</li><li><a href="/contact">Contact</a>: How to reach us</li><li><a href="/privacy">Privacy</a>: Privacy policy</li><li><a href="/terms">Terms</a>: Terms of service</li></ul><p>Contact: <a href="mailto:hello@theroundtaible.com">hello@theroundtaible.com</a></p></div></div>
     <script type="module" src="/src/main.tsx"></script>
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "cec55d1a2e254157b78e93b3cede1adc"}'></script>
     <script defer src="https://analytics.boxfordpartners.com/script.js" data-website-id="ea755d2b-3117-4906-b47a-6bdf28d63acc"></script>
