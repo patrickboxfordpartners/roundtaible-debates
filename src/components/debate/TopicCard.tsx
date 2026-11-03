@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Play, Pause, Users, MessageCircle } from "lucide-react";
+import { Play, Pause, Square, Users, MessageCircle } from "lucide-react";
 import type { DebateTopic } from "@/data/debateData";
 import { Button } from "@/components/ui/button";
 
@@ -73,19 +73,28 @@ export function TopicCard({
       </div>
 
       <div className="mt-3 flex items-center gap-2">
+        {isDebating && onPauseDebate && onResumeDebate && (
+          <Button
+            onClick={isPaused ? onResumeDebate : onPauseDebate}
+            variant="outline"
+            size="sm"
+            className="flex-1 font-display font-semibold"
+            aria-label={isPaused ? "Resume debate" : "Pause debate"}
+          >
+            {isPaused
+              ? <><Play className="w-3.5 h-3.5" /> Resume</>
+              : <><Pause className="w-3.5 h-3.5" /> Pause</>}
+          </Button>
+        )}
         <Button
-          onClick={isDebating && onPauseDebate && onResumeDebate
-            ? (isPaused ? onResumeDebate : onPauseDebate)
-            : (isDebating ? onStopDebate : onStartDebate)}
+          onClick={isDebating ? onStopDebate : onStartDebate}
           variant={isDebating ? "outline" : "default"}
           size="sm"
           className="flex-1 font-display font-semibold"
-          aria-label={isDebating ? (isPaused ? "Resume debate" : "Pause debate") : "Start debate"}
+          aria-label={isDebating ? "End current round" : "Start debate"}
         >
           {isDebating
-            ? (isPaused
-              ? <><Play className="w-3.5 h-3.5" /> Resume</>
-              : <><Pause className="w-3.5 h-3.5" /> Pause</>)
+            ? <><Square className="w-3.5 h-3.5" /> End Round</>
             : <><Play className="w-3.5 h-3.5" /> Start Debate</>}
         </Button>
       </div>

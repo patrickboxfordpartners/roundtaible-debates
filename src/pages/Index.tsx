@@ -302,7 +302,7 @@ const Index = () => {
   });
 
   return (
-    <div className={`min-h-dvh flex flex-col bg-background parchment-texture vignette-overlay candlelight${isDemoMode ? " demo-mode" : ""}`} role="application" aria-label="Algonquin RoundtAIble debate platform">
+    <div className={`h-dvh overflow-hidden flex flex-col bg-background parchment-texture vignette-overlay candlelight${isDemoMode ? " demo-mode" : ""}`} role="application" aria-label="Algonquin RoundtAIble debate platform">
       {/* Header */}
       <motion.header
         className="flex items-center justify-between py-4 px-4 border-b border-border bg-card/40 relative z-20"
@@ -474,9 +474,9 @@ const Index = () => {
       </AnimatePresence>
 
       {/* Main content: two-column grid, table left, controls right */}
-      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_400px] overflow-hidden min-h-0" role="main">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_400px] overflow-y-auto lg:overflow-hidden min-h-0" role="main">
         {/* Left: Round Table, fills available space, nothing beneath it */}
-        <div className="flex-1 flex items-center justify-center p-2 lg:p-6 min-h-0">
+        <div className="flex shrink-0 items-center justify-center p-2 lg:flex-1 lg:p-6 lg:min-h-0">
           <RoundTable
             activeTopic={debate.activeTopic}
             speakingId={debate.speakingId}
@@ -490,7 +490,7 @@ const Index = () => {
 
         {/* Right: one uniform column */}
         <aside
-          className="flex flex-col lg:h-full lg:border-l border-border bg-card/30 lg:min-h-0"
+          className="flex flex-col shrink-0 lg:h-full lg:border-l border-border bg-card/30 lg:min-h-0"
           aria-label="Debate controls and transcript"
         >
           {/* Column header */}
@@ -528,7 +528,7 @@ const Index = () => {
           </div>
 
           {/* Transcript: flex-1 middle of the column */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-1 flex-col h-[250px] max-h-[250px] min-h-[250px] overflow-hidden lg:h-auto lg:max-h-none lg:min-h-0">
             <TranscriptPanel
               entries={debate.transcript}
               personasState={debate.personasState}
