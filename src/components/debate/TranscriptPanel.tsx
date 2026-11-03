@@ -110,6 +110,7 @@ function renderWithVocabulary(text: string, gradeLevel: string, baseKey: number)
 interface TranscriptPanelProps {
   entries: TranscriptEntry[];
   personasState: Persona[];
+  thinkingId?: string | null;
   highlightVocabulary?: boolean;
   gradeLevel?: string;
 }
@@ -125,20 +126,24 @@ const humanPersona: Persona = {
   context: "",
 };
 
-export function TranscriptPanel({ entries, personasState, highlightVocabulary = false, gradeLevel = "" }: TranscriptPanelProps) {
+export function TranscriptPanel({ entries, personasState, thinkingId, highlightVocabulary = false, gradeLevel = "" }: TranscriptPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [entries.length]);
+  }, [entries.length, thinkingId]);
+
+  const thinkingPersona = thinkingId
+    ? personasState.find((p) => p.id === thinkingId)
+    : null;
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full">
-        <h3 className="font-display text-xs font-bold text-foreground px-3 py-1.5 border-b border-border uppercase tracking-wider text-muted-foreground">
+      <div className="flex flex-col h-full min-h-0">
+        <h3 className="shrink-0 font-display text-xs font-bold text-foreground px-3 py-2 border-b border-border uppercase tracking-wider text-muted-foreground">
           Transcript
         </h3>
-        <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5" role="log" aria-live="polite" aria-label="Debate transcript">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" role="log" aria-live="polite" aria-label="Debate transcript">
           {entries.map((entry, i) => {
             const persona = entry.personaId === "human"
               ? humanPersona
@@ -147,27 +152,71 @@ export function TranscriptPanel({ entries, personasState, highlightVocabulary = 
             return (
               <motion.div
                 key={entry.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i * 0.02, 0.3) }}
-                className="flex gap-1.5"
+                className="flex gap-2"
               >
                 <div
-                  className="w-0.5 rounded-full flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: persona.color }}
-                />
-                <p className="text-xs font-body text-foreground/90 leading-snug">
-                  <span
-                    className="font-display font-semibold mr-1"
-                    style={{ color: persona.color }}
-                  >
-                    {persona.name}:
-                  </span>
-                  {renderTextWithMarkers(entry.text, highlightVocabulary, gradeLevel)}
-                </p>
+                  className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center overflow-hidden border border-border"
+                  style={persona.avatar ? {} : { backgroundColor: `${persona.color}26` }}
+                  aria-hidden="true"
+                >
+                  {persona.avatar ? (
+                    <img
+                      src={persona.avatar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="text-[10px] font-display font-bold" style={{ color: persona.color }}>
+                      {persona.name.split(" ").map((w) => w[0]).join("")}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="flex-1 min-w-0 rounded-xl border border-border bg-card p-3 border-l-4"
+                  style={{ borderLeftColor: persona.color }}
+                >
+                  <p className="text-xs font-display font-semibold mb-0.5" style={{ color: persona.color }}>
+                    {persona.name}
+                  </p>
+                  <p className="text-sm font-body text-foreground/90 leading-snug break-words">
+                    {renderTextWithMarkers(entry.text, highlightVocabulary, gradeLevel)}
+                  </p>
+                </div>
               </motion.div>
             );
           })}
+          {thinkingPersona && (
+            <motion.div
+              key={`thinking-${thinkingPersona.id}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex gap-2"
+              aria-live="polite"
+            >
+              <div
+                className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center border border-border"
+                style={{ backgroundColor: `${thinkingPersona.color}26` }}
+                aria-hidden="true"
+              >
+                <span className="text-[10px] font-display font-bold" style={{ color: thinkingPersona.color }}>
+                  {thinkingPersona.name.split(" ").map((w) => w[0]).join("")}
+                </span>
+              </div>
+              <div
+                className="flex-1 rounded-xl border border-border bg-card p-3 border-l-4"
+                style={{ borderLeftColor: thinkingPersona.color }}
+              >
+                <p className="text-sm font-body text-muted-foreground italic">
+                  {thinkingPersona.name} is thinking...
+                </p>
+              </div>
+            </motion.div>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>

@@ -8,9 +8,9 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { RoundTable } from "@/components/debate/RoundTable";
 import { TranscriptPanel } from "@/components/debate/TranscriptPanel";
-import { Leaderboard } from "@/components/debate/Leaderboard";
-import { ControlBar } from "@/components/debate/ControlBar";
-import { SpectatorBar } from "@/components/debate/SpectatorBar";
+import { TopicCard } from "@/components/debate/TopicCard";
+import { Composer } from "@/components/debate/Composer";
+import { MoreMenu } from "@/components/debate/MoreMenu";
 import { VictoryModal } from "@/components/debate/VictoryModal";
 import { PersonaContextDialog } from "@/components/debate/PersonaContextDialog";
 import { AddPersonaDialog } from "@/components/debate/AddPersonaDialog";
@@ -242,25 +242,9 @@ const Index = () => {
 
   // --- Event handlers ---
 
-  const handlePitchIdea = (text: string) => {
-    if (mp.isGuest) {
-      mp.sendGuestMessage(`[Pitch]: ${text}`);
-    } else {
-      debate.addTranscriptEntry("edison", `[New pitch from the gallery]: ${text}`);
-    }
-  };
-
   const handleSummarize = useCallback(() => {
     debate.summarizeDebate();
   }, [debate]);
-
-  const handleGallerySubmit = (text: string) => {
-    if (mp.isGuest) {
-      mp.sendGuestMessage(`[Gallery]: ${text}`);
-    } else {
-      debate.addTranscriptEntry("adams", `[Gallery suggestion]: "${text}", An intriguing proposition from the audience.`);
-    }
-  };
 
   const handleClickPersona = (persona: Persona) => {
     const current = debate.personasState.find(p => p.id === persona.id);
@@ -288,14 +272,6 @@ const Index = () => {
       mp.sendGuestVote(personaId);
     } else {
       debate.voteWinner(personaId);
-    }
-  };
-
-  const handleReaction = (emoji: string) => {
-    if (mp.isGuest) {
-      mp.sendGuestReaction(emoji);
-    } else {
-      debate.addReaction(emoji);
     }
   };
 
@@ -497,80 +473,95 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0" role="main">
-        {/* Center: Round Table */}
-        <div className="flex-1 flex items-center justify-center p-2 lg:p-4 min-h-0">
+      {/* Main content: two-column grid, table left, controls right */}
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_400px] overflow-hidden min-h-0" role="main">
+        {/* Left: Round Table, fills available space, nothing beneath it */}
+        <div className="flex-1 flex items-center justify-center p-2 lg:p-6 min-h-0">
           <RoundTable
             activeTopic={debate.activeTopic}
             speakingId={debate.speakingId}
             thinkingId={debate.thinkingId}
-            heatLevel={debate.heatLevel}
-            timeRemaining={debate.timeRemaining}
-            isDebating={debate.isDebating}
             winner={debate.winner}
             personasState={debate.personasState}
             onClickPersona={handleClickPersona}
             onAddPersona={() => setAddDialogOpen(true)}
-            onJumpIn={handleJumpIn}
           />
         </div>
 
-        {/* Right panel: Transcript + Leaderboard */}
-        <motion.aside
-          className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-border bg-card/30 flex flex-col h-[250px] lg:h-auto relative z-20 shrink-0"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          aria-label="Debate transcript and leaderboard"
+        {/* Right: one uniform column */}
+        <aside
+          className="flex flex-col lg:h-full lg:border-l border-border bg-card/30 lg:min-h-0"
+          aria-label="Debate controls and transcript"
         >
-          <div className="flex-1 overflow-hidden min-h-0">
+          {/* Column header */}
+          <div className="flex items-center justify-between gap-2 p-3 border-b border-border shrink-0">
+            <span className="text-xs font-display font-semibold uppercase tracking-wider text-muted-foreground">
+              Debate
+            </span>
+            {!isDemoMode && (
+              <MoreMenu
+                onSurpriseMe={debate.surpriseMe}
+                onCustomTopic={debate.setCustomTopic}
+                onLightningRound={debate.startLightningRound}
+                onSummarize={handleSummarize}
+                onVote={handleVote}
+                personasState={debate.personasState}
+              />
+            )}
+          </div>
+
+          {/* Topic + timer card */}
+          <div className="p-3 shrink-0">
+            <TopicCard
+              activeTopic={debate.activeTopic}
+              timeRemaining={debate.timeRemaining}
+              heatLevel={debate.heatLevel}
+              isDebating={debate.isDebating}
+              isPaused={debate.isPaused}
+              onStartDebate={handleStartDebate}
+              onStopDebate={debate.stopDebate}
+              onPauseDebate={debate.pauseDebate}
+              onResumeDebate={debate.resumeDebate}
+              reactionTotal={Object.values(debate.reactions).reduce((sum, n) => sum + n, 0)}
+              personaCount={debate.personasState.filter(p => p.id !== "human").length}
+            />
+          </div>
+
+          {/* Transcript: flex-1 middle of the column */}
+          <div className="flex-1 min-h-0 overflow-hidden">
             <TranscriptPanel
               entries={debate.transcript}
               personasState={debate.personasState}
+              thinkingId={debate.thinkingId}
               highlightVocabulary={educationalConfig.vocabularyHighlights}
               gradeLevel={educationalConfig.gradeLevel}
             />
           </div>
-          <div className="border-t border-border shrink-0">
-            <Leaderboard leaderboard={debate.leaderboard} onReset={debate.resetLeaderboard} hideReset={isDemoMode} />
+
+          {/* Composer pinned to bottom of the column (desktop) */}
+          <div className="hidden lg:block p-3 border-t border-border shrink-0">
+            <Composer
+              onSendMessage={handleJumpIn}
+              onVoiceInput={handleVoiceInput}
+              isMuted={debate.isMuted}
+              onToggleMute={debate.handleToggleMute}
+            />
           </div>
-        </motion.aside>
+        </aside>
       </div>
 
-      {/* Spectator bar */}
-      <div className="relative z-20">
-        <SpectatorBar
-          reactions={debate.reactions}
-          onReaction={handleReaction}
-          onGallerySubmit={handleGallerySubmit}
-        />
-      </div>
-
-      {/* Control bar (hidden in demo mode) */}
-      {!isDemoMode && (
-        <nav className="relative z-20" aria-label="Debate controls">
-          <ControlBar
-            isDebating={debate.isDebating}
-            personasState={debate.personasState}
-            onStartDebate={handleStartDebate}
-            onCustomTopic={debate.setCustomTopic}
-            onStopDebate={debate.stopDebate}
-            onSelectTopic={debate.selectTopic}
-            onSurpriseMe={debate.surpriseMe}
-            onLightningRound={debate.startLightningRound}
-            onPitchIdea={handlePitchIdea}
-            onVote={handleVote}
-            onSummarize={handleSummarize}
+      {/* Composer fixed to bottom of screen (mobile only) */}
+      <div className="lg:hidden sticky bottom-0 z-30 px-3 pb-[env(safe-area-inset-bottom)] bg-background/95 backdrop-blur">
+        <div className="pt-2">
+          <Composer
+            onSendMessage={handleJumpIn}
             onVoiceInput={handleVoiceInput}
             isMuted={debate.isMuted}
             onToggleMute={debate.handleToggleMute}
-            isPaused={debate.isPaused}
-            onPauseDebate={debate.pauseDebate}
-            onResumeDebate={debate.resumeDebate}
+            placeholder="Jump in..."
           />
-        </nav>
-      )}
+        </div>
+      </div>
 
       {/* Victory modal */}
       <VictoryModal
