@@ -127,10 +127,14 @@ const humanPersona: Persona = {
 };
 
 export function TranscriptPanel({ entries, personasState, thinkingId, highlightVocabulary = false, gradeLevel = "" }: TranscriptPanelProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const list = listRef.current;
+    if (!list) return;
+    // Scroll this log only. scrollIntoView also scrolls every ancestor,
+    // which pulls the mobile page down to the transcript.
+    list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [entries.length, thinkingId]);
 
   const thinkingPersona = thinkingId
@@ -143,7 +147,7 @@ export function TranscriptPanel({ entries, personasState, thinkingId, highlightV
         <h3 className="shrink-0 font-display text-xs font-bold text-foreground px-3 py-2 border-b border-border uppercase tracking-wider text-muted-foreground">
           Transcript
         </h3>
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" role="log" aria-live="polite" aria-label="Debate transcript">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2" role="log" aria-live="polite" aria-label="Debate transcript">
           {entries.map((entry, i) => {
             const persona = entry.personaId === "human"
               ? humanPersona
@@ -217,7 +221,6 @@ export function TranscriptPanel({ entries, personasState, thinkingId, highlightV
               </div>
             </motion.div>
           )}
-          <div ref={bottomRef} />
         </div>
       </div>
     </TooltipProvider>
