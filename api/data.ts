@@ -7,6 +7,7 @@ import { db } from "./_lib/db.js";
 import { getClerkUser, getUserId } from "./_lib/auth.js";
 import { HttpError, errorResponse, json, rateLimit, readJson } from "./_lib/http.js";
 import { sendWelcomeEmail } from "./_lib/email.js";
+import { notifySignup } from "./_lib/notify.js";
 
 type Args = Record<string, any>;
 type Ctx = { userId: string | null; args: Args };
@@ -100,6 +101,8 @@ const ops: Record<string, (ctx: Ctx) => Promise<unknown>> = {
     } catch (err) {
       console.error("welcome email error", err);
     }
+    // Internal alert only when the profile is genuinely new
+    await notifySignup({ kind: "signup", email, name: fullName, details: { role, source: "app signup" } });
     return { profile: inserted[0], created: true };
   },
 
