@@ -1,0 +1,52 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "The Roundtaible",
+    "documentationUrl": "https://theroundtaible.com/llms.txt"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:theroundtaible.com:site:home",
+      "displayName": "The Roundtaible website",
+      "type": "text/html",
+      "url": "https://theroundtaible.com/",
+      "description": "Watch history's sharpest minds debate your actual questions. Edison, Curie, Machiavelli, and more go head-to-head in real-time AI-powered debates on any topic.",
+      "tags": [
+        "website"
+      ],
+      "trustManifest": {
+        "identity": "https://theroundtaible.com",
+        "identityType": "https"
+      }
+    },
+    {
+      "identifier": "urn:air:theroundtaible.com:doc:llms",
+      "displayName": "The Roundtaible llms.txt",
+      "type": "text/plain",
+      "url": "https://theroundtaible.com/llms.txt",
+      "description": "Plain-text guide to The Roundtaible for AI agents.",
+      "tags": [
+        "llms.txt",
+        "docs"
+      ],
+      "trustManifest": {
+        "identity": "https://theroundtaible.com",
+        "identityType": "https"
+      }
+    },
+    {
+      "identifier": "urn:air:theroundtaible.com:doc:pricing",
+      "displayName": "The Roundtaible pricing",
+      "type": "text/markdown",
+      "url": "https://theroundtaible.com/pricing.md",
+      "description": "Machine-readable pricing for The Roundtaible.",
+      "tags": [
+        "pricing"
+      ],
+      "trustManifest": {
+        "identity": "https://theroundtaible.com",
+        "identityType": "https"
+      }
+    }
+  ]
+}
